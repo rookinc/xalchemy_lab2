@@ -30,3 +30,15 @@ def serve_witness():
 @app.get("/witness/")
 def serve_witness_slash():
     return FileResponse(BASE_DIR / "witness" / "index.html")
+
+@app.get("/cycle/g15")
+def serve_cycle_g15():
+    return FileResponse(BASE_DIR / "public" / "cycle.html")
+
+@app.get("/cycle/g30")
+def serve_cycle_g30():
+    return FileResponse(BASE_DIR / "public" / "cycle.html")
+
+@app.get("/cycle/g60")
+def serve_cycle_g60():
+    return FileResponse(BASE_DIR / "public" / "cycle.html")

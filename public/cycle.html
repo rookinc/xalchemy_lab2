@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cycle Viewer</title>
+  <link rel="stylesheet" href="/assets/cycle.css" />
+  <link rel="icon" href="/assets/favicon.ico" />
+</head>
+<body>
+  <main class="app">
+    <h1 id="page-title">Witness // Cycle</h1>
+
+    <section class="stage-panel">
+      <canvas id="cycle-stage" width="720" height="720"></canvas>
+    </section>
+
+    <div id="cycle-status" class="status-line">booting</div>
+
+    <section class="controls">
+      <div class="row">
+        <button id="btn-step">step</button>
+        <button id="btn-auto">auto</button>
+        <button id="btn-reset">reset</button>
+        <button id="btn-prev-mark">prev mark</button>
+        <button id="btn-next-mark">next mark</button>
+      </div>
+
+      <div class="row">
+        <label>step <input id="step-input" type="number" value="0" min="0" step="1" /></label>
+        <button id="btn-apply-step">apply</button>
+      </div>
+
+      <div class="row">
+        <label>show labels <input id="show-labels" type="checkbox" checked /></label>
+        <label>show marks <input id="show-marks" type="checkbox" checked /></label>
+        <label>show trails <input id="show-trails" type="checkbox" checked /></label>
+      </div>
+    </section>
+
+    <pre id="cycle-notes" class="ascii-panel"></pre>
+  </main>
+
+  <script src="/assets/cycle_specs.js"></script>
+  <script src="/assets/cycle.js"></script>
+</body>
+</html>
