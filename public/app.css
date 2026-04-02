@@ -1,39 +1,78 @@
 body {
-  font-family: monospace;
-  padding: 20px;
+  margin: 0;
   background: #000;
   color: #00f7a5;
+  font-family: monospace;
+}
+
+.app {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px;
 }
 
 h1 {
-  margin-top: 0;
+  margin: 0 0 12px;
+  font-size: 24px;
+}
+
+.stage-panel {
+  border: 1px solid #1c5;
+  padding: 8px;
+  margin-bottom: 10px;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #050505;
+}
+
+.status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid #133;
+  border-bottom: 1px solid #133;
+  margin-bottom: 10px;
 }
 
 .controls {
-  margin: 10px 0;
+  margin-bottom: 10px;
 }
 
-.buttons button {
-  margin-right: 8px;
-  margin-bottom: 8px;
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
+button,
 input,
-select,
-button {
-  font-family: monospace;
+select {
+  font: inherit;
 }
 
-input {
-  width: 110px;
+input[type="number"] {
+  width: 64px;
 }
 
-.status {
-  margin: 12px 0;
-  opacity: 0.85;
+input[type="range"] {
+  width: 140px;
 }
 
-pre {
+.status-line {
+  margin: 8px 0 12px;
+}
+
+.ascii-panel {
+  border: 1px solid #133;
+  padding: 12px;
   white-space: pre-wrap;
   line-height: 1.35;
+  min-height: 220px;
 }

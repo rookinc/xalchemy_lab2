@@ -1,11 +1,29 @@
 const frameInput = document.getElementById("frame");
 const phaseInput = document.getElementById("phase");
 const opSelect = document.getElementById("op");
+const zoomInput = document.getElementById("zoom");
+const ghostInput = document.getElementById("ghost");
+const showLabelsInput = document.getElementById("showLabels");
+const showLatticeInput = document.getElementById("showLattice");
+const showActionInput = document.getElementById("showAction");
+
+const statState = document.getElementById("stat-state");
+const statPhase = document.getElementById("stat-phase");
+const statAlign = document.getElementById("stat-align");
+const statSpread = document.getElementById("stat-spread");
+const statFiber = document.getElementById("stat-fiber");
+const statSource = document.getElementById("stat-source");
+
 const out = document.getElementById("out");
 const statusLine = document.getElementById("status");
+const canvas = document.getElementById("stage");
+const ctx = canvas.getContext("2d");
 
 const R = 1;
 const FRAME_COUNT = 5 * R;
+
+let currentPayload = null;
+let autoTimer = null;
 
 function mod(n, m) {
   return ((n % m) + m) % m;
@@ -25,40 +43,18 @@ function validateState(state) {
   return state;
 }
 
-function o(i) {
-  return `o${i}`;
-}
-
-function s(i) {
-  return `s${i}`;
-}
-
-function t(i) {
-  return `t${i}`;
-}
+function o(i) { return `o${i}`; }
+function s(i) { return `s${i}`; }
+function t(i) { return `t${i}`; }
 
 function subjectiveCycle(i) {
   i = mod(i, FRAME_COUNT);
-  return [
-    o(i),
-    o(mod(i + 1, FRAME_COUNT)),
-    o(mod(i + 2, FRAME_COUNT)),
-    s(mod(i + 2, FRAME_COUNT)),
-    t(i),
-    s(i),
-  ];
+  return [o(i), o(mod(i + 1, FRAME_COUNT)), o(mod(i + 2, FRAME_COUNT)), s(mod(i + 2, FRAME_COUNT)), t(i), s(i)];
 }
 
 function objectiveCycle(i) {
   i = mod(i, FRAME_COUNT);
-  return [
-    o(i),
-    o(mod(i + 1, FRAME_COUNT)),
-    o(mod(i + 2, FRAME_COUNT)),
-    s(mod(i + 3, FRAME_COUNT)),
-    t(mod(i + 3, FRAME_COUNT)),
-    s(i),
-  ];
+  return [o(i), o(mod(i + 1, FRAME_COUNT)), o(mod(i + 2, FRAME_COUNT)), s(mod(i + 3, FRAME_COUNT)), t(mod(i + 3, FRAME_COUNT)), s(i)];
 }
 
 function witnessCycle(state) {
@@ -68,14 +64,7 @@ function witnessCycle(state) {
 
 function actionCell(frame) {
   frame = mod(frame, FRAME_COUNT);
-  return [
-    o(mod(frame + 2, FRAME_COUNT)),
-    s(mod(frame + 2, FRAME_COUNT)),
-    t(frame),
-    s(frame),
-    t(mod(frame + 3, FRAME_COUNT)),
-    s(mod(frame + 3, FRAME_COUNT)),
-  ];
+  return [o(mod(frame + 2, FRAME_COUNT)), s(mod(frame + 2, FRAME_COUNT)), t(frame), s(frame), t(mod(frame + 3, FRAME_COUNT)), s(mod(frame + 3, FRAME_COUNT))];
 }
 
 function phaseLabel(state) {
@@ -100,8 +89,7 @@ function frameBits() {
 
 function stateCode(state) {
   const [frame, phase] = validateState(state);
-  const fb = frameBits();
-  return `${frame.toString(2).padStart(fb, "0")}${phase}`;
+  return `${frame.toString(2).padStart(frameBits(), "0")}${phase}`;
 }
 
 function tau(state) {
@@ -155,10 +143,7 @@ function stateDict(state) {
 }
 
 function getStateFromInputs() {
-  return [
-    parseInt(frameInput.value, 10),
-    parseInt(phaseInput.value, 10),
-  ];
+  return [parseInt(frameInput.value, 10), parseInt(phaseInput.value, 10)];
 }
 
 function setStateInputs(state) {
@@ -166,47 +151,56 @@ function setStateInputs(state) {
   phaseInput.value = state[1];
 }
 
-function renderPayload(payload, sourceLabel = "local") {
-  out.textContent =
-`source: ${sourceLabel}
-
-state: [${payload.state.join(", ")}]
-code: ${payload.code}
-phase: ${payload.phase_label}
-
-cycle:
-  ${payload.witness_cycle.join(" -> ")}
-
-action:
-  ${payload.action_cell.join(" -> ")}
-
-invariants:
-  alignment: ${payload.alignment}
-  spread: ${payload.spread}
-  fiber: ${payload.fiber}
-
-transitions:
-  tau: [${payload.tau.join(", ")}]
-  tau_inv: [${payload.tau_inv.join(", ")}]
-  mu: [${payload.mu.join(", ")}]`;
-}
-
-function renderError(err) {
-  out.textContent = `error: ${err.message}`;
-}
-
 function setStatus(msg) {
   statusLine.textContent = msg;
 }
 
+function syncStatusStrip(payload, sourceLabel) {
+  statState.textContent = `[${payload.state.join(",")}]`;
+  statPhase.textContent = payload.phase_label;
+  statAlign.textContent = payload.alignment;
+  statSpread.textContent = String(payload.spread);
+  statFiber.textContent = String(payload.fiber);
+  statSource.textContent = sourceLabel;
+}
+
+function asciiBlock(payload, sourceLabel) {
+  return [
+    `source  ${sourceLabel}`,
+    ``,
+    `state   [${payload.state.join(", ")}]`,
+    `code    ${payload.code}`,
+    `phase   ${payload.phase_label}`,
+    `align   ${payload.alignment}`,
+    `spread  ${payload.spread}`,
+    `fiber   ${payload.fiber}`,
+    ``,
+    `cycle   ${payload.witness_cycle.join(" -> ")}`,
+    `action  ${payload.action_cell.join(" -> ")}`,
+    ``,
+    `tau     [${payload.tau.join(", ")}]`,
+    `tau^-1  [${payload.tau_inv.join(", ")}]`,
+    `mu      [${payload.mu.join(", ")}]`,
+  ].join("\n");
+}
+
+function renderPayload(payload, sourceLabel = "local") {
+  currentPayload = payload;
+  syncStatusStrip(payload, sourceLabel);
+  drawGraph(payload);
+  out.textContent = asciiBlock(payload, sourceLabel);
+}
+
+function renderError(err) {
+  out.textContent = `error\n\n${err.message}`;
+}
+
 function apply() {
   try {
-    const state = getStateFromInputs();
-    const op = opSelect.value;
-    const nextState = applyLocal(state, op);
+    const nextState = applyLocal(getStateFromInputs(), opSelect.value);
     const payload = stateDict(nextState);
     setStateInputs(nextState);
-    renderPayload(payload, "local echo");
+    renderPayload(payload, "local");
     setStatus("local step complete");
   } catch (err) {
     renderError(err);
@@ -226,7 +220,7 @@ async function verify() {
       throw new Error(data.detail || "verification failed");
     }
 
-    renderPayload(data.payload, "witness canon");
+    renderPayload(data.payload, "canon");
     setStatus("verified against witness harness");
   } catch (err) {
     renderError(err);
@@ -239,13 +233,206 @@ function step(op) {
   apply();
 }
 
+function resetState() {
+  const state = [0, 0];
+  setStateInputs(state);
+  renderPayload(stateDict(state), "local");
+  setStatus("reset");
+}
+
+function toggleAuto() {
+  if (autoTimer) {
+    clearInterval(autoTimer);
+    autoTimer = null;
+    setStatus("auto stopped");
+    return;
+  }
+  autoTimer = setInterval(() => {
+    try {
+      step(opSelect.value);
+    } catch (_) {}
+  }, 500);
+  setStatus("auto running");
+}
+
+function getNodePositions() {
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const zoom = parseInt(zoomInput.value, 10) / 100;
+
+  const outerR = Math.min(w, h) * 0.34 * zoom;
+  const innerR = outerR * 0.62;
+  const midR = outerR * 0.82;
+
+  const positions = {};
+
+  for (let i = 0; i < FRAME_COUNT; i++) {
+    const aOuter = -Math.PI / 2 + (2 * Math.PI * i) / FRAME_COUNT;
+    const aInner = aOuter;
+    const aMid = aOuter + Math.PI / FRAME_COUNT;
+
+    positions[`o${i}`] = { x: cx + outerR * Math.cos(aOuter), y: cy + outerR * Math.sin(aOuter), kind: "o" };
+    positions[`s${i}`] = { x: cx + innerR * Math.cos(aInner), y: cy + innerR * Math.sin(aInner), kind: "s" };
+    positions[`t${i}`] = { x: cx + midR * Math.cos(aMid), y: cy + midR * Math.sin(aMid), kind: "t" };
+  }
+
+  return positions;
+}
+
+function line(a, b, width = 1, alpha = 1) {
+  ctx.beginPath();
+  ctx.globalAlpha = alpha;
+  ctx.lineWidth = width;
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+function circle(x, y, r) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+}
+
+function drawBackgroundLattice(pos) {
+  if (!showLatticeInput.checked) return;
+  ctx.strokeStyle = "#123d31";
+  for (let i = 0; i < FRAME_COUNT; i++) {
+    const ni = mod(i + 1, FRAME_COUNT);
+    line(pos[`o${i}`], pos[`o${ni}`], 1, 0.35);
+    line(pos[`s${i}`], pos[`s${ni}`], 1, 0.2);
+    line(pos[`o${i}`], pos[`s${i}`], 1, 0.18);
+    line(pos[`s${i}`], pos[`t${i}`], 1, 0.18);
+    line(pos[`t${i}`], pos[`o${ni}`], 1, 0.14);
+  }
+}
+
+function drawPath(names, pos, color, width, closeLoop = true) {
+  if (!names || names.length < 2) return;
+  ctx.strokeStyle = color;
+  for (let i = 0; i < names.length - 1; i++) {
+    line(pos[names[i]], pos[names[i + 1]], width, 1);
+  }
+  if (closeLoop) {
+    line(pos[names[names.length - 1]], pos[names[0]], width, 1);
+  }
+}
+
+function drawNodes(pos, payload) {
+  const cycleSet = new Set(payload?.witness_cycle || []);
+  const actionSet = new Set(payload?.action_cell || []);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "18px monospace";
+
+  for (const [name, p] of Object.entries(pos)) {
+    let radius = p.kind === "o" ? 20 : p.kind === "t" ? 16 : 15;
+    let fill = "#0a1814";
+    let stroke = "#1b5d49";
+    let lineWidth = 2;
+
+    if (actionSet.has(name)) {
+      fill = "#2b1200";
+      stroke = "#ff9f1a";
+      lineWidth = 3;
+    }
+
+    if (cycleSet.has(name)) {
+      fill = "#08231a";
+      stroke = "#00f7a5";
+      lineWidth = 4;
+    }
+
+    if (cycleSet.has(name) && actionSet.has(name)) {
+      fill = "#2e2410";
+      stroke = "#fff27a";
+      lineWidth = 4;
+    }
+
+    circle(p.x, p.y, radius);
+    ctx.fillStyle = fill;
+    ctx.fill();
+
+    circle(p.x, p.y, radius);
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+
+    if (showLabelsInput.checked) {
+      ctx.fillStyle = "#dfffee";
+      ctx.fillText(name, p.x, p.y);
+    }
+  }
+}
+
+function drawLegend(payload) {
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.font = "16px monospace";
+  ctx.fillStyle = "#b5f7db";
+  ctx.fillText(`state ${payload.state[0]},${payload.state[1]}  ${payload.phase_label}`, 18, 18);
+  ctx.fillText(`align ${payload.alignment}  spread ${payload.spread}  fiber ${payload.fiber}`, 18, 40);
+  ctx.fillStyle = "#00f7a5";
+  ctx.fillText("cycle", 18, 68);
+  if (showActionInput.checked) {
+    ctx.fillStyle = "#ffb347";
+    ctx.fillText("action", 18, 90);
+  }
+}
+
+function drawGraph(payload) {
+  const ghost = parseInt(ghostInput.value, 10) / 100;
+  if (ghost > 0) {
+    ctx.fillStyle = `rgba(0,0,0,${ghost})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  } else {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  const pos = getNodePositions();
+  drawBackgroundLattice(pos);
+
+  if (showActionInput.checked) {
+    drawPath(payload.action_cell, pos, "#ffb347", 4, true);
+  }
+
+  drawPath(payload.witness_cycle, pos, "#00f7a5", 6, true);
+  drawNodes(pos, payload);
+  drawLegend(payload);
+}
+
+zoomInput.addEventListener("input", () => {
+  if (currentPayload) drawGraph(currentPayload);
+});
+
+ghostInput.addEventListener("input", () => {
+  if (currentPayload) drawGraph(currentPayload);
+});
+
+showLabelsInput.addEventListener("change", () => {
+  if (currentPayload) drawGraph(currentPayload);
+});
+
+showLatticeInput.addEventListener("change", () => {
+  if (currentPayload) drawGraph(currentPayload);
+});
+
+showActionInput.addEventListener("change", () => {
+  if (currentPayload) drawGraph(currentPayload);
+});
+
 window.apply = apply;
 window.verify = verify;
 window.step = step;
+window.resetState = resetState;
+window.toggleAuto = toggleAuto;
 
 try {
   const initial = stateDict(getStateFromInputs());
-  renderPayload(initial, "local echo");
+  renderPayload(initial, "local");
   setStatus("ready");
 } catch (err) {
   renderError(err);

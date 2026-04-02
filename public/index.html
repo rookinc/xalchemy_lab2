@@ -9,38 +9,58 @@
   <link rel="manifest" href="/assets/manifest.webmanifest" />
 </head>
 <body>
-  <h1>Public Face</h1>
+  <main class="app">
+    <h1>Witness // Public Face</h1>
 
-  <div class="controls">
-    <label>
-      state:
-      <input id="frame" type="number" value="0" min="0" step="1" />
-      <input id="phase" type="number" value="0" min="0" max="1" step="1" />
-    </label>
-  </div>
+    <section class="stage-panel">
+      <canvas id="stage" width="720" height="720"></canvas>
+    </section>
 
-  <div class="controls">
-    <label>
-      op:
-      <select id="op">
-        <option value="tau">tau</option>
-        <option value="tau_inv">tau_inv</option>
-        <option value="mu">mu</option>
-      </select>
-    </label>
-  </div>
+    <section class="status-strip">
+      <span>state <strong id="stat-state">[0,0]</strong></span>
+      <span>phase <strong id="stat-phase">subjective</strong></span>
+      <span>align <strong id="stat-align">return</strong></span>
+      <span>spread <strong id="stat-spread">4</strong></span>
+      <span>fiber <strong id="stat-fiber">26</strong></span>
+      <span>src <strong id="stat-source">local</strong></span>
+    </section>
 
-  <div class="controls buttons">
-    <button onclick="apply()">Apply Local</button>
-    <button onclick="step('tau')">τ</button>
-    <button onclick="step('tau_inv')">τ⁻¹</button>
-    <button onclick="step('mu')">μ</button>
-    <button onclick="verify()">Verify</button>
-  </div>
+    <section class="controls">
+      <div class="row">
+        <button onclick="step('tau')">τ</button>
+        <button onclick="step('tau_inv')">τ⁻¹</button>
+        <button onclick="step('mu')">μ</button>
+        <button onclick="toggleAuto()">auto</button>
+        <button onclick="resetState()">reset</button>
+        <button onclick="verify()">verify</button>
+      </div>
 
-  <div id="status" class="status">booting...</div>
+      <div class="row">
+        <label>frame <input id="frame" type="number" value="0" min="0" step="1" /></label>
+        <label>phase <input id="phase" type="number" value="0" min="0" max="1" step="1" /></label>
+        <label>op
+          <select id="op">
+            <option value="tau">tau</option>
+            <option value="tau_inv">tau_inv</option>
+            <option value="mu">mu</option>
+          </select>
+        </label>
+        <button onclick="apply()">apply</button>
+      </div>
 
-  <pre id="out"></pre>
+      <div class="row">
+        <label>zoom <input id="zoom" type="range" min="70" max="130" value="100" step="1" /></label>
+        <label>ghost <input id="ghost" type="range" min="0" max="100" value="0" step="1" /></label>
+        <label><input id="showLabels" type="checkbox" checked /> labels</label>
+        <label><input id="showLattice" type="checkbox" checked /> lattice</label>
+        <label><input id="showAction" type="checkbox" checked /> action</label>
+      </div>
+    </section>
+
+    <div id="status" class="status-line">ready</div>
+
+    <pre id="out" class="ascii-panel"></pre>
+  </main>
 
   <script src="/assets/app.js"></script>
   <script>
