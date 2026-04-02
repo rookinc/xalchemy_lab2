@@ -1,0 +1,8 @@
+{
+  "name": "Witness Lab",
+  "short_name": "Witness",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#00f7a5"
+}

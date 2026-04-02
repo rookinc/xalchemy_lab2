@@ -2,57 +2,50 @@
 <html>
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Public Face</title>
   <link rel="stylesheet" href="/assets/app.css" />
+  <link rel="icon" href="/assets/favicon.ico" />
+  <link rel="manifest" href="/assets/manifest.webmanifest" />
 </head>
 <body>
   <h1>Public Face</h1>
 
-  <div>
-    state:
-    <input id="frame" type="number" value="0" />
-    <input id="phase" type="number" value="0" />
+  <div class="controls">
+    <label>
+      state:
+      <input id="frame" type="number" value="0" min="0" step="1" />
+      <input id="phase" type="number" value="0" min="0" max="1" step="1" />
+    </label>
   </div>
 
-  <div>
-    op:
-    <select id="op">
-      <option value="tau">tau</option>
-      <option value="tau_inv">tau_inv</option>
-      <option value="mu">mu</option>
-    </select>
+  <div class="controls">
+    <label>
+      op:
+      <select id="op">
+        <option value="tau">tau</option>
+        <option value="tau_inv">tau_inv</option>
+        <option value="mu">mu</option>
+      </select>
+    </label>
   </div>
 
-  <br>
+  <div class="controls buttons">
+    <button onclick="apply()">Apply Local</button>
+    <button onclick="step('tau')">τ</button>
+    <button onclick="step('tau_inv')">τ⁻¹</button>
+    <button onclick="step('mu')">μ</button>
+    <button onclick="verify()">Verify</button>
+  </div>
 
-  <button onclick="apply()">Apply</button>
+  <div id="status" class="status">booting...</div>
 
   <pre id="out"></pre>
 
+  <script src="/assets/app.js"></script>
   <script>
-    async function apply() {
-      const frame = parseInt(document.getElementById("frame").value);
-      const phase = parseInt(document.getElementById("phase").value);
-      const op = document.getElementById("op").value;
-
-      const res = await fetch("/witness/api/apply?r=1", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          state: [frame, phase],
-          op: op
-        })
-      });
-
-      const data = await res.json();
-
-      document.getElementById("out").textContent =
-        JSON.stringify(data, null, 2);
-
-      if (data.ok) {
-        document.getElementById("frame").value = data.payload.state[0];
-        document.getElementById("phase").value = data.payload.state[1];
-      }
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/assets/sw.js");
     }
   </script>
 </body>
