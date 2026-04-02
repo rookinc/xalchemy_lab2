@@ -7,12 +7,6 @@ const showLabelsInput = document.getElementById("showLabels");
 const showLatticeInput = document.getElementById("showLattice");
 const showActionInput = document.getElementById("showAction");
 
-const statState = document.getElementById("stat-state");
-const statPhase = document.getElementById("stat-phase");
-const statAlign = document.getElementById("stat-align");
-const statSpread = document.getElementById("stat-spread");
-const statFiber = document.getElementById("stat-fiber");
-const statSource = document.getElementById("stat-source");
 
 const out = document.getElementById("out");
 const statusLine = document.getElementById("status");
@@ -156,12 +150,6 @@ function setStatus(msg) {
 }
 
 function syncStatusStrip(payload, sourceLabel) {
-  statState.textContent = `[${payload.state.join(",")}]`;
-  statPhase.textContent = payload.phase_label;
-  statAlign.textContent = payload.alignment;
-  statSpread.textContent = String(payload.spread);
-  statFiber.textContent = String(payload.fiber);
-  statSource.textContent = sourceLabel;
 }
 
 function asciiBlock(payload, sourceLabel) {
