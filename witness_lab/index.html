@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Witness Harness</title>
+  <link rel="stylesheet" href="/witness_assets/app.css?v=2" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="app-header">
+      <h1>Witness Harness</h1>
+      <div class="app-subtitle">Sprint 1 · console-first instrumentation</div>
+    </header>
+
+    <section class="control-bar" aria-label="Transport controls">
+      <div class="button-row">
+        <button id="reset-btn" type="button">Reset</button>
+        <button id="tau-btn" type="button">τ</button>
+        <button id="tau-inv-btn" type="button">τ⁻¹</button>
+        <button id="mu-btn" type="button">μ</button>
+        <button id="play-btn" type="button">Play</button>
+      </div>
+
+      <div class="field-row">
+        <label class="field">
+          <span>Autoplay op</span>
+          <select id="autoplay-op">
+            <option value="tau" selected>τ</option>
+            <option value="tau_inv">τ⁻¹</option>
+            <option value="mu">μ</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Rate (Hz)</span>
+          <input id="hz-input" type="number" min="1" step="1" value="2" />
+        </label>
+      </div>
+    </section>
+
+    <section class="status-panel" aria-label="Status">
+      <div><strong>Status:</strong> <span id="status-text">booting</span></div>
+      <div><strong>Playback:</strong> <span id="playback-text">paused</span></div>
+      <div><strong>State:</strong> <span id="state-text">-</span></div>
+      <div><strong>Code:</strong> <span id="code-text">-</span></div>
+    </section>
+
+    <section class="console-panel" aria-label="Live console">
+      <div class="console-title">Live console</div>
+      <pre id="console-output">loading...</pre>
+    </section>
+
+    <section class="readme-panel" aria-label="Harness readme">
+      <h2>Harness README</h2>
+
+      <p>
+        This page is the Sprint 1 witness harness. It is intentionally console-first.
+        The goal is to validate the machine, the operators, and the readout before any
+        graphics layer is allowed into the stack.
+      </p>
+
+      <p>
+        The harness is built around the real witness machine, not a placeholder browser
+        simulator. The Python engine is the source of truth. The browser acts only as a
+        transport surface and inspection console.
+      </p>
+
+      <h3>What this page does</h3>
+      <p>
+        It exposes a live readout of a current witness state and lets you apply the
+        canonical operators one step at a time or on autoplay. The console shows the
+        state payload returned by the API after each transition.
+      </p>
+
+      <h3>Operators</h3>
+      <p>
+        <strong>τ</strong> advances the frame while keeping phase fixed.
+        <strong>τ⁻¹</strong> reverses the frame step while keeping phase fixed.
+        <strong>μ</strong> flips the phase while preserving the frame.
+      </p>
+
+      <h3>Current Sprint 1 contract</h3>
+      <ul>
+        <li>The witness machine is canonical.</li>
+        <li>The API is a thin transport layer.</li>
+        <li>The harness is a readout and control surface only.</li>
+        <li>No rendering claims are made yet.</li>
+        <li>The console output is the primary debugging instrument.</li>
+      </ul>
+
+      <h3>Readout fields</h3>
+      <p>
+        The console reports the current state code, frame, phase, phase label, witness
+        cycle, species, alignment, spread, fiber, action cell, action species, and the
+        immediate τ, τ⁻¹, and μ targets. It also keeps a short recent history trace so
+        local temporal behavior is visible at a glance.
+      </p>
+
+      <h3>What to look for</h3>
+      <ul>
+        <li>Under repeated <strong>τ</strong>, frame should cycle while phase remains fixed.</li>
+        <li>Under repeated <strong>μ</strong>, phase should alternate subjective/objective.</li>
+        <li>Alignment, spread, and fiber should toggle with phase.</li>
+        <li>The recent history trace should reveal local orbit structure.</li>
+      </ul>
+
+      <h3>Why no visuals yet</h3>
+      <p>
+        Because Sprint 1 is about trusting the numbers. Once the state transitions and
+        readouts are stable, later sprints can map the same machine payload into visual
+        geometry without changing the source of truth.
+      </p>
+    </section>
+  </main>
+
+  <script type="module" src="/witness_assets/boot.js?v=2"></script>
+</body>
+</html>
