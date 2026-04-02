@@ -1,8 +1,10 @@
 const els = {
   resetBtn: document.getElementById("reset-btn"),
+  stepBackBtn: document.getElementById("step-back-btn"),
   tauBtn: document.getElementById("tau-btn"),
   tauInvBtn: document.getElementById("tau-inv-btn"),
   muBtn: document.getElementById("mu-btn"),
+  stepForwardBtn: document.getElementById("step-forward-btn"),
   playBtn: document.getElementById("play-btn"),
   autoplayOp: document.getElementById("autoplay-op"),
   hzInput: document.getElementById("hz-input"),
@@ -10,6 +12,8 @@ const els = {
   playbackText: document.getElementById("playback-text"),
   stateText: document.getElementById("state-text"),
   codeText: document.getElementById("code-text"),
+  cursorText: document.getElementById("cursor-text"),
+  traceSizeText: document.getElementById("trace-size-text"),
   consoleOutput: document.getElementById("console-output"),
 };
 
@@ -19,6 +23,9 @@ const app = {
   isPlaying: false,
   timerId: null,
   history: [],
+  cursor: -1,
+  inFlight: false,
+  shutdown: false,
 };
 
 function setStatus(text) {
@@ -39,12 +46,17 @@ function formatCycle(name, values) {
   return `${name.padEnd(14)}: ${Array.isArray(values) ? values.join(" -> ") : values}`;
 }
 
-function pushHistory(payload) {
-  const entry = `[${payload.state.join(", ")}] ${payload.code}  ${payload.phase_label}  ${payload.alignment}`;
-  app.history.push(entry);
-  if (app.history.length > 10) {
-    app.history.shift();
-  }
+function pushState(payload) {
+  app.history = app.history.slice(0, app.cursor + 1);
+  app.history.push(payload);
+  app.cursor = app.history.length - 1;
+}
+
+function orbitTrace() {
+  return app.history.map((payload, idx) => {
+    const marker = idx === app.cursor ? ">" : " ";
+    return `${marker} ${String(idx).padStart(2)}  [${payload.state.join(", ")}]  ${payload.code}  ${payload.phase_label}  ${payload.alignment}`;
+  });
 }
 
 function renderConsole(payload) {
@@ -52,8 +64,6 @@ function renderConsole(payload) {
     els.consoleOutput.textContent = "no payload";
     return;
   }
-
-  pushHistory(payload);
 
   const lines = [
     `state          : [${payload.state.join(", ")}]`,
@@ -73,13 +83,15 @@ function renderConsole(payload) {
     `mu             : [${payload.mu.join(", ")}]`,
     `output         : alignment=${payload.output.alignment}, spread=${payload.output.spread}, fiber=${payload.output.fiber}`,
     ``,
-    `recent         :`,
-    ...app.history.map((entry) => `  ${entry}`),
+    `--- orbit ---`,
+    ...orbitTrace(),
   ];
 
   els.consoleOutput.textContent = lines.join("\n");
   els.stateText.textContent = `[${payload.state.join(", ")}]`;
   els.codeText.textContent = payload.code;
+  els.cursorText.textContent = app.cursor >= 0 ? String(app.cursor) : "-";
+  els.traceSizeText.textContent = String(app.history.length);
 }
 
 async function fetchJson(url, options = {}) {
@@ -104,27 +116,56 @@ async function loadState(frame = 0, phase = 0) {
   const data = await fetchJson(`/api/witness/state?frame=${frame}&phase=${phase}`);
   app.current = data.payload;
   app.history = [];
+  app.cursor = -1;
+  pushState(app.current);
   renderConsole(app.current);
 }
 
 async function applyOp(op) {
-  if (!app.current) return;
+  if (!app.current || app.inFlight || app.shutdown) return false;
 
-  const data = await fetchJson("/api/witness/apply", {
-    method: "POST",
-    body: JSON.stringify({
-      state: app.current.state,
-      op,
-    }),
-  });
+  app.inFlight = true;
+  try {
+    const data = await fetchJson("/api/witness/apply", {
+      method: "POST",
+      body: JSON.stringify({
+        state: app.current.state,
+        op,
+      }),
+    });
 
-  app.current = data.payload;
-  renderConsole(app.current);
+    if (app.shutdown) return false;
+
+    app.current = data.payload;
+    pushState(app.current);
+    renderConsole(app.current);
+    return true;
+  } finally {
+    app.inFlight = false;
+  }
+}
+
+function stepBack() {
+  if (app.cursor > 0) {
+    app.cursor -= 1;
+    app.current = app.history[app.cursor];
+    renderConsole(app.current);
+    setStatus("step back");
+  }
+}
+
+function stepForward() {
+  if (app.cursor < app.history.length - 1) {
+    app.cursor += 1;
+    app.current = app.history[app.cursor];
+    renderConsole(app.current);
+    setStatus("step forward");
+  }
 }
 
 function stopPlayback(status = "paused") {
   if (app.timerId) {
-    clearInterval(app.timerId);
+    clearTimeout(app.timerId);
     app.timerId = null;
   }
   app.isPlaying = false;
@@ -132,21 +173,31 @@ function stopPlayback(status = "paused") {
   setStatus(status);
 }
 
+async function playbackTick() {
+  if (!app.isPlaying || app.shutdown) return;
+
+  try {
+    await applyOp(els.autoplayOp.value);
+  } catch (err) {
+    console.error(err);
+    stopPlayback("playback error");
+    return;
+  }
+
+  if (!app.isPlaying || app.shutdown) return;
+
+  const delayMs = Math.max(20, Math.round(1000 / hzValue()));
+  app.timerId = setTimeout(() => {
+    void playbackTick();
+  }, delayMs);
+}
+
 function startPlayback() {
   stopPlayback();
   app.isPlaying = true;
   setPlaybackText();
   setStatus(`running ${els.autoplayOp.value} @ ${hzValue()} Hz`);
-
-  const intervalMs = Math.max(20, Math.round(1000 / hzValue()));
-  app.timerId = setInterval(async () => {
-    try {
-      await applyOp(els.autoplayOp.value);
-    } catch (err) {
-      console.error(err);
-      stopPlayback("playback error");
-    }
-  }, intervalMs);
+  void playbackTick();
 }
 
 function togglePlayback() {
@@ -157,11 +208,21 @@ function togglePlayback() {
   }
 }
 
+function handlePageShutdown(reason) {
+  app.shutdown = true;
+  stopPlayback(reason);
+}
+
 function bindControls() {
   els.resetBtn.addEventListener("click", async () => {
     stopPlayback("reset");
     await loadState(0, 0);
     setStatus("reset to [0, 0]");
+  });
+
+  els.stepBackBtn.addEventListener("click", () => {
+    stopPlayback();
+    stepBack();
   });
 
   els.tauBtn.addEventListener("click", async () => {
@@ -182,6 +243,11 @@ function bindControls() {
     setStatus("applied mu");
   });
 
+  els.stepForwardBtn.addEventListener("click", () => {
+    stopPlayback();
+    stepForward();
+  });
+
   els.playBtn.addEventListener("click", () => {
     togglePlayback();
   });
@@ -195,6 +261,20 @@ function bindControls() {
   els.autoplayOp.addEventListener("change", () => {
     if (app.isPlaying) {
       startPlayback();
+    }
+  });
+
+  window.addEventListener("beforeunload", () => {
+    handlePageShutdown("unloading");
+  });
+
+  window.addEventListener("pagehide", () => {
+    handlePageShutdown("page hidden");
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && app.isPlaying) {
+      stopPlayback("hidden");
     }
   });
 }

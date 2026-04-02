@@ -4,21 +4,23 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Witness Harness</title>
-  <link rel="stylesheet" href="/witness_assets/app.css?v=2" />
+  <link rel="stylesheet" href="/witness_assets/app.css?v=4" />
 </head>
 <body>
   <main class="app-shell">
     <header class="app-header">
       <h1>Witness Harness</h1>
-      <div class="app-subtitle">Sprint 1 · console-first instrumentation</div>
+      <div class="app-subtitle">Sprint 2 · stateful stepping and orbit trace</div>
     </header>
 
     <section class="control-bar" aria-label="Transport controls">
       <div class="button-row">
         <button id="reset-btn" type="button">Reset</button>
+        <button id="step-back-btn" type="button">←</button>
         <button id="tau-btn" type="button">τ</button>
         <button id="tau-inv-btn" type="button">τ⁻¹</button>
         <button id="mu-btn" type="button">μ</button>
+        <button id="step-forward-btn" type="button">→</button>
         <button id="play-btn" type="button">Play</button>
       </div>
 
@@ -44,6 +46,8 @@
       <div><strong>Playback:</strong> <span id="playback-text">paused</span></div>
       <div><strong>State:</strong> <span id="state-text">-</span></div>
       <div><strong>Code:</strong> <span id="code-text">-</span></div>
+      <div><strong>Cursor:</strong> <span id="cursor-text">-</span></div>
+      <div><strong>Trace size:</strong> <span id="trace-size-text">-</span></div>
     </section>
 
     <section class="console-panel" aria-label="Live console">
@@ -55,65 +59,50 @@
       <h2>Harness README</h2>
 
       <p>
-        This page is the Sprint 1 witness harness. It is intentionally console-first.
-        The goal is to validate the machine, the operators, and the readout before any
-        graphics layer is allowed into the stack.
+        This page is the Sprint 2 witness harness. Sprint 1 established the console-first
+        machine readout. Sprint 2 makes the harness stateful: every applied operator is
+        recorded into a local trace so the machine can be stepped backward and forward
+        without re-deriving prior browser states.
       </p>
 
-      <p>
-        The harness is built around the real witness machine, not a placeholder browser
-        simulator. The Python engine is the source of truth. The browser acts only as a
-        transport surface and inspection console.
-      </p>
-
-      <h3>What this page does</h3>
-      <p>
-        It exposes a live readout of a current witness state and lets you apply the
-        canonical operators one step at a time or on autoplay. The console shows the
-        state payload returned by the API after each transition.
-      </p>
-
-      <h3>Operators</h3>
-      <p>
-        <strong>τ</strong> advances the frame while keeping phase fixed.
-        <strong>τ⁻¹</strong> reverses the frame step while keeping phase fixed.
-        <strong>μ</strong> flips the phase while preserving the frame.
-      </p>
-
-      <h3>Current Sprint 1 contract</h3>
+      <h3>What Sprint 2 adds</h3>
       <ul>
-        <li>The witness machine is canonical.</li>
-        <li>The API is a thin transport layer.</li>
-        <li>The harness is a readout and control surface only.</li>
-        <li>No rendering claims are made yet.</li>
-        <li>The console output is the primary debugging instrument.</li>
+        <li>A canonical <strong>/api/witness/apply</strong> endpoint for τ, τ⁻¹, and μ.</li>
+        <li>A local orbit history trace in the browser.</li>
+        <li>Step back and step forward controls over the recorded trace.</li>
+        <li>A console section that shows recent trajectory, not just the current state.</li>
       </ul>
 
-      <h3>Readout fields</h3>
+      <h3>Interpretation</h3>
       <p>
-        The console reports the current state code, frame, phase, phase label, witness
-        cycle, species, alignment, spread, fiber, action cell, action species, and the
-        immediate τ, τ⁻¹, and μ targets. It also keeps a short recent history trace so
-        local temporal behavior is visible at a glance.
+        The witness machine remains the source of truth. The browser stores only the
+        states it has already observed. Back/forward travel in the harness is therefore
+        navigation through recorded observation, not a replacement for the machine.
       </p>
 
-      <h3>What to look for</h3>
+      <h3>Operator expectations</h3>
       <ul>
-        <li>Under repeated <strong>τ</strong>, frame should cycle while phase remains fixed.</li>
-        <li>Under repeated <strong>μ</strong>, phase should alternate subjective/objective.</li>
-        <li>Alignment, spread, and fiber should toggle with phase.</li>
-        <li>The recent history trace should reveal local orbit structure.</li>
+        <li><strong>τ</strong> advances frame while preserving phase.</li>
+        <li><strong>τ⁻¹</strong> reverses frame while preserving phase.</li>
+        <li><strong>μ</strong> flips subjective/objective while preserving frame.</li>
       </ul>
 
-      <h3>Why no visuals yet</h3>
+      <h3>What to watch</h3>
+      <ul>
+        <li>Repeated τ should wrap the frame modulo the machine frame count.</li>
+        <li>Repeated μ should alternate phase and return after two applications.</li>
+        <li>Mixed words like τ, μ, τ, μ should become legible in the orbit trace.</li>
+      </ul>
+
+      <h3>Why this matters</h3>
       <p>
-        Because Sprint 1 is about trusting the numbers. Once the state transitions and
-        readouts are stable, later sprints can map the same machine payload into visual
-        geometry without changing the source of truth.
+        Sprint 2 upgrades the harness from a stateless fetch console into a trajectory
+        instrument. That makes it possible to inspect local orbit structure before any
+        visual embedding is introduced.
       </p>
     </section>
   </main>
 
-  <script type="module" src="/witness_assets/boot.js?v=2"></script>
+  <script type="module" src="/witness_assets/boot.js?v=4"></script>
 </body>
 </html>
