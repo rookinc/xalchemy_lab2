@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from witness_machine.core import (
+    action_cell,
     apply_word,
     frame_count,
     state_count,
@@ -13,7 +14,7 @@ from witness_machine.core import (
     validate_state,
 )
 
-router = APIRouter(prefix="/api/witness", tags=["witness"])
+router = APIRouter(tags=["witness"])
 
 
 class ApplyRequest(BaseModel):
@@ -45,22 +46,36 @@ def api_witness_state(
     phase: int = Query(..., ge=0, le=1),
     r: int = Query(1, ge=1),
 ):
-    state = validate_state((frame, phase), r)
-    return {
-        "ok": True,
-        "payload": state_dict(state, r),
+    state = (frame, phase)
+    validate_state(state, r)
+    payload = state_dict(state, r)
+    return {"ok": True, "payload": payload}
+
+
+@router.get("/action")
+def api_witness_action(
+    frame: int = Query(..., ge=0),
+    phase: int = Query(..., ge=0, le=1),
+    r: int = Query(1, ge=1),
+):
+    state = (frame, phase)
+    validate_state(state, r)
+    payload = {
+        "state": [frame, phase],
+        "action_cell": action_cell(frame, r),
     }
+    return {"ok": True, "payload": payload}
 
 
 @router.post("/apply")
-def api_witness_apply(body: ApplyRequest, r: int = Query(1, ge=1)):
-    if len(body.state) != 2:
-        raise HTTPException(status_code=400, detail="state must be [frame, phase]")
+def api_witness_apply(req: ApplyRequest, r: int = Query(1, ge=1)):
+    state = (req.state[0], req.state[1])
+    validate_state(state, r)
 
-    state = validate_state((int(body.state[0]), int(body.state[1])), r)
-    next_state = apply_word(state, [body.op], r)
+    try:
+        next_state = apply_word(state, [req.op], r)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    return {
-        "ok": True,
-        "payload": state_dict(next_state, r),
-    }
+    payload = state_dict(next_state, r)
+    return {"ok": True, "payload": payload}

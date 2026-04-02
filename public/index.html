@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Public Face</title>
+  <link rel="stylesheet" href="/assets/app.css" />
+</head>
+<body>
+  <h1>Public Face</h1>
+
+  <div>
+    state:
+    <input id="frame" type="number" value="0" />
+    <input id="phase" type="number" value="0" />
+  </div>
+
+  <div>
+    op:
+    <select id="op">
+      <option value="tau">tau</option>
+      <option value="tau_inv">tau_inv</option>
+      <option value="mu">mu</option>
+    </select>
+  </div>
+
+  <br>
+
+  <button onclick="apply()">Apply</button>
+
+  <pre id="out"></pre>
+
+  <script>
+    async function apply() {
+      const frame = parseInt(document.getElementById("frame").value);
+      const phase = parseInt(document.getElementById("phase").value);
+      const op = document.getElementById("op").value;
+
+      const res = await fetch("/witness/api/apply?r=1", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          state: [frame, phase],
+          op: op
+        })
+      });
+
+      const data = await res.json();
+
+      document.getElementById("out").textContent =
+        JSON.stringify(data, null, 2);
+
+      if (data.ok) {
+        document.getElementById("frame").value = data.payload.state[0];
+        document.getElementById("phase").value = data.payload.state[1];
+      }
+    }
+  </script>
+</body>
+</html>
