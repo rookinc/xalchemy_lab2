@@ -217,7 +217,6 @@ function renderSummary(payload, verification = null) {
     `start_state         : ${formatStateTriple(start)}`,
     `start_projected     : ${formatWitnessPair(payload.trace[0].projected_witness_state)}`,
     ``,
-    `op_word             : ${ops.join(',') || '(none)'}`,
     `step_count          : ${payload.trace.length - 1}`,
     `loop_count          : ${state.loopCount}`,
     `play_index          : ${state.playIndex}`,
