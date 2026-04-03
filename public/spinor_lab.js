@@ -1,6 +1,7 @@
 const els = {
   resetBtn: document.getElementById('reset-btn'),
   traceBtn: document.getElementById('trace-btn'),
+  verifyBtn: document.getElementById('verify-btn'),
   playBtn: document.getElementById('play-btn'),
   frameInput: document.getElementById('frame-input'),
   phaseInput: document.getElementById('phase-input'),
@@ -26,6 +27,7 @@ const state = {
   loopCount: 0,
   playIndex: 0,
   liveState: null,
+  lastPayload: null,
 };
 
 function setStatus(text) {
@@ -140,7 +142,7 @@ function renderTrace(payload) {
   els.traceOutput.textContent = lines.join('\n');
 }
 
-function renderSummary(payload) {
+function renderSummary(payload, verification = null) {
   const start = payload.start;
   const end = payload.trace[payload.trace.length - 1];
   const ops = payload.ops;
@@ -170,16 +172,25 @@ function renderSummary(payload) {
     lines.push(`g30_count          : ${g30Count}`);
   }
 
+  if (verification) {
+    lines.push('');
+    lines.push(`verify_status       : ${verification.ok ? 'match' : 'mismatch'}`);
+    if (verification.reason) {
+      lines.push(`verify_reason       : ${verification.reason}`);
+    }
+  }
+
   els.summaryOutput.textContent = lines.join('\n');
 }
 
-function renderPayload(payload) {
+function renderPayload(payload, verification = null) {
   els.startText.textContent = formatStateTriple(payload.start);
   els.projectedText.textContent = formatWitnessPair(payload.trace[0].projected_witness_state);
   els.stepsText.textContent = String(payload.trace.length - 1);
   els.opsText.textContent = payload.ops.join(',');
   renderTrace(payload);
-  renderSummary(payload);
+  renderSummary(payload, verification);
+  state.lastPayload = payload;
 }
 
 function getStartStateFromInputs() {
@@ -288,6 +299,63 @@ function startPlayback() {
   scheduleNextTick();
 }
 
+async function fetchServerTrace(start, ops) {
+  const params = new URLSearchParams({
+    frame: String(start.frame),
+    phase: String(start.phase),
+    sheet: start.sheet,
+    ops: ops.join(','),
+  });
+  const res = await fetch(`/witness/api/g30/trace?${params.toString()}`, { cache: 'no-store' });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`HTTP ${res.status}${body ? ` :: ${body}` : ''}`);
+  }
+  return res.json();
+}
+
+function statesEqual(a, b) {
+  return a.frame === b.frame && a.phase === b.phase && a.sheet === b.sheet;
+}
+
+function pairsEqual(a, b) {
+  return Array.isArray(a) && Array.isArray(b) && a.length === 2 && b.length === 2 && a[0] === b[0] && a[1] === b[1];
+}
+
+function comparePayloads(localPayload, serverPayload) {
+  const server = serverPayload.payload;
+  if (!server || !Array.isArray(server.trace)) {
+    return { ok: false, reason: 'server payload missing trace' };
+  }
+
+  if (server.trace.length !== localPayload.trace.length) {
+    return { ok: false, reason: `trace length mismatch local=${localPayload.trace.length} server=${server.trace.length}` };
+  }
+
+  for (let i = 0; i < localPayload.trace.length; i += 1) {
+    const l = localPayload.trace[i];
+    const s = server.trace[i];
+
+    if (l.op !== s.op) {
+      return { ok: false, reason: `op mismatch at step ${i}: local=${l.op} server=${s.op}` };
+    }
+    if (!statesEqual(l.state, s.state)) {
+      return {
+        ok: false,
+        reason: `state mismatch at step ${i}: local=${formatStateTriple(l.state)} server=${formatStateTriple(s.state)}`
+      };
+    }
+    if (!pairsEqual(l.projected_witness_state, s.projected_witness_state)) {
+      return {
+        ok: false,
+        reason: `projection mismatch at step ${i}: local=${formatWitnessPair(l.projected_witness_state)} server=${formatWitnessPair(s.projected_witness_state)}`
+      };
+    }
+  }
+
+  return { ok: true };
+}
+
 els.resetBtn.addEventListener('click', () => {
   stopPlayback('ready');
   state.loopCount = 0;
@@ -304,6 +372,26 @@ els.traceBtn.addEventListener('click', () => {
   state.loopCount = 0;
   state.playIndex = 0;
   runTraceFromInputs();
+});
+
+els.verifyBtn.addEventListener('click', async () => {
+  stopPlayback('verifying');
+
+  const start = getStartStateFromInputs();
+  const ops = getOpsFromInput();
+  const localPayload = buildTrace(start, ops);
+  renderPayload(localPayload);
+
+  try {
+    const serverPayload = await fetchServerTrace(start, ops);
+    const verdict = comparePayloads(localPayload, serverPayload);
+    renderPayload(localPayload, verdict);
+    setStatus(verdict.ok ? 'verified' : 'mismatch');
+  } catch (err) {
+    console.error(err);
+    renderPayload(localPayload, { ok: false, reason: String(err) });
+    setStatus('verify-error');
+  }
 });
 
 els.playBtn.addEventListener('click', () => {

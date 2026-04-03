@@ -13,7 +13,7 @@
       <div class="topbar-row">
         <div>
           <div class="title">Spinor Lab</div>
-          <div class="sub">Validated witness harness · play button + console output only</div>
+          <div class="sub">G30 lifted-state console · trace first · graphics later</div>
         </div>
         <nav class="header-links" aria-label="Page links">
           <a href="/">Home</a>
@@ -24,16 +24,17 @@
     </header>
 
     <section class="controls-card">
-      <div class="button-row">
+      <div class="button-row button-row-4">
         <button id="reset-btn" type="button">Reset</button>
-        <button id="step-btn" type="button">Step</button>
+        <button id="trace-btn" type="button">Run trace</button>
+        <button id="verify-btn" type="button">Verify</button>
         <button id="play-btn" type="button">Play</button>
       </div>
 
       <div class="form-grid">
         <label class="field">
           <span>Frame</span>
-          <input id="frame-input" type="number" min="0" step="1" value="0" />
+          <input id="frame-input" type="number" min="0" max="14" step="1" value="0" />
         </label>
 
         <label class="field">
@@ -45,33 +46,43 @@
         </label>
 
         <label class="field">
-          <span>Rate (Hz)</span>
-          <input id="hz-input" type="number" min="1" max="60" step="1" value="2" />
+          <span>Sheet</span>
+          <select id="sheet-input">
+            <option value="+" selected>+</option>
+            <option value="-">-</option>
+          </select>
         </label>
 
         <label class="field">
-          <span>Mode</span>
-          <select id="mode-input">
-            <option value="tau" selected>tau</option>
-            <option value="mu">mu</option>
-            <option value="alternate">alternate tau / mu</option>
-          </select>
+          <span>Rate (Hz)</span>
+          <input id="hz-input" type="number" min="1" max="30" step="1" value="2" />
+        </label>
+
+        <label class="field field-wide">
+          <span>Op word</span>
+          <input id="ops-input" type="text" value="tau,mu,g15" />
         </label>
       </div>
     </section>
 
     <section class="status-bar">
       <span>Status <strong id="status-text">ready</strong></span>
-      <span>Code <strong id="code-text">----</strong></span>
-      <span>State <strong id="state-text">(0,0)</strong></span>
-      <span>Phase <strong id="phase-text">subjective</strong></span>
-      <span>Alignment <strong id="alignment-text">return</strong></span>
-      <span>Payload <strong id="payload-text">-</strong></span>
+      <span>Start <strong id="start-text">(0,0,+)</strong></span>
+      <span>Projected <strong id="projected-text">(0,0)</strong></span>
+      <span>Steps <strong id="steps-text">0</strong></span>
+      <span>Ops <strong id="ops-text">tau,mu,g15</strong></span>
     </section>
 
-    <section class="console-card">
-      <div class="console-title">Console</div>
-      <pre id="console-output">booting...</pre>
+    <section class="console-grid">
+      <section class="console-card">
+        <div class="console-title">Lifted trace</div>
+        <pre id="trace-output">booting...</pre>
+      </section>
+
+      <section class="console-card">
+        <div class="console-title">Trace summary</div>
+        <pre id="summary-output">booting...</pre>
+      </section>
     </section>
   </main>
 
