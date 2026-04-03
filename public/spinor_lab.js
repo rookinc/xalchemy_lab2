@@ -34,6 +34,7 @@ const els = {
 const LAB = {
   frameModulus: 15,
   maxHistory: 240,
+  g30MotifsPerLoop: 10,
 };
 
 const state = {
@@ -217,9 +218,6 @@ function renderSummary(payload, verification = null) {
     `start_state         : ${formatStateTriple(start)}`,
     `start_projected     : ${formatWitnessPair(payload.trace[0].projected_witness_state)}`,
     ``,
-    `step_count          : ${payload.trace.length - 1}`,
-    `loop_count          : ${state.loopCount}`,
-    `play_index          : ${state.playIndex}`,
     `current_op          : ${state.isPlaying ? currentOpLabel() : '(stopped)'}`,
     ``,
     `end_state           : ${formatStateTriple(end.state)}`,
@@ -230,18 +228,21 @@ function renderSummary(payload, verification = null) {
     `frame_changed       : ${start.frame !== end.state.frame}`,
   ];
 
-  const g15Count = ops.filter(op => op === 'g15').length;
-  const g30Count = ops.filter(op => op === 'g30').length;
-  if (g15Count || g30Count) {
-    lines.push('');
-    lines.push(`g15_count          : ${g15Count}`);
-    lines.push(`g30_count          : ${g30Count}`);
-  }
+  const hasPlaybackHistory = state.playIndex > 0 || state.loopCount > 0 || state.playHistory.length > 0;
+  const totalSteps = hasPlaybackHistory ? state.playIndex : (payload.trace.length - 1);
+  const motifCount = hasPlaybackHistory ? state.loopCount : Math.floor((payload.trace.length - 1) / 3);
+  const g30LoopsObserved = Math.floor(motifCount / LAB.g30MotifsPerLoop);
+  const windowSteps = payload.trace.length - 1;
+  const windowG15Count = ops.filter(op => op === 'g15').length;
 
-  if (state.isPlaying) {
-    lines.push('');
-    lines.push(`history_rows        : ${state.playHistory.length}`);
-  }
+  lines.push('');
+  lines.push(`total_steps         : ${totalSteps}`);
+  lines.push(`motif_count         : ${motifCount}`);
+  lines.push(`g30_loops_observed  : ${g30LoopsObserved}`);
+  lines.push(`window_steps        : ${windowSteps}`);
+  lines.push(`window_g15_count    : ${windowG15Count}`);
+
+
 
   if (verification) {
     lines.push('');
