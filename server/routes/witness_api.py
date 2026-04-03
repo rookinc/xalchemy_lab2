@@ -22,7 +22,9 @@ from witness_machine.g60_scaffold import (
 )
 from witness_machine.g60_quotient import (
     quotient_payload,
+    quotient_edges_payload,
     quotient_validation_report,
+    quotient_graph_validation_report,
 )
 
 router = APIRouter(tags=["witness-api"])
@@ -35,10 +37,7 @@ def get_witness_state(
     r: int = Query(1, ge=1),
 ):
     state = validate_state((frame, phase), r)
-    return {
-        "ok": True,
-        "payload": state_dict(state, r),
-    }
+    return {"ok": True, "payload": state_dict(state, r)}
 
 
 @router.get("/assembly")
@@ -48,10 +47,7 @@ def get_witness_assembly(
     r: int = Query(1, ge=1),
 ):
     state = validate_state((frame, phase), r)
-    return {
-        "ok": True,
-        "payload": state_assembly(state, r),
-    }
+    return {"ok": True, "payload": state_assembly(state, r)}
 
 
 @router.get("/action")
@@ -59,97 +55,71 @@ def get_witness_action(
     frame: int = Query(..., ge=0),
     r: int = Query(1, ge=1),
 ):
-    return {
-        "ok": True,
-        "payload": action_dict(frame, r),
-    }
+    return {"ok": True, "payload": action_dict(frame, r)}
 
 
 @router.get("/g15/core")
 def get_g15_core():
-    return {
-        "ok": True,
-        "payload": g15_core(),
-    }
+    return {"ok": True, "payload": g15_core()}
 
 
 @router.get("/g15/validate")
 def get_g15_validate():
-    return {
-        "ok": True,
-        "payload": g15_validation_report(),
-    }
+    return {"ok": True, "payload": g15_validation_report()}
 
 
 @router.get("/g15/sector")
 def get_g15_sector(
     vertex: int = Query(..., ge=0, le=14),
 ):
-    return {
-        "ok": True,
-        "payload": sector_support(vertex),
-    }
+    return {"ok": True, "payload": sector_support(vertex)}
 
 
 @router.get("/g15/sector-matrix")
 def get_g15_sector_matrix():
-    return {
-        "ok": True,
-        "payload": sector_matrix_payload(),
-    }
+    return {"ok": True, "payload": sector_matrix_payload()}
 
 
 @router.get("/g15/sector-validate")
 def get_g15_sector_validate():
-    return {
-        "ok": True,
-        "payload": sector_validation_report(),
-    }
+    return {"ok": True, "payload": sector_validation_report()}
 
 
 @router.get("/g60/scaffold")
 def get_g60_scaffold():
-    return {
-        "ok": True,
-        "payload": g60_scaffold(),
-    }
+    return {"ok": True, "payload": g60_scaffold()}
 
 
 @router.get("/g60/scaffold-edges")
 def get_g60_scaffold_edges():
-    return {
-        "ok": True,
-        "payload": scaffold_edges(),
-    }
+    return {"ok": True, "payload": scaffold_edges()}
 
 
 @router.get("/g60/scaffold-adjacency")
 def get_g60_scaffold_adjacency():
-    return {
-        "ok": True,
-        "payload": scaffold_adjacency(),
-    }
+    return {"ok": True, "payload": scaffold_adjacency()}
 
 
 @router.get("/g60/scaffold-validate")
 def get_g60_scaffold_validate():
-    return {
-        "ok": True,
-        "payload": scaffold_validation_report(),
-    }
+    return {"ok": True, "payload": scaffold_validation_report()}
 
 
 @router.get("/g60/quotient")
 def get_g60_quotient():
-    return {
-        "ok": True,
-        "payload": quotient_payload(),
-    }
+    return {"ok": True, "payload": quotient_payload()}
 
 
 @router.get("/g60/quotient-validate")
 def get_g60_quotient_validate():
-    return {
-        "ok": True,
-        "payload": quotient_validation_report(),
-    }
+    return {"ok": True, "payload": quotient_validation_report()}
+
+
+@router.get("/g60/quotient-edges")
+def get_g60_quotient_edges():
+    return {"ok": True, "payload": quotient_edges_payload()}
+
+
+@router.get("/g60/quotient-graph-validate")
+def get_g60_quotient_graph_validate():
+    return {"ok": True, "payload": quotient_graph_validation_report()}

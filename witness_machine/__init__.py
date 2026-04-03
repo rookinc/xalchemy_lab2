@@ -79,6 +79,10 @@ from .g60_quotient import (
     scaffold_to_g30_classes,
     g30_to_g15_classes,
     scaffold_to_g15_map,
+    induced_g30_edges,
+    induced_g15_edges,
     quotient_payload,
+    quotient_edges_payload,
     quotient_validation_report,
+    quotient_graph_validation_report,
 )

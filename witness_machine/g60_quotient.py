@@ -2,17 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from .g60_scaffold import g60_scaffold, scaffold_node_ids
+from .g60_scaffold import g60_scaffold, scaffold_edges, scaffold_node_ids
 
 
 def scaffold_to_g30_classes() -> dict[str, Any]:
-    """
-    First-pass quotient from scaffold nodes to provisional G30 fibers.
-
-    This is a controllable grouping layer derived from the sketch scaffold.
-    It is explicitly provisional and intended for inspection.
-    """
-
     classes = {
         "g30_00": ["n0", "n1"],
         "g30_01": ["n2", "5"],
@@ -44,10 +37,6 @@ def scaffold_to_g30_classes() -> dict[str, Any]:
 
 
 def g30_to_g15_classes() -> dict[str, Any]:
-    """
-    First-pass quotient from provisional G30 classes to provisional G15 classes.
-    """
-
     classes = {
         "g15_00": ["g30_00"],
         "g15_01": ["g30_01"],
@@ -81,11 +70,93 @@ def g30_to_g15_classes() -> dict[str, Any]:
 def scaffold_to_g15_map() -> dict[str, str]:
     s2g30 = scaffold_to_g30_classes()["node_to_class"]
     g30_to_g15 = g30_to_g15_classes()["g30_to_g15"]
+    return {node_id: g30_to_g15[g30_id] for node_id, g30_id in s2g30.items()}
 
-    out: dict[str, str] = {}
-    for node_id, g30_id in s2g30.items():
-        out[node_id] = g30_to_g15[g30_id]
-    return out
+
+def induced_g30_edges() -> list[dict[str, Any]]:
+    s2g30 = scaffold_to_g30_classes()["node_to_class"]
+
+    agg: dict[tuple[str, str], dict[str, Any]] = {}
+    for edge in scaffold_edges():
+        a, b = edge["nodes"]
+        ca = s2g30[a]
+        cb = s2g30[b]
+
+        if ca == cb:
+            continue
+
+        x, y = sorted((ca, cb))
+        key = (x, y)
+
+        if key not in agg:
+            agg[key] = {
+                "id": f"{x}-{y}",
+                "nodes": [x, y],
+                "multiplicity": 0,
+                "families": set(),
+                "source_edges": [],
+            }
+
+        agg[key]["multiplicity"] += 1
+        agg[key]["families"].add(edge["family"])
+        agg[key]["source_edges"].append(edge["id"])
+
+    out = []
+    for row in agg.values():
+        out.append(
+            {
+                "id": row["id"],
+                "nodes": row["nodes"],
+                "multiplicity": row["multiplicity"],
+                "families": sorted(row["families"]),
+                "source_edges": sorted(row["source_edges"]),
+            }
+        )
+
+    return sorted(out, key=lambda row: row["id"])
+
+
+def induced_g15_edges() -> list[dict[str, Any]]:
+    g30_to_g15 = g30_to_g15_classes()["g30_to_g15"]
+
+    agg: dict[tuple[str, str], dict[str, Any]] = {}
+    for edge in induced_g30_edges():
+        a, b = edge["nodes"]
+        ga = g30_to_g15[a]
+        gb = g30_to_g15[b]
+
+        if ga == gb:
+            continue
+
+        x, y = sorted((ga, gb))
+        key = (x, y)
+
+        if key not in agg:
+            agg[key] = {
+                "id": f"{x}-{y}",
+                "nodes": [x, y],
+                "multiplicity": 0,
+                "families": set(),
+                "source_g30_edges": [],
+            }
+
+        agg[key]["multiplicity"] += edge["multiplicity"]
+        agg[key]["families"].update(edge["families"])
+        agg[key]["source_g30_edges"].append(edge["id"])
+
+    out = []
+    for row in agg.values():
+        out.append(
+            {
+                "id": row["id"],
+                "nodes": row["nodes"],
+                "multiplicity": row["multiplicity"],
+                "families": sorted(row["families"]),
+                "source_g30_edges": sorted(row["source_g30_edges"]),
+            }
+        )
+
+    return sorted(out, key=lambda row: row["id"])
 
 
 def quotient_payload() -> dict[str, Any]:
@@ -101,6 +172,15 @@ def quotient_payload() -> dict[str, Any]:
         "scaffold_to_g30": s2g30,
         "g30_to_g15": g30_to_g15,
         "scaffold_to_g15": s2g15,
+    }
+
+
+def quotient_edges_payload() -> dict[str, Any]:
+    return {
+        "name": "g60_quotient_edges_first_pass",
+        "status": "provisional",
+        "g30_edges": induced_g30_edges(),
+        "g15_edges": induced_g15_edges(),
     }
 
 
@@ -146,6 +226,38 @@ def quotient_validation_report() -> dict[str, Any]:
         "g30_class_sizes": g30_class_sizes,
         "g15_class_sizes": g15_class_sizes,
         "g15_fibers": g15_fibers,
+    }
+
+
+def quotient_graph_validation_report() -> dict[str, Any]:
+    g30_edges = induced_g30_edges()
+    g15_edges = induced_g15_edges()
+
+    g30_nodes = sorted(scaffold_to_g30_classes()["classes"].keys())
+    g15_nodes = sorted(g30_to_g15_classes()["classes"].keys())
+
+    g30_adj: dict[str, set[str]] = {node: set() for node in g30_nodes}
+    for edge in g30_edges:
+        a, b = edge["nodes"]
+        g30_adj[a].add(b)
+        g30_adj[b].add(a)
+
+    g15_adj: dict[str, set[str]] = {node: set() for node in g15_nodes}
+    for edge in g15_edges:
+        a, b = edge["nodes"]
+        g15_adj[a].add(b)
+        g15_adj[b].add(a)
+
+    return {
+        "ok": True,
+        "g30_node_count": len(g30_nodes),
+        "g30_edge_count": len(g30_edges),
+        "g30_degrees": {k: len(v) for k, v in sorted(g30_adj.items())},
+        "g30_multiplicities": sorted(set(edge["multiplicity"] for edge in g30_edges)),
+        "g15_node_count": len(g15_nodes),
+        "g15_edge_count": len(g15_edges),
+        "g15_degrees": {k: len(v) for k, v in sorted(g15_adj.items())},
+        "g15_multiplicities": sorted(set(edge["multiplicity"] for edge in g15_edges)),
     }
 
 
