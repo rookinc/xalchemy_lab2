@@ -63,3 +63,22 @@ from .g15_sector import (
     sector_matrix_payload,
     sector_validation_report,
 )
+
+from .g60_scaffold import (
+    g60_scaffold,
+    scaffold_node_ids,
+    scaffold_sheet_ids,
+    scaffold_axis_nodes,
+    scaffold_sheet_membership,
+    scaffold_edges,
+    scaffold_adjacency,
+    scaffold_validation_report,
+)
+
+from .g60_quotient import (
+    scaffold_to_g30_classes,
+    g30_to_g15_classes,
+    scaffold_to_g15_map,
+    quotient_payload,
+    quotient_validation_report,
+)
