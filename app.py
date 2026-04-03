@@ -55,6 +55,18 @@ def serve_spinor_scene_debug():
 
 
 
+
+
+
+
+@app.get("/field")
+def serve_field():
+    return FileResponse(BASE_DIR / "public" / "field.html")
+
+@app.get("/tetra-fold")
+def serve_tetra_fold():
+    return FileResponse(BASE_DIR / "public" / "tetra_fold.html")
+
 @app.get("/tetra-instant")
 def serve_tetra_instant():
     return FileResponse(BASE_DIR / "public" / "tetra_instant.html")
