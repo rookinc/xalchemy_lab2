@@ -22,6 +22,9 @@ const spinBtn = document.getElementById('toggle-spin');
 const toggleVLabelsBtn = document.getElementById('toggle-vlabels');
 const toggleFLabelsBtn = document.getElementById('toggle-flabels');
 const toggleRegisterBtn = document.getElementById('toggle-register');
+const toggleLiveG15Btn = document.getElementById('toggle-live-g15');
+const stepG15PrevBtn = document.getElementById('step-g15-prev');
+const stepG15NextBtn = document.getElementById('step-g15-next');
 
 const camIsoBtn = document.getElementById('cam-iso');
 const camFrontBtn = document.getElementById('cam-front');
@@ -31,6 +34,7 @@ const faceOpacityInput = document.getElementById('face-opacity');
 const innerOpacityInput = document.getElementById('inner-opacity');
 const glowOpacityInput = document.getElementById('glow-opacity');
 const wireOpacityInput = document.getElementById('wire-opacity');
+const sectorHud = document.getElementById('sector-hud');
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -172,6 +176,45 @@ const canonicalVertices = tetraGeometry.userData.vertices.map(v =>
   new THREE.Vector3(v.x, v.y, v.z)
 );
 
+const TETRA_EDGE_REGISTER = [
+  [0, 1],
+  [0, 2],
+  [0, 3],
+  [1, 2],
+  [1, 3],
+  [2, 3],
+];
+
+
+function petersenEdgeToFaceSlot(edge, phase, sheet) {
+  if (!Array.isArray(edge) || edge.length !== 2) return 0;
+  const a = Number(edge[0]) || 0;
+  const b = Number(edge[1]) || 0;
+
+  // First-pass structured register:
+  // - edge sum chooses a base face
+  // - phase toggles the face family
+  // - sheet flips orientation within that family
+  let slot = (a + b) % 4;
+  if (phase === 1) slot = (slot + 1) % 4;
+  if (sheet === '-') slot = (slot + 2) % 4;
+  return slot;
+}
+
+function sectorEdgesToTetraSlots(edgeIndices, phase, sheet) {
+  const raw = (edgeIndices || [])
+    .slice(0, 6)
+    .map((edgeIndex) => {
+      const base = (Number(edgeIndex) || 0) % 6;
+      const phaseShift = phase === 1 ? 1 : 0;
+      const sheetShift = sheet === '-' ? 2 : 0;
+      return (base + phaseShift + sheetShift) % 6;
+    });
+
+  return raw;
+}
+
+
 const canonicalFaces = tetraGeometry.userData.faces.map(face => {
   const verts = face.verts.map(idx => canonicalVertices[idx].clone());
   const centroid = new THREE.Vector3();
@@ -183,6 +226,53 @@ const canonicalFaces = tetraGeometry.userData.faces.map(face => {
     centroid,
   };
 });
+
+const faceAccentGeometry = canonicalFaces.map((face) => {
+  const verts = face.verts.map(idx => canonicalVertices[idx].clone().multiplyScalar(0.985));
+  const positions = [];
+  positions.push(
+    verts[0].x, verts[0].y, verts[0].z,
+    verts[1].x, verts[1].y, verts[1].z,
+    verts[2].x, verts[2].y, verts[2].z,
+  );
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.computeVertexNormals();
+  return geometry;
+});
+
+const faceAccentMeshes = faceAccentGeometry.map((geometry, i) => {
+  const mesh = new THREE.Mesh(
+    geometry,
+    new THREE.MeshStandardMaterial({
+      color: 0x8ab4ff,
+      transparent: true,
+      opacity: 0.0,
+      metalness: 0.05,
+      roughness: 0.28,
+      side: THREE.DoubleSide,
+    })
+  );
+  tetra.add(mesh);
+  return mesh;
+});
+
+const tetraEdgeAccentLines = TETRA_EDGE_REGISTER.map(([a, b]) => {
+  const va = canonicalVertices[a];
+  const vb = canonicalVertices[b];
+  const geometry = new THREE.BufferGeometry().setFromPoints([va.clone(), vb.clone()]);
+  const line = new THREE.Line(
+    geometry,
+    new THREE.LineBasicMaterial({
+      color: 0x8ab4ff,
+      transparent: true,
+      opacity: 0.0,
+    })
+  );
+  tetra.add(line);
+  return line;
+});
+
 
 const vertexLabelElements = tetraGeometry.userData.vertices.map((v, i) => {
   const el = document.createElement('div');
@@ -239,6 +329,13 @@ let currentPreset = 'iso';
 let vertexLabelsVisible = true;
 let faceLabelsVisible = true;
 let registerVisible = true;
+let liveG15Enabled = false;
+let liveG15Frame = 0;
+let liveG15Phase = 0;
+let liveG15Sheet = '+';
+let lastG15Payload = null;
+let liveStateChannel = null;
+const LIVE_STATE_KEY = 'lab2_live_state_v1';
 
 function resize() {
   const rect = canvas.getBoundingClientRect();
@@ -340,7 +437,11 @@ function updateTelemetry() {
   const yaw = Math.atan2(dx, dz);
   const pitch = Math.atan2(dy, Math.sqrt(dx * dx + dz * dz));
 
-  metricTick.textContent = String(tick);
+  const liveStep = lastG15Payload && lastG15Payload.input_state
+    ? Number(lastG15Payload.input_state.frame) || 0
+    : 0;
+
+  metricTick.textContent = String(liveStep);
   metricDist.textContent = dist.toFixed(2);
   metricYaw.textContent = yaw.toFixed(2);
   metricPitch.textContent = pitch.toFixed(2);
@@ -436,6 +537,268 @@ function updateRegisterOverlay() {
   drawRegisterEdges(points);
 }
 
+
+function setLiveG15Enabled(flag) {
+  liveG15Enabled = flag;
+  if (toggleLiveG15Btn) {
+    toggleLiveG15Btn.classList.toggle('is-live', flag);
+    toggleLiveG15Btn.textContent = flag ? 'Live G15 on' : 'Live G15 off';
+  }
+}
+
+async function fetchLiveG15(frame, phase, sheet) {
+  const params = new URLSearchParams({
+    frame: String(frame),
+    phase: String(phase),
+    sheet: String(sheet),
+  });
+  const res = await fetch(`/witness/api/g15/from-g30?${params.toString()}`, { cache: 'no-store' });
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status} :: ${await res.text()}`);
+  }
+  const data = await res.json();
+  return data.payload;
+}
+
+function formatSectorHud(payload, activeFace, normalizedEdgeSlots) {
+  if (!payload) return 'no payload';
+
+  const state = payload.input_state;
+  const g15 = payload.g15_focus;
+  const sector = payload.sector_focus;
+
+  return [
+    `state              : (${state.frame},${state.phase},${state.sheet})`,
+    `projected          : (${payload.projected_witness_state[0]},${payload.projected_witness_state[1]})`,
+    ``,
+    `g15_vertex         : ${g15.vertex}`,
+    `petersen_edge      : ${g15.petersen_edge.join('-')}`,
+    `tetra_face_slot    : ${activeFace}`,
+    `face_rule          : (a+b)%4 with phase/sheet shifts`,
+    ``,
+    `closed_neighborhood: ${sector.closed_neighborhood.join(', ')}`,
+    `sector_edges       : ${sector.edge_labels.join(', ')}`,
+    `tetra_edge_slots   : ${normalizedEdgeSlots.join(', ') || '(none)'}`,
+    `sector_weight      : ${sector.weight}`,
+  ].join('\n');
+}
+
+function g15VertexToAnchorPoint(index) {
+  const anchors = [
+    new THREE.Vector3( 0.00,  1.15,  0.00),
+    new THREE.Vector3(-0.82,  0.58,  0.58),
+    new THREE.Vector3( 0.82,  0.58,  0.58),
+    new THREE.Vector3( 0.82,  0.58, -0.58),
+    new THREE.Vector3(-0.82,  0.58, -0.58),
+
+    new THREE.Vector3( 0.00, -1.02,  0.00),
+    new THREE.Vector3(-0.72, -0.44,  0.72),
+    new THREE.Vector3( 0.72, -0.44,  0.72),
+    new THREE.Vector3( 0.72, -0.44, -0.72),
+    new THREE.Vector3(-0.72, -0.44, -0.72),
+
+    new THREE.Vector3(-1.08,  0.04,  0.00),
+    new THREE.Vector3( 1.08,  0.04,  0.00),
+    new THREE.Vector3( 0.00,  0.04,  1.08),
+    new THREE.Vector3( 0.00,  0.04, -1.08),
+    new THREE.Vector3( 0.00,  0.48,  0.00),
+  ];
+  return anchors[index % anchors.length].clone();
+}
+
+const liveG15Marker = new THREE.Mesh(
+  new THREE.SphereGeometry(0.11, 18, 18),
+  new THREE.MeshStandardMaterial({
+    color: 0x8ab4ff,
+    transparent: true,
+    opacity: 0.95,
+    metalness: 0.08,
+    roughness: 0.28,
+  })
+);
+scene.add(liveG15Marker);
+
+const liveG15Halo = new THREE.Mesh(
+  new THREE.TorusGeometry(0.19, 0.015, 12, 40),
+  new THREE.MeshBasicMaterial({
+    color: 0xffd6ea,
+    transparent: true,
+    opacity: 0.92,
+  })
+);
+scene.add(liveG15Halo);
+
+const liveG15Neighborhood = [];
+for (let i = 0; i < 4; i += 1) {
+  const dot = new THREE.Mesh(
+    new THREE.SphereGeometry(0.055, 14, 14),
+    new THREE.MeshStandardMaterial({
+      color: 0x8ab4ff,
+      transparent: true,
+      opacity: 0.55,
+      metalness: 0.02,
+      roughness: 0.45,
+    })
+  );
+  scene.add(dot);
+  liveG15Neighborhood.push(dot);
+}
+
+function applyLiveG15Payload(payload) {
+  lastG15Payload = payload;
+
+  const vertexIndex = payload.g15_focus.vertex_index;
+  const closed = payload.sector_focus.closed_neighborhood || [];
+  const edgeIndices = payload.sector_focus.edge_indices || [];
+  const edgeCount = edgeIndices.length;
+  const phase = payload.input_state.phase;
+  const sheet = payload.input_state.sheet;
+
+  const anchor = g15VertexToAnchorPoint(vertexIndex);
+  liveG15Marker.position.copy(anchor);
+  liveG15Halo.position.copy(anchor);
+  liveG15Halo.rotation.x = Math.PI / 2;
+
+  const markerScale = 1 + 0.02 * Math.min(edgeCount, 10);
+  liveG15Marker.scale.setScalar(markerScale);
+
+  const isMinus = sheet === '-';
+  const baseBlue = 0x8ab4ff;
+  const basePink = 0xffa8d6;
+
+  if (isMinus) {
+    liveG15Marker.material.color.setHex(basePink);
+  } else {
+    liveG15Marker.material.color.setHex(baseBlue);
+  }
+
+  if (phase === 1) {
+    liveG15Halo.material.color.setHex(0xffd6ea);
+    liveG15Halo.material.opacity = 0.95;
+  } else {
+    liveG15Halo.material.color.setHex(baseBlue);
+    liveG15Halo.material.opacity = 0.65;
+  }
+
+  const activeFace = petersenEdgeToFaceSlot(payload.g15_focus.petersen_edge, phase, sheet);
+  for (let i = 0; i < faceAccentMeshes.length; i += 1) {
+    const mesh = faceAccentMeshes[i];
+    if (i === activeFace) {
+      mesh.material.opacity = phase === 1 ? 0.36 : 0.26;
+      mesh.material.color.setHex(isMinus ? basePink : baseBlue);
+    } else {
+      mesh.material.opacity = 0.03;
+      mesh.material.color.setHex(baseBlue);
+    }
+  }
+
+  // Explicit 6-edge register: sector edge slots drive the 6 tetra edges.
+  const normalizedEdgeSlots = sectorEdgesToTetraSlots(edgeIndices, phase, sheet);
+
+  for (let i = 0; i < tetraEdgeAccentLines.length; i += 1) {
+    const line = tetraEdgeAccentLines[i];
+    const hitCount = normalizedEdgeSlots.filter((slot) => slot === i).length;
+    const active = hitCount > 0;
+
+    line.material.opacity = active ? (0.28 + 0.18 * hitCount) : 0.04;
+    line.material.color.setHex(isMinus ? basePink : baseBlue);
+  }
+
+  const edgeEnergy = Math.min(1, edgeCount / 6);
+  edges.material.opacity = 0.30 + 0.70 * edgeEnergy;
+  innerMaterial.opacity = 0.18 + 0.48 * (Math.max(0, closed.length - 1) / 4);
+  glow.material.opacity = 0.03 + 0.22 * (phase === 1 ? 1 : 0.55) * edgeEnergy;
+
+  if (isMinus) {
+    innerMaterial.color.setHex(basePink);
+  } else {
+    innerMaterial.color.setHex(0xffc9e2);
+  }
+
+  // Let the active face slightly steer the whole tetra orientation.
+  tetra.rotation.z = (activeFace - 1.5) * 0.08;
+  inner.rotation.z = tetra.rotation.z * 0.7;
+
+  const offsets = [
+    new THREE.Vector3(-0.22,  0.14,  0.00),
+    new THREE.Vector3( 0.22,  0.14,  0.00),
+    new THREE.Vector3( 0.00, -0.20,  0.16),
+    new THREE.Vector3( 0.00, -0.20, -0.16),
+  ];
+
+  for (let i = 0; i < liveG15Neighborhood.length; i += 1) {
+    const dot = liveG15Neighborhood[i];
+    if (i < Math.max(0, closed.length - 1)) {
+      dot.visible = true;
+      dot.position.copy(anchor).add(offsets[i % offsets.length]);
+      if (isMinus) {
+        dot.material.color.setHex(0xffd6ea);
+      } else {
+        dot.material.color.setHex(baseBlue);
+      }
+      dot.material.opacity = 0.35 + 0.12 * i;
+    } else {
+      dot.visible = false;
+    }
+  }
+
+  metricReg.textContent = `${payload.g15_focus.vertex} · ${payload.g15_focus.petersen_edge.join('-')}`;
+  metricFace.textContent = `${Math.round(tetraMaterial.opacity * 100)}%`;
+
+  if (sectorHud) {
+    sectorHud.textContent = formatSectorHud(payload, activeFace, normalizedEdgeSlots);
+  }
+}
+
+async function refreshLiveG15() {
+  if (!liveG15Enabled) return;
+  try {
+    const payload = await fetchLiveG15(liveG15Frame, liveG15Phase, liveG15Sheet);
+    applyLiveG15Payload(payload);
+  } catch (err) {
+    console.error('refreshLiveG15 failed:', err);
+  }
+}
+
+function ensureLiveStateChannel() {
+  if (liveStateChannel || typeof BroadcastChannel === 'undefined') return liveStateChannel;
+  try {
+    liveStateChannel = new BroadcastChannel('lab2_live_state');
+    liveStateChannel.addEventListener('message', async (event) => {
+      if (!liveG15Enabled) return;
+      const data = event.data;
+      if (!data || !data.state) return;
+      liveG15Frame = data.state.frame;
+      liveG15Phase = data.state.phase;
+      liveG15Sheet = data.state.sheet;
+      await refreshLiveG15();
+    });
+  } catch (err) {
+    console.warn('BroadcastChannel unavailable:', err);
+  }
+  return liveStateChannel;
+}
+
+function loadLiveStateSnapshot() {
+  try {
+    const raw = localStorage.getItem(LIVE_STATE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (err) {
+    console.warn('localStorage read failed:', err);
+    return null;
+  }
+}
+
+async function syncFromLiveSnapshot() {
+  const snap = loadLiveStateSnapshot();
+  if (!snap || !snap.state) return;
+  liveG15Frame = snap.state.frame;
+  liveG15Phase = snap.state.phase;
+  liveG15Sheet = snap.state.sheet;
+  await refreshLiveG15();
+}
+
 resetBtn.addEventListener('click', resetCamera);
 
 spinBtn.addEventListener('click', () => {
@@ -466,6 +829,48 @@ faceOpacityInput.addEventListener('input', applyFaceOpacity);
 innerOpacityInput.addEventListener('input', applyInnerOpacity);
 glowOpacityInput.addEventListener('input', applyGlowOpacity);
 wireOpacityInput.addEventListener('input', applyWireOpacity);
+
+
+if (toggleLiveG15Btn) {
+  toggleLiveG15Btn.addEventListener('click', async () => {
+    setLiveG15Enabled(!liveG15Enabled);
+    if (liveG15Enabled) {
+      ensureLiveStateChannel();
+      await syncFromLiveSnapshot();
+    }
+  });
+}
+
+if (stepG15PrevBtn) {
+  stepG15PrevBtn.addEventListener('click', async () => {
+    setLiveG15Enabled(false);
+    liveG15Frame = (liveG15Frame + 14) % 15;
+    await refreshLiveG15();
+  });
+}
+
+if (stepG15NextBtn) {
+  stepG15NextBtn.addEventListener('click', async () => {
+    setLiveG15Enabled(false);
+    liveG15Frame = (liveG15Frame + 1) % 15;
+    await refreshLiveG15();
+  });
+}
+
+window.addEventListener('storage', async (event) => {
+  if (!liveG15Enabled) return;
+  if (event.key !== LIVE_STATE_KEY || !event.newValue) return;
+  try {
+    const snap = JSON.parse(event.newValue);
+    if (!snap || !snap.state) return;
+    liveG15Frame = snap.state.frame;
+    liveG15Phase = snap.state.phase;
+    liveG15Sheet = snap.state.sheet;
+    await refreshLiveG15();
+  } catch (err) {
+    console.warn('storage sync failed:', err);
+  }
+});
 
 window.addEventListener('resize', resize);
 

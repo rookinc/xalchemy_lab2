@@ -63,6 +63,7 @@ const state = {
   lastTransitionOp: 'start',
   g60LastPrimaryNode: null,
   g60TauPulseToken: 0,
+  liveChannel: null,
 };
 
 function setStatus(text) {
@@ -275,6 +276,50 @@ function renderSummary(payload, verification = null) {
 
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
+
+
+const LIVE_STATE_KEY = 'lab2_live_state_v1';
+
+function ensureLiveChannel() {
+  if (state.liveChannel || typeof BroadcastChannel === 'undefined') return state.liveChannel;
+  try {
+    state.liveChannel = new BroadcastChannel('lab2_live_state');
+  } catch (err) {
+    console.warn('BroadcastChannel unavailable:', err);
+  }
+  return state.liveChannel;
+}
+
+function publishLiveState(payload) {
+  const end = payload.trace[payload.trace.length - 1];
+  const snapshot = {
+    source: 'spinor-lab',
+    ts: Date.now(),
+    status: els.metricStatus ? els.metricStatus.textContent : 'ready',
+    isPlaying: state.isPlaying,
+    op: state.lastTransitionOp || 'start',
+    totalSteps: state.playIndex,
+    motifCount: state.loopCount,
+    state: end ? end.state : payload.start,
+    projected: end ? end.projected_witness_state : payload.trace[0].projected_witness_state,
+  };
+
+  try {
+    localStorage.setItem(LIVE_STATE_KEY, JSON.stringify(snapshot));
+  } catch (err) {
+    console.warn('localStorage publish failed:', err);
+  }
+
+  const channel = ensureLiveChannel();
+  if (channel) {
+    try {
+      channel.postMessage(snapshot);
+    } catch (err) {
+      console.warn('BroadcastChannel post failed:', err);
+    }
+  }
+}
+
 
 const G60_LAYOUT = {
   n2: [450, 44],
@@ -714,6 +759,7 @@ function renderPayload(payload, verification = null) {
   }
   renderSummary(payload, verification);
   updateStagePanel(payload);
+  publishLiveState(payload);
   state.lastPayload = payload;
 }
 

@@ -9,6 +9,7 @@ from witness_machine.core import (
     validate_state,
 )
 from witness_machine.g15_core import g15_core, g15_validation_report
+from witness_machine.g15_live_adapter import g30_state_to_g15_focus
 from witness_machine.g15_sector import (
     sector_matrix_payload,
     sector_support,
@@ -109,6 +110,19 @@ def get_g15_sector_matrix():
 def get_g15_sector_validate():
     return {"ok": True, "payload": sector_validation_report()}
 
+
+
+
+@router.get("/g15/from-g30")
+def get_g15_from_g30(
+    frame: int = Query(..., ge=0, le=14),
+    phase: int = Query(..., ge=0, le=1),
+    sheet: str = Query("+"),
+):
+    return {
+        "ok": True,
+        "payload": g30_state_to_g15_focus(frame, phase, sheet),
+    }
 
 @router.get("/g30/translator")
 def get_g30_translator():
