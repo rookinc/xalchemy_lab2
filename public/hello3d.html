@@ -46,6 +46,14 @@
       background: linear-gradient(180deg, rgba(8,16,25,0.98), rgba(8,16,25,0.92));
     }
 
+    .topbar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
     .title {
       font-size: 1.35rem;
       font-weight: 700;
@@ -55,6 +63,24 @@
     .sub {
       color: var(--muted);
       font-size: 0.9rem;
+      margin-top: 2px;
+    }
+
+    .header-links {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .header-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+
+    .header-links a:hover,
+    .header-links a:focus {
+      color: var(--text);
     }
 
     .stage-shell,
@@ -66,7 +92,6 @@
     .telemetry,
     .button-grid,
     .button-row-4,
-    .nav-row,
     .range-row,
     .range-row.long {
       min-width: 0;
@@ -109,7 +134,7 @@
       overflow: hidden;
     }
 
-    .vertex-label {
+    .stage-label {
       position: absolute;
       transform: translate(-50%, -50%);
       padding: 2px 6px;
@@ -123,7 +148,13 @@
       box-shadow: 0 0 0 1px rgba(138, 180, 255, 0.08) inset;
     }
 
-    .vertex-label.is-hidden {
+    .stage-label.face-label {
+      border-color: rgba(255, 170, 210, 0.28);
+      background: rgba(28, 16, 28, 0.74);
+      color: #ffd6ea;
+    }
+
+    .stage-label.is-hidden {
       display: none;
     }
 
@@ -181,14 +212,7 @@
       gap: 10px;
     }
 
-    .nav-row {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    button,
-    a.button {
+    button {
       appearance: none;
       width: 100%;
       min-width: 0;
@@ -199,7 +223,6 @@
       padding: 10px 12px;
       font: inherit;
       text-align: center;
-      text-decoration: none;
       cursor: pointer;
       min-height: 48px;
     }
@@ -210,9 +233,10 @@
       color: var(--accent);
     }
 
-    .compact {
-      min-height: 48px;
-      border-radius: 16px;
+    button.is-active-face {
+      border-color: rgba(255, 170, 210, 0.45);
+      box-shadow: inset 0 0 0 1px rgba(255, 170, 210, 0.22);
+      color: #ffd6ea;
     }
 
     .range-row {
@@ -275,7 +299,7 @@
         font-size: 0.96rem;
       }
 
-      .vertex-label {
+      .stage-label {
         font-size: 11px;
         padding: 2px 5px;
       }
@@ -285,8 +309,16 @@
 <body>
   <main class="shell">
     <header class="topbar">
-      <div class="title">Tetra Lab Zero</div>
-      <div class="sub">Fresh 3D baseline · stage first · controls below</div>
+      <div class="topbar-row">
+        <div>
+          <div class="title">Tetra Lab Zero</div>
+          <div class="sub">Fresh 3D baseline · stage first · controls below</div>
+        </div>
+        <nav class="header-links" aria-label="Page links">
+          <a href="/">Home</a>
+          <a href="/witness">Witness</a>
+        </nav>
+      </div>
     </header>
 
     <section class="stage-shell">
@@ -305,18 +337,12 @@
         <span>View <strong id="metric-view">Iso</strong></span>
         <span>Geom <strong id="metric-geom">canon</strong></span>
         <span>Face <strong id="metric-face">78%</strong></span>
-        <span>Labels <strong id="metric-labels">on</strong></span>
+        <span>Vtx <strong id="metric-vlabels">on</strong></span>
+        <span>FaceLbl <strong id="metric-flabels">on</strong></span>
       </div>
     </section>
 
     <section class="controls">
-      <div class="control-row">
-        <div class="nav-row">
-          <a class="button compact" href="/">← Home</a>
-          <a class="button compact" href="/witness">Witness</a>
-        </div>
-      </div>
-
       <div class="control-row">
         <div class="control-label">Zoom</div>
         <div class="range-row long">
@@ -343,8 +369,9 @@
         </div>
       </div>
 
-      <div class="control-row">
-        <button id="toggle-labels" type="button" class="compact is-active">Vertex labels</button>
+      <div class="button-grid">
+        <button id="toggle-vlabels" type="button" class="is-active">Vertex labels</button>
+        <button id="toggle-flabels" type="button" class="is-active-face">Face labels</button>
       </div>
 
       <div class="section-card">
@@ -390,13 +417,15 @@
     const metricPitch = document.getElementById('metric-pitch');
     const metricView = document.getElementById('metric-view');
     const metricFace = document.getElementById('metric-face');
-    const metricLabels = document.getElementById('metric-labels');
+    const metricVLabels = document.getElementById('metric-vlabels');
+    const metricFLabels = document.getElementById('metric-flabels');
 
     const resetBtn = document.getElementById('reset-camera');
     const stepLeftBtn = document.getElementById('step-left');
     const stepRightBtn = document.getElementById('step-right');
     const spinBtn = document.getElementById('toggle-spin');
-    const toggleLabelsBtn = document.getElementById('toggle-labels');
+    const toggleVLabelsBtn = document.getElementById('toggle-vlabels');
+    const toggleFLabelsBtn = document.getElementById('toggle-flabels');
 
     const camIsoBtn = document.getElementById('cam-iso');
     const camFrontBtn = document.getElementById('cam-front');
@@ -551,10 +580,30 @@
       new THREE.Vector3(v.x, v.y, v.z)
     );
 
-    const labelElements = tetraGeometry.userData.vertices.map((v, i) => {
+    const canonicalFaces = tetraGeometry.userData.faces.map(face => {
+      const verts = face.verts.map(idx => canonicalVertices[idx].clone());
+      const centroid = new THREE.Vector3();
+      verts.forEach(v => centroid.add(v));
+      centroid.multiplyScalar(1 / 3);
+      return {
+        id: face.id,
+        verts: face.verts,
+        centroid,
+      };
+    });
+
+    const vertexLabelElements = tetraGeometry.userData.vertices.map((v, i) => {
       const el = document.createElement('div');
-      el.className = 'vertex-label';
+      el.className = 'stage-label vertex-label';
       el.textContent = `v${i}`;
+      labelLayer.appendChild(el);
+      return el;
+    });
+
+    const faceLabelElements = canonicalFaces.map((face, i) => {
+      const el = document.createElement('div');
+      el.className = 'stage-label face-label';
+      el.textContent = `f${i}`;
       labelLayer.appendChild(el);
       return el;
     });
@@ -562,7 +611,8 @@
     let spinning = true;
     let tick = 0;
     let currentPreset = 'iso';
-    let labelsVisible = true;
+    let vertexLabelsVisible = true;
+    let faceLabelsVisible = true;
 
     function resize() {
       const rect = canvas.getBoundingClientRect();
@@ -586,12 +636,20 @@
       if (name === 'top') camTopBtn.classList.add('is-active');
     }
 
-    function setLabelsVisible(flag) {
-      labelsVisible = flag;
-      metricLabels.textContent = flag ? 'on' : 'off';
-      toggleLabelsBtn.classList.toggle('is-active', flag);
-      toggleLabelsBtn.textContent = flag ? 'Vertex labels' : 'Vertex labels off';
-      labelElements.forEach(el => el.classList.toggle('is-hidden', !flag));
+    function setVertexLabelsVisible(flag) {
+      vertexLabelsVisible = flag;
+      metricVLabels.textContent = flag ? 'on' : 'off';
+      toggleVLabelsBtn.classList.toggle('is-active', flag);
+      toggleVLabelsBtn.textContent = flag ? 'Vertex labels' : 'Vertex labels off';
+      vertexLabelElements.forEach(el => el.classList.toggle('is-hidden', !flag));
+    }
+
+    function setFaceLabelsVisible(flag) {
+      faceLabelsVisible = flag;
+      metricFLabels.textContent = flag ? 'on' : 'off';
+      toggleFLabelsBtn.classList.toggle('is-active-face', flag);
+      toggleFLabelsBtn.textContent = flag ? 'Face labels' : 'Face labels off';
+      faceLabelElements.forEach(el => el.classList.toggle('is-hidden', !flag));
     }
 
     function syncZoomSlider() {
@@ -674,27 +732,39 @@
       metricPitch.textContent = pitch.toFixed(2);
     }
 
+    function placeLabel(el, worldPoint, visibleFlag) {
+      if (!visibleFlag) {
+        el.classList.add('is-hidden');
+        return;
+      }
+
+      const projected = worldPoint.clone().project(camera);
+      const visible = projected.z >= -1 && projected.z <= 1;
+
+      if (!visible) {
+        el.classList.add('is-hidden');
+        return;
+      }
+
+      const x = (projected.x * 0.5 + 0.5) * canvas.clientWidth;
+      const y = (-projected.y * 0.5 + 0.5) * canvas.clientHeight;
+
+      el.classList.remove('is-hidden');
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+    }
+
     function updateVertexLabels() {
-      if (!labelsVisible) return;
-
-      const rect = canvas.getBoundingClientRect();
-
       canonicalVertices.forEach((vertex, i) => {
         const world = tetra.localToWorld(vertex.clone());
-        const projected = world.clone().project(camera);
+        placeLabel(vertexLabelElements[i], world, vertexLabelsVisible);
+      });
+    }
 
-        const visible = projected.z >= -1 && projected.z <= 1;
-        if (!visible) {
-          labelElements[i].classList.add('is-hidden');
-          return;
-        }
-
-        const x = (projected.x * 0.5 + 0.5) * rect.width;
-        const y = (-projected.y * 0.5 + 0.5) * rect.height;
-
-        labelElements[i].classList.toggle('is-hidden', !labelsVisible);
-        labelElements[i].style.left = `${x}px`;
-        labelElements[i].style.top = `${y}px`;
+    function updateFaceLabels() {
+      canonicalFaces.forEach((face, i) => {
+        const world = tetra.localToWorld(face.centroid.clone());
+        placeLabel(faceLabelElements[i], world, faceLabelsVisible);
       });
     }
 
@@ -705,8 +775,12 @@
       spinBtn.textContent = spinning ? 'Pause' : 'Play';
     });
 
-    toggleLabelsBtn.addEventListener('click', () => {
-      setLabelsVisible(!labelsVisible);
+    toggleVLabelsBtn.addEventListener('click', () => {
+      setVertexLabelsVisible(!vertexLabelsVisible);
+    });
+
+    toggleFLabelsBtn.addEventListener('click', () => {
+      setFaceLabelsVisible(!faceLabelsVisible);
     });
 
     stepLeftBtn.addEventListener('click', () => stepRotation(-1));
@@ -737,6 +811,7 @@
       controls.update();
       updateTelemetry();
       updateVertexLabels();
+      updateFaceLabels();
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     }
@@ -748,7 +823,8 @@
       applyWireOpacity();
       resize();
       applyCameraPreset('iso');
-      setLabelsVisible(true);
+      setVertexLabelsVisible(true);
+      setFaceLabelsVisible(true);
       animate();
     } catch (err) {
       console.error(err);
