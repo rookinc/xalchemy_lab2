@@ -1,63 +1,167 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Public Face</title>
-  <link rel="stylesheet" href="/assets/app.css" />
-  <link rel="icon" href="/assets/favicon.ico" />
-  <link rel="manifest" href="/assets/manifest.webmanifest" />
+  <title>Aletheos.ai</title>
+  <meta name="description" content="Aletheos.ai — witness harness, cycle views, and machine-facing tools." />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0f14;
+      --panel: #121821;
+      --panel-2: #0f141c;
+      --line: #223041;
+      --text: #e8f0f8;
+      --muted: #9fb0c3;
+      --accent: #8ab4ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    body {
+      padding: 20px;
+    }
+
+    .shell {
+      max-width: 980px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    h1, h2 {
+      margin: 0 0 10px;
+    }
+
+    .sub {
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .card p {
+      margin: 0 0 12px;
+      color: var(--muted);
+    }
+
+    a.button {
+      display: inline-block;
+      text-decoration: none;
+      color: var(--text);
+      border: 1px solid var(--line);
+      background: rgba(138, 180, 255, 0.08);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    a.button:hover {
+      border-color: var(--accent);
+    }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    code {
+      color: var(--accent);
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 12px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <main class="app">
-    <h1>Witness // Public Face</h1>
-
-    <section class="stage-panel">
-      <canvas id="stage" width="720" height="720"></canvas>
-    </section>
-
-    <section class="controls">
-      <div class="row">
-        <button onclick="step('tau')">τ</button>
-        <button onclick="step('tau_inv')">τ⁻¹</button>
-        <button onclick="step('mu')">μ</button>
-        <button onclick="toggleAuto()">auto</button>
-        <button onclick="resetState()">reset</button>
-        <button onclick="verify()">verify</button>
-      </div>
-
-      <div class="row">
-        <label>frame <input id="frame" type="number" value="0" min="0" step="1" /></label>
-        <label>phase <input id="phase" type="number" value="0" min="0" max="1" step="1" /></label>
-        <label>op
-          <select id="op">
-            <option value="tau">tau</option>
-            <option value="tau_inv">tau_inv</option>
-            <option value="mu">mu</option>
-          </select>
-        </label>
-        <button onclick="apply()">apply</button>
-      </div>
-
-      <div class="row">
-        <label>zoom <input id="zoom" type="range" min="70" max="130" value="100" step="1" /></label>
-        <label>ghost <input id="ghost" type="range" min="0" max="100" value="0" step="1" /></label>
-        <label><input id="showLabels" type="checkbox" checked /> labels</label>
-        <label><input id="showLattice" type="checkbox" checked /> lattice</label>
-        <label><input id="showAction" type="checkbox" checked /> action</label>
+  <main class="shell">
+    <section class="panel">
+      <h1>Aletheos.ai</h1>
+      <div class="sub">
+        Machine-facing tools, witness harnesses, and cycle views.
       </div>
     </section>
 
-    <div id="status" class="status-line">ready</div>
+    <section class="panel">
+      <h2>Launch</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Witness Harness</h3>
+          <p>
+            Direct inspection and stepping of the live witness machine.
+          </p>
+          <a class="button" href="/witness">Open /witness</a>
+        </div>
 
-    <pre id="out" class="ascii-panel"></pre>
+        <div class="card">
+          <h3>Cycle View</h3>
+          <p>
+            Cycle-facing visual page for G15 / G30 / G60 routes.
+          </p>
+          <div class="links">
+            <a class="button" href="/cycle/g15">G15</a>
+            <a class="button" href="/cycle/g30">G30</a>
+            <a class="button" href="/cycle/g60">G60</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>API</h2>
+      <div class="sub">
+        The witness API currently lives under <code>/witness/api/...</code>.
+      </div>
+      <div class="links">
+        <a class="button" href="/witness/api/state?frame=0&phase=0">Sample state</a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Notes</h2>
+      <div class="sub">
+        This root page is the public landing page. The witness harness is a dedicated subpage.
+      </div>
+    </section>
   </main>
-
-  <script src="/assets/app.js"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/assets/sw.js");
-    }
-  </script>
 </body>
 </html>
