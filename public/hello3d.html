@@ -86,6 +86,7 @@
     }
 
     .stage-inner {
+      position: relative;
       border: 1px solid var(--line);
       border-radius: 24px;
       overflow: hidden;
@@ -99,6 +100,31 @@
       min-height: 240px;
       max-height: 360px;
       touch-action: none;
+    }
+
+    .label-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .vertex-label {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      padding: 2px 6px;
+      border-radius: 10px;
+      border: 1px solid rgba(120, 170, 255, 0.28);
+      background: rgba(10, 18, 30, 0.78);
+      color: var(--text);
+      font-size: 12px;
+      line-height: 1.1;
+      white-space: nowrap;
+      box-shadow: 0 0 0 1px rgba(138, 180, 255, 0.08) inset;
+    }
+
+    .vertex-label.is-hidden {
+      display: none;
     }
 
     .telemetry {
@@ -248,6 +274,11 @@
       .telemetry strong {
         font-size: 0.96rem;
       }
+
+      .vertex-label {
+        font-size: 11px;
+        padding: 2px 5px;
+      }
     }
   </style>
 </head>
@@ -262,6 +293,7 @@
       <div class="stage-frame">
         <div class="stage-inner">
           <canvas id="stage"></canvas>
+          <div id="label-layer" class="label-layer"></div>
         </div>
       </div>
 
@@ -271,7 +303,9 @@
         <span>Yaw <strong id="metric-yaw">0.00</strong></span>
         <span>Pitch <strong id="metric-pitch">0.00</strong></span>
         <span>View <strong id="metric-view">Iso</strong></span>
+        <span>Geom <strong id="metric-geom">canon</strong></span>
         <span>Face <strong id="metric-face">78%</strong></span>
+        <span>Labels <strong id="metric-labels">on</strong></span>
       </div>
     </section>
 
@@ -309,6 +343,10 @@
         </div>
       </div>
 
+      <div class="control-row">
+        <button id="toggle-labels" type="button" class="compact is-active">Vertex labels</button>
+      </div>
+
       <div class="section-card">
         <div class="control-row">
           <div class="range-row">
@@ -344,6 +382,7 @@
     import { OrbitControls } from '/assets/vendor/three/OrbitControls.js';
 
     const canvas = document.getElementById('stage');
+    const labelLayer = document.getElementById('label-layer');
 
     const metricTick = document.getElementById('metric-tick');
     const metricDist = document.getElementById('metric-dist');
@@ -351,11 +390,13 @@
     const metricPitch = document.getElementById('metric-pitch');
     const metricView = document.getElementById('metric-view');
     const metricFace = document.getElementById('metric-face');
+    const metricLabels = document.getElementById('metric-labels');
 
     const resetBtn = document.getElementById('reset-camera');
     const stepLeftBtn = document.getElementById('step-left');
     const stepRightBtn = document.getElementById('step-right');
     const spinBtn = document.getElementById('toggle-spin');
+    const toggleLabelsBtn = document.getElementById('toggle-labels');
 
     const camIsoBtn = document.getElementById('cam-iso');
     const camFrontBtn = document.getElementById('cam-front');
@@ -397,7 +438,60 @@
     grid.position.y = -1.15;
     scene.add(grid);
 
-    const tetraGeometry = new THREE.TetrahedronGeometry(1.1, 0);
+    function createCanonicalTetraGeometry(scale = 1.1) {
+      const raw = [
+        new THREE.Vector3( 1,  1,  1),
+        new THREE.Vector3(-1, -1,  1),
+        new THREE.Vector3(-1,  1, -1),
+        new THREE.Vector3( 1, -1, -1),
+      ];
+
+      const baseRadius = raw[0].length();
+      const s = scale / baseRadius;
+      const vertices = raw.map(v => v.clone().multiplyScalar(s));
+
+      const positions = [];
+      const faces = [
+        [0, 1, 2],
+        [0, 3, 1],
+        [0, 2, 3],
+        [1, 3, 2],
+      ];
+
+      for (const [a, b, c] of faces) {
+        const va = vertices[a];
+        const vb = vertices[b];
+        const vc = vertices[c];
+        positions.push(
+          va.x, va.y, va.z,
+          vb.x, vb.y, vb.z,
+          vc.x, vc.y, vc.z,
+        );
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        'position',
+        new THREE.Float32BufferAttribute(positions, 3)
+      );
+      geometry.computeVertexNormals();
+
+      geometry.userData.vertices = vertices.map((v, i) => ({
+        id: `v${i}`,
+        x: v.x,
+        y: v.y,
+        z: v.z,
+      }));
+
+      geometry.userData.faces = faces.map((f, i) => ({
+        id: `f${i}`,
+        verts: [...f],
+      }));
+
+      return geometry;
+    }
+
+    const tetraGeometry = createCanonicalTetraGeometry(1.1);
 
     const tetraMaterial = new THREE.MeshStandardMaterial({
       color: 0x8ab4ff,
@@ -423,10 +517,13 @@
     scene.add(tetra);
 
     const inner = new THREE.Mesh(
-      new THREE.TetrahedronGeometry(0.92, 0),
+      createCanonicalTetraGeometry(0.92),
       innerMaterial
     );
     scene.add(inner);
+
+    console.log('canonical tetra vertices', tetraGeometry.userData.vertices);
+    console.log('canonical tetra faces', tetraGeometry.userData.faces);
 
     const edges = new THREE.LineSegments(
       new THREE.EdgesGeometry(tetraGeometry),
@@ -450,9 +547,22 @@
     glow.position.y = -1.13;
     scene.add(glow);
 
+    const canonicalVertices = tetraGeometry.userData.vertices.map(v =>
+      new THREE.Vector3(v.x, v.y, v.z)
+    );
+
+    const labelElements = tetraGeometry.userData.vertices.map((v, i) => {
+      const el = document.createElement('div');
+      el.className = 'vertex-label';
+      el.textContent = `v${i}`;
+      labelLayer.appendChild(el);
+      return el;
+    });
+
     let spinning = true;
     let tick = 0;
     let currentPreset = 'iso';
+    let labelsVisible = true;
 
     function resize() {
       const rect = canvas.getBoundingClientRect();
@@ -474,6 +584,14 @@
       if (name === 'iso') camIsoBtn.classList.add('is-active');
       if (name === 'front') camFrontBtn.classList.add('is-active');
       if (name === 'top') camTopBtn.classList.add('is-active');
+    }
+
+    function setLabelsVisible(flag) {
+      labelsVisible = flag;
+      metricLabels.textContent = flag ? 'on' : 'off';
+      toggleLabelsBtn.classList.toggle('is-active', flag);
+      toggleLabelsBtn.textContent = flag ? 'Vertex labels' : 'Vertex labels off';
+      labelElements.forEach(el => el.classList.toggle('is-hidden', !flag));
     }
 
     function syncZoomSlider() {
@@ -556,11 +674,39 @@
       metricPitch.textContent = pitch.toFixed(2);
     }
 
+    function updateVertexLabels() {
+      if (!labelsVisible) return;
+
+      const rect = canvas.getBoundingClientRect();
+
+      canonicalVertices.forEach((vertex, i) => {
+        const world = tetra.localToWorld(vertex.clone());
+        const projected = world.clone().project(camera);
+
+        const visible = projected.z >= -1 && projected.z <= 1;
+        if (!visible) {
+          labelElements[i].classList.add('is-hidden');
+          return;
+        }
+
+        const x = (projected.x * 0.5 + 0.5) * rect.width;
+        const y = (-projected.y * 0.5 + 0.5) * rect.height;
+
+        labelElements[i].classList.toggle('is-hidden', !labelsVisible);
+        labelElements[i].style.left = `${x}px`;
+        labelElements[i].style.top = `${y}px`;
+      });
+    }
+
     resetBtn.addEventListener('click', resetCamera);
 
     spinBtn.addEventListener('click', () => {
       spinning = !spinning;
       spinBtn.textContent = spinning ? 'Pause' : 'Play';
+    });
+
+    toggleLabelsBtn.addEventListener('click', () => {
+      setLabelsVisible(!labelsVisible);
     });
 
     stepLeftBtn.addEventListener('click', () => stepRotation(-1));
@@ -590,6 +736,7 @@
 
       controls.update();
       updateTelemetry();
+      updateVertexLabels();
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     }
@@ -601,6 +748,7 @@
       applyWireOpacity();
       resize();
       applyCameraPreset('iso');
+      setLabelsVisible(true);
       animate();
     } catch (err) {
       console.error(err);
