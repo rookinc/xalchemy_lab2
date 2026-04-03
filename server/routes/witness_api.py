@@ -35,6 +35,7 @@ from witness_machine.g60_quotient import (
     quotient_validation_report,
     quotient_graph_validation_report,
 )
+from witness_machine.g60_live_adapter import g30_state_to_g60_focus
 from witness_machine.g60_host import (
     g60_host_contract,
     g60_host_metadata,
@@ -157,6 +158,19 @@ def get_g30_trace(
         },
     }
 
+
+
+
+@router.get("/g60/from-g30")
+def get_g60_from_g30(
+    frame: int = Query(..., ge=0, le=14),
+    phase: int = Query(..., ge=0, le=1),
+    sheet: str = Query("+"),
+):
+    return {
+        "ok": True,
+        "payload": g30_state_to_g60_focus(frame, phase, sheet),
+    }
 
 @router.get("/g60/host")
 def get_g60_host():

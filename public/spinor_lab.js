@@ -29,6 +29,15 @@ const els = {
   stageVizPulses: document.getElementById('stage-viz-pulses'),
   stageVizNodes: document.getElementById('stage-viz-nodes'),
   stageVizLabels: document.getElementById('stage-viz-labels'),
+  g60Stage: document.getElementById('g60-stage'),
+  g60StageEdges: document.getElementById('g60-stage-edges'),
+  g60StageEdgeOverlay: document.getElementById('g60-stage-edge-overlay'),
+  g60StageNodes: document.getElementById('g60-stage-nodes'),
+  g60StageNodeOverlay: document.getElementById('g60-stage-node-overlay'),
+  g60StageLabels: document.getElementById('g60-stage-labels'),
+  g60G30Class: document.getElementById('g60-g30-class'),
+  g60G15Class: document.getElementById('g60-g15-class'),
+  g60PrimaryNode: document.getElementById('g60-primary-node'),
 };
 
 const LAB = {
@@ -46,6 +55,8 @@ const state = {
   playStartState: null,
   lastPayload: null,
   playHistory: [],
+  g60LayoutReady: false,
+  g60LastFocusKey: '',
 };
 
 function setStatus(text) {
@@ -259,6 +270,168 @@ function renderSummary(payload, verification = null) {
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
+const G60_LAYOUT = {
+  n0: [450, 312],
+  n1: [450, 220],
+  n2: [450, 128],
+  "3": [450, 78],
+  "4": [280, 60],
+  "5": [450, 48],
+  "6": [620, 60],
+  "7": [620, 150],
+  "8": [280, 258],
+  "9": [280, 170],
+  "10": [620, 228],
+  "11": [620, 302],
+  "12": [280, 302],
+  "13": [450, 170],
+  "14": [450, 258],
+};
+
+async function fetchG60Focus(stateTriple) {
+  const params = new URLSearchParams({
+    frame: String(stateTriple.frame),
+    phase: String(stateTriple.phase),
+    sheet: String(stateTriple.sheet),
+  });
+  const res = await fetch(`/witness/api/g60/from-g30?${params.toString()}`);
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status} :: ${await res.text()}`);
+  }
+  const data = await res.json();
+  return data.payload;
+}
+
+function drawG60Base() {
+  if (!els.g60Stage || !els.g60StageEdges || !els.g60StageNodes || !els.g60StageLabels) return;
+  if (state.g60LayoutReady) return;
+
+  const edgeDefs = [
+    ['n0','n1'], ['n1','n2'],
+    ['3','8'], ['8','14'], ['14','11'], ['11','12'], ['12','3'],
+    ['3','9'], ['9','10'], ['10','7'], ['7','8'],
+    ['14','13'],
+    ['4','5'], ['5','6'], ['6','3'], ['3','4'],
+    ['5','n2'], ['n2','3'],
+    ['n0','14'], ['n1','13'], ['n2','5'],
+    ['4','n2'], ['n2','6'], ['14','3'], ['14','7'], ['5','3'], ['8','13'], ['13','10'], ['7','11'],
+    ['8','9'], ['3','10'], ['3','7'], ['13','n2'],
+  ];
+
+  const seen = new Set();
+  for (const [a, b] of edgeDefs) {
+    const key = [a, b].sort().join('|');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const [x1, y1] = G60_LAYOUT[a];
+    const [x2, y2] = G60_LAYOUT[b];
+    const line = svgEl('line', {
+      x1, y1, x2, y2,
+      class: 'g60-edge',
+      'data-edge': key,
+    });
+    els.g60StageEdges.appendChild(line);
+  }
+
+  for (const [nodeId, [x, y]] of Object.entries(G60_LAYOUT)) {
+    const circle = svgEl('circle', {
+      cx: x,
+      cy: y,
+      r: 13,
+      class: 'g60-node',
+      'data-node': nodeId,
+    });
+    els.g60StageNodes.appendChild(circle);
+
+    const label = svgEl('text', {
+      x,
+      y: y + 30,
+      class: 'g60-label',
+    });
+    label.textContent = nodeId;
+    els.g60StageLabels.appendChild(label);
+  }
+
+  state.g60LayoutReady = true;
+}
+
+async function updateG60Panel(payload) {
+  if (!els.g60Stage) return;
+  drawG60Base();
+
+  const end = payload.trace[payload.trace.length - 1];
+  if (!end || !end.state) return;
+
+  const focus = await fetchG60Focus(end.state);
+  const sf = focus.scaffold_focus;
+  const key = JSON.stringify(focus.input_state);
+  state.g60LastFocusKey = key;
+
+  if (els.g60G30Class) els.g60G30Class.textContent = focus.g30_focus.class_id;
+  if (els.g60G15Class) els.g60G15Class.textContent = focus.g15_focus.class_id;
+  if (els.g60PrimaryNode) els.g60PrimaryNode.textContent = sf.primary_node;
+
+  els.g60StageEdgeOverlay.textContent = '';
+  els.g60StageNodeOverlay.textContent = '';
+
+  const nodeEls = Array.from(els.g60StageNodes.querySelectorAll('.g60-node'));
+  nodeEls.forEach((node) => {
+    node.classList.remove('active', 'neighbor', 'primary', 'sheet-minus');
+  });
+
+  const active = new Set(sf.active_nodes || []);
+  const neighbors = new Set(sf.neighbor_nodes || []);
+  const primary = sf.primary_node;
+  const minus = sf.sheet_accent === '-';
+
+  nodeEls.forEach((node) => {
+    const id = node.getAttribute('data-node');
+    if (neighbors.has(id)) node.classList.add('neighbor');
+    if (active.has(id)) node.classList.add('active');
+    if (id === primary) node.classList.add('primary');
+    if (minus && (active.has(id) || id === primary)) node.classList.add('sheet-minus');
+  });
+
+  const overlayDefs = [
+    ['n0','n1'], ['n1','n2'],
+    ['3','8'], ['8','14'], ['14','11'], ['11','12'], ['12','3'],
+    ['3','9'], ['9','10'], ['10','7'], ['7','8'],
+    ['14','13'],
+    ['4','5'], ['5','6'], ['6','3'], ['3','4'],
+    ['5','n2'], ['n2','3'],
+    ['n0','14'], ['n1','13'], ['n2','5'],
+    ['4','n2'], ['n2','6'], ['14','3'], ['14','7'], ['5','3'], ['8','13'], ['13','10'], ['7','11'],
+    ['8','9'], ['3','10'], ['3','7'], ['13','n2'],
+  ];
+
+  for (const [a, b] of overlayDefs) {
+    const aActive = active.has(a) || a === primary;
+    const bActive = active.has(b) || b === primary;
+    if (!(aActive && bActive) && !(a === primary && neighbors.has(b)) && !(b === primary && neighbors.has(a))) {
+      continue;
+    }
+    const [x1, y1] = G60_LAYOUT[a];
+    const [x2, y2] = G60_LAYOUT[b];
+    const line = svgEl('line', {
+      x1, y1, x2, y2,
+      class: `g60-edge active${minus ? ' sheet-minus' : ''}`,
+    });
+    els.g60StageEdgeOverlay.appendChild(line);
+  }
+
+  if (primary && G60_LAYOUT[primary]) {
+    const [x, y] = G60_LAYOUT[primary];
+    const ring = svgEl('circle', {
+      cx: x,
+      cy: y,
+      r: 20,
+      class: `g60-ring ${sf.phase_band === 'objective' ? 'phase-objective' : 'phase-subjective'}`,
+    });
+    els.g60StageNodeOverlay.appendChild(ring);
+  }
+}
+
+
 function svgEl(name, attrs = {}) {
   const el = document.createElementNS(SVG_NS, name);
   for (const [k, v] of Object.entries(attrs)) {
@@ -426,6 +599,7 @@ function updateStagePanel(payload) {
   if (els.metricSteps) els.metricSteps.textContent = String(state.isPlaying ? state.playIndex : (payload.trace.length - 1));
   if (els.metricEnd) els.metricEnd.textContent = formatStateTriple(live);
   updateStageViz(payload);
+  updateG60Panel(payload).catch((err) => console.error('updateG60Panel failed:', err));
 }
 
 function renderPayload(payload, verification = null) {
