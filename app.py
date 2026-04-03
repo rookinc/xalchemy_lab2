@@ -53,6 +53,12 @@ def serve_spinor_scene_debug():
     return FileResponse(BASE_DIR / "public" / "spinor_scene_debug.html")
 
 
+
+
+@app.get("/tetra-instant")
+def serve_tetra_instant():
+    return FileResponse(BASE_DIR / "public" / "tetra_instant.html")
+
 @app.get("/spinor-render-debug")
 def serve_spinor_render_debug():
     return FileResponse(BASE_DIR / "public" / "spinor_render_debug.html")
