@@ -21,6 +21,7 @@ from witness_machine.g30_translator import (
     g30_translator_validation_report,
     make_g30_state,
     g30_state_dict,
+    g30_trace,
 )
 from witness_machine.g60_scaffold import (
     g60_scaffold,
@@ -42,6 +43,15 @@ from witness_machine.g60_host import (
 )
 
 router = APIRouter(tags=["witness-api"])
+
+
+def _parse_g30_ops(text: str) -> list[str]:
+    ops = [part.strip() for part in text.split(",") if part.strip()]
+    valid = {"tau", "tau_inv", "mu", "g15", "g30"}
+    bad = [op for op in ops if op not in valid]
+    if bad:
+        raise ValueError(f"invalid g30 ops: {', '.join(bad)}")
+    return ops
 
 
 @router.get("/state")
@@ -127,6 +137,25 @@ def get_g30_state(
 ):
     state = make_g30_state(frame, phase, sheet)
     return {"ok": True, "payload": g30_state_dict(state)}
+
+
+@router.get("/g30/trace")
+def get_g30_trace(
+    frame: int = Query(..., ge=0, le=14),
+    phase: int = Query(..., ge=0, le=1),
+    sheet: str = Query("+"),
+    ops: str = Query("tau"),
+):
+    state = make_g30_state(frame, phase, sheet)
+    parsed_ops = _parse_g30_ops(ops)
+    return {
+        "ok": True,
+        "payload": {
+            "start": state,
+            "ops": parsed_ops,
+            "trace": g30_trace(state, parsed_ops),
+        },
+    }
 
 
 @router.get("/g60/host")
