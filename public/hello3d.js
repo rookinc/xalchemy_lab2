@@ -1,0 +1,424 @@
+import * as THREE from '/assets/vendor/three/three.module.js';
+import { OrbitControls } from '/assets/vendor/three/OrbitControls.js';
+
+const canvas = document.getElementById('stage');
+const labelLayer = document.getElementById('label-layer');
+
+const metricTick = document.getElementById('metric-tick');
+const metricDist = document.getElementById('metric-dist');
+const metricYaw = document.getElementById('metric-yaw');
+const metricPitch = document.getElementById('metric-pitch');
+const metricView = document.getElementById('metric-view');
+const metricFace = document.getElementById('metric-face');
+const metricVLabels = document.getElementById('metric-vlabels');
+const metricFLabels = document.getElementById('metric-flabels');
+
+const resetBtn = document.getElementById('reset-camera');
+const stepLeftBtn = document.getElementById('step-left');
+const stepRightBtn = document.getElementById('step-right');
+const spinBtn = document.getElementById('toggle-spin');
+const toggleVLabelsBtn = document.getElementById('toggle-vlabels');
+const toggleFLabelsBtn = document.getElementById('toggle-flabels');
+
+const camIsoBtn = document.getElementById('cam-iso');
+const camFrontBtn = document.getElementById('cam-front');
+const camTopBtn = document.getElementById('cam-top');
+
+const zoomSlider = document.getElementById('zoom-slider');
+const faceOpacityInput = document.getElementById('face-opacity');
+const innerOpacityInput = document.getElementById('inner-opacity');
+const glowOpacityInput = document.getElementById('glow-opacity');
+const wireOpacityInput = document.getElementById('wire-opacity');
+
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: true,
+  alpha: true,
+});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x081019);
+
+const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.target.set(0, 0.12, 0);
+
+const ambient = new THREE.AmbientLight(0xffffff, 0.82);
+scene.add(ambient);
+
+const key = new THREE.DirectionalLight(0xffffff, 1.25);
+key.position.set(4, 5, 3);
+scene.add(key);
+
+const rim = new THREE.DirectionalLight(0x88aaff, 0.42);
+rim.position.set(-3, 2, -4);
+scene.add(rim);
+
+const grid = new THREE.GridHelper(12, 24, 0x2f5d9a, 0x1d3557);
+grid.position.y = -1.15;
+scene.add(grid);
+
+function createCanonicalTetraGeometry(scale = 1.1) {
+  const raw = [
+    new THREE.Vector3( 1,  1,  1),
+    new THREE.Vector3(-1, -1,  1),
+    new THREE.Vector3(-1,  1, -1),
+    new THREE.Vector3( 1, -1, -1),
+  ];
+
+  const baseRadius = raw[0].length();
+  const s = scale / baseRadius;
+  const vertices = raw.map(v => v.clone().multiplyScalar(s));
+
+  const positions = [];
+  const faces = [
+    [0, 1, 2],
+    [0, 3, 1],
+    [0, 2, 3],
+    [1, 3, 2],
+  ];
+
+  for (const [a, b, c] of faces) {
+    const va = vertices[a];
+    const vb = vertices[b];
+    const vc = vertices[c];
+    positions.push(
+      va.x, va.y, va.z,
+      vb.x, vb.y, vb.z,
+      vc.x, vc.y, vc.z,
+    );
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute(positions, 3)
+  );
+  geometry.computeVertexNormals();
+
+  geometry.userData.vertices = vertices.map((v, i) => ({
+    id: `v${i}`,
+    x: v.x,
+    y: v.y,
+    z: v.z,
+  }));
+
+  geometry.userData.faces = faces.map((f, i) => ({
+    id: `f${i}`,
+    verts: [...f],
+  }));
+
+  return geometry;
+}
+
+const tetraGeometry = createCanonicalTetraGeometry(1.1);
+
+const tetraMaterial = new THREE.MeshStandardMaterial({
+  color: 0x8ab4ff,
+  transparent: true,
+  opacity: 0.78,
+  metalness: 0.08,
+  roughness: 0.32,
+  flatShading: true,
+  side: THREE.DoubleSide,
+});
+
+const innerMaterial = new THREE.MeshStandardMaterial({
+  color: 0xffa8d6,
+  transparent: true,
+  opacity: 0.78,
+  metalness: 0.02,
+  roughness: 0.42,
+  flatShading: true,
+  side: THREE.DoubleSide,
+});
+
+const tetra = new THREE.Mesh(tetraGeometry, tetraMaterial);
+scene.add(tetra);
+
+const inner = new THREE.Mesh(
+  createCanonicalTetraGeometry(0.92),
+  innerMaterial
+);
+scene.add(inner);
+
+console.log('canonical tetra vertices', tetraGeometry.userData.vertices);
+console.log('canonical tetra faces', tetraGeometry.userData.faces);
+
+const edges = new THREE.LineSegments(
+  new THREE.EdgesGeometry(tetraGeometry),
+  new THREE.LineBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 1.0,
+  })
+);
+tetra.add(edges);
+
+const glow = new THREE.Mesh(
+  new THREE.CircleGeometry(1.5, 48),
+  new THREE.MeshBasicMaterial({
+    color: 0x8ab4ff,
+    transparent: true,
+    opacity: 0.08,
+  })
+);
+glow.rotation.x = -Math.PI / 2;
+glow.position.y = -1.13;
+scene.add(glow);
+
+const canonicalVertices = tetraGeometry.userData.vertices.map(v =>
+  new THREE.Vector3(v.x, v.y, v.z)
+);
+
+const canonicalFaces = tetraGeometry.userData.faces.map(face => {
+  const verts = face.verts.map(idx => canonicalVertices[idx].clone());
+  const centroid = new THREE.Vector3();
+  verts.forEach(v => centroid.add(v));
+  centroid.multiplyScalar(1 / 3);
+  return {
+    id: face.id,
+    verts: face.verts,
+    centroid,
+  };
+});
+
+const vertexLabelElements = tetraGeometry.userData.vertices.map((v, i) => {
+  const el = document.createElement('div');
+  el.className = 'stage-label vertex-label';
+  el.textContent = `v${i}`;
+  labelLayer.appendChild(el);
+  return el;
+});
+
+const faceLabelElements = canonicalFaces.map((face, i) => {
+  const el = document.createElement('div');
+  el.className = 'stage-label face-label';
+  el.textContent = `f${i}`;
+  labelLayer.appendChild(el);
+  return el;
+});
+
+let spinning = true;
+let tick = 0;
+let currentPreset = 'iso';
+let vertexLabelsVisible = true;
+let faceLabelsVisible = true;
+
+function resize() {
+  const rect = canvas.getBoundingClientRect();
+  const width = Math.max(1, Math.floor(rect.width));
+  const height = Math.max(1, Math.floor(rect.height));
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height, false);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function setActivePreset(name) {
+  currentPreset = name;
+  metricView.textContent = name[0].toUpperCase() + name.slice(1);
+  [camIsoBtn, camFrontBtn, camTopBtn].forEach(btn => btn.classList.remove('is-active'));
+  if (name === 'iso') camIsoBtn.classList.add('is-active');
+  if (name === 'front') camFrontBtn.classList.add('is-active');
+  if (name === 'top') camTopBtn.classList.add('is-active');
+}
+
+function setVertexLabelsVisible(flag) {
+  vertexLabelsVisible = flag;
+  metricVLabels.textContent = flag ? 'on' : 'off';
+  toggleVLabelsBtn.classList.toggle('is-active', flag);
+  toggleVLabelsBtn.textContent = flag ? 'Vertex labels' : 'Vertex labels off';
+  vertexLabelElements.forEach(el => el.classList.toggle('is-hidden', !flag));
+}
+
+function setFaceLabelsVisible(flag) {
+  faceLabelsVisible = flag;
+  metricFLabels.textContent = flag ? 'on' : 'off';
+  toggleFLabelsBtn.classList.toggle('is-active-face', flag);
+  toggleFLabelsBtn.textContent = flag ? 'Face labels' : 'Face labels off';
+  faceLabelElements.forEach(el => el.classList.toggle('is-hidden', !flag));
+}
+
+function syncZoomSlider() {
+  const minDist = 2.4;
+  const maxDist = 8.0;
+  const t = (camera.position.distanceTo(controls.target) - minDist) / (maxDist - minDist);
+  zoomSlider.value = String(Math.round(clamp(1 - t, 0, 1) * 100));
+}
+
+function applyCameraPreset(name) {
+  if (name === 'front') {
+    camera.position.set(0, 0.35, 4.4);
+    controls.target.set(0, 0.10, 0);
+  } else if (name === 'top') {
+    camera.position.set(0, 4.8, 0.01);
+    controls.target.set(0, 0.02, 0);
+  } else {
+    camera.position.set(2.8, 2.2, 3.6);
+    controls.target.set(0, 0.12, 0);
+  }
+  controls.update();
+  setActivePreset(name);
+  syncZoomSlider();
+}
+
+function resetCamera() {
+  applyCameraPreset(currentPreset);
+}
+
+function applyFaceOpacity() {
+  tetraMaterial.opacity = Number(faceOpacityInput.value) / 100;
+  metricFace.textContent = `${Math.round(tetraMaterial.opacity * 100)}%`;
+}
+
+function applyInnerOpacity() {
+  innerMaterial.opacity = Number(innerOpacityInput.value) / 100;
+}
+
+function applyGlowOpacity() {
+  glow.material.opacity = Number(glowOpacityInput.value) / 100;
+}
+
+function applyWireOpacity() {
+  edges.material.opacity = Number(wireOpacityInput.value) / 100;
+}
+
+function applyZoomSlider() {
+  const minDist = 2.4;
+  const maxDist = 8.0;
+  const alpha = Number(zoomSlider.value) / 100;
+  const dist = maxDist - alpha * (maxDist - minDist);
+
+  const direction = new THREE.Vector3()
+    .subVectors(camera.position, controls.target)
+    .normalize()
+    .multiplyScalar(dist);
+
+  camera.position.copy(controls.target).add(direction);
+  controls.update();
+}
+
+function stepRotation(dir) {
+  tetra.rotation.y += 0.18 * dir;
+  tetra.rotation.x += 0.05 * dir;
+  inner.rotation.y += 0.14 * dir;
+  inner.rotation.x += 0.04 * dir;
+}
+
+function updateTelemetry() {
+  const dx = camera.position.x - controls.target.x;
+  const dy = camera.position.y - controls.target.y;
+  const dz = camera.position.z - controls.target.z;
+  const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  const yaw = Math.atan2(dx, dz);
+  const pitch = Math.atan2(dy, Math.sqrt(dx * dx + dz * dz));
+
+  metricTick.textContent = String(tick);
+  metricDist.textContent = dist.toFixed(2);
+  metricYaw.textContent = yaw.toFixed(2);
+  metricPitch.textContent = pitch.toFixed(2);
+}
+
+function placeLabel(el, worldPoint, visibleFlag) {
+  if (!visibleFlag) {
+    el.classList.add('is-hidden');
+    return;
+  }
+
+  const projected = worldPoint.clone().project(camera);
+  const visible = projected.z >= -1 && projected.z <= 1;
+
+  if (!visible) {
+    el.classList.add('is-hidden');
+    return;
+  }
+
+  const x = (projected.x * 0.5 + 0.5) * canvas.clientWidth;
+  const y = (-projected.y * 0.5 + 0.5) * canvas.clientHeight;
+
+  el.classList.remove('is-hidden');
+  el.style.left = `${x}px`;
+  el.style.top = `${y}px`;
+}
+
+function updateVertexLabels() {
+  canonicalVertices.forEach((vertex, i) => {
+    const world = tetra.localToWorld(vertex.clone());
+    placeLabel(vertexLabelElements[i], world, vertexLabelsVisible);
+  });
+}
+
+function updateFaceLabels() {
+  canonicalFaces.forEach((face, i) => {
+    const world = tetra.localToWorld(face.centroid.clone());
+    placeLabel(faceLabelElements[i], world, faceLabelsVisible);
+  });
+}
+
+resetBtn.addEventListener('click', resetCamera);
+
+spinBtn.addEventListener('click', () => {
+  spinning = !spinning;
+  spinBtn.textContent = spinning ? 'Pause' : 'Play';
+});
+
+toggleVLabelsBtn.addEventListener('click', () => {
+  setVertexLabelsVisible(!vertexLabelsVisible);
+});
+
+toggleFLabelsBtn.addEventListener('click', () => {
+  setFaceLabelsVisible(!faceLabelsVisible);
+});
+
+stepLeftBtn.addEventListener('click', () => stepRotation(-1));
+stepRightBtn.addEventListener('click', () => stepRotation(1));
+
+camIsoBtn.addEventListener('click', () => applyCameraPreset('iso'));
+camFrontBtn.addEventListener('click', () => applyCameraPreset('front'));
+camTopBtn.addEventListener('click', () => applyCameraPreset('top'));
+
+faceOpacityInput.addEventListener('input', applyFaceOpacity);
+innerOpacityInput.addEventListener('input', applyInnerOpacity);
+glowOpacityInput.addEventListener('input', applyGlowOpacity);
+wireOpacityInput.addEventListener('input', applyWireOpacity);
+zoomSlider.addEventListener('input', applyZoomSlider);
+
+window.addEventListener('resize', resize);
+
+function animate() {
+  tick += 1;
+
+  if (spinning) {
+    tetra.rotation.x += 0.004;
+    tetra.rotation.y += 0.008;
+    inner.rotation.x += 0.003;
+    inner.rotation.y += 0.006;
+  }
+
+  controls.update();
+  updateTelemetry();
+  updateVertexLabels();
+  updateFaceLabels();
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+
+try {
+  applyFaceOpacity();
+  applyInnerOpacity();
+  applyGlowOpacity();
+  applyWireOpacity();
+  resize();
+  applyCameraPreset('iso');
+  setVertexLabelsVisible(true);
+  setFaceLabelsVisible(true);
+  animate();
+} catch (err) {
+  console.error(err);
+}
