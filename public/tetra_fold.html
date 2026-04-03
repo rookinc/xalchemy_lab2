@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tetra Fold Ladder · Aletheos</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="stylesheet" href="/public/tetra_fold.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="topbar-row">
+        <div>
+          <div class="title">Tetra Fold Ladder</div>
+          <div class="sub">Notebook ladder viewer · x0..x5 · static sequence first</div>
+        </div>
+        <nav class="header-links" aria-label="Page links">
+          <a href="/">Home</a>
+          <a href="/tetra-instant">Tetra Instant</a>
+          <a href="/hello3d">Hello3D</a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="stage-card">
+      <div class="stage-shell">
+        <svg id="fold-stage" class="stage" viewBox="0 0 900 620" preserveAspectRatio="xMidYMid meet">
+          <g id="correspondence-lines"></g>
+
+          <g id="upstairs-face-polys"></g>
+          <g id="upstairs-edge-lines"></g>
+          <g id="upstairs-mark-layer"></g>
+          <g id="upstairs-anchor-dots"></g>
+          <g id="upstairs-anchor-labels"></g>
+
+          <g id="downstairs-face-polys"></g>
+          <g id="downstairs-edge-lines"></g>
+          <g id="downstairs-mark-layer"></g>
+          <g id="downstairs-anchor-dots"></g>
+          <g id="downstairs-anchor-labels"></g>
+        </svg>
+      </div>
+
+      <div class="telemetry">
+        <span>Step <strong id="metric-step">x0</strong></span>
+        <span>Index <strong id="metric-index">0</strong></span>
+        <span>Faces <strong id="metric-faces">0</strong></span>
+        <span>Open <strong id="metric-open">0</strong></span>
+      </div>
+    </section>
+
+    <section class="controls-card">
+      <div class="button-row">
+        <button id="prev-btn" type="button">Prev</button>
+        <button id="next-btn" type="button">Next</button>
+      </div>
+
+      <div class="button-row button-row-4">
+        <button id="toggle-anchors" class="is-active" type="button">Anchors</button>
+        <button id="toggle-labels" class="is-active" type="button">Labels</button>
+        <button id="toggle-faces" class="is-active" type="button">Faces</button>
+        <button id="toggle-marks" class="is-active" type="button">Regions</button>
+      </div>
+
+      <div class="button-row button-row-4">
+        <button id="toggle-upstairs" class="is-active" type="button">Upstairs</button>
+        <button id="toggle-downstairs" class="is-active" type="button">Downstairs</button>
+        <button id="toggle-correspondence" class="is-active" type="button">Links</button>
+        <button id="toggle-downstairs-labels" class="is-active" type="button">Down labels</button>
+      </div>
+    </section>
+
+    <section class="info-card">
+      <div class="info-title">Fold readout</div>
+      <pre id="fold-readout">booting...</pre>
+    </section>
+  </main>
+
+  <script type="module" src="/public/tetra_fold.js"></script>
+</body>
+</html>
