@@ -34,6 +34,14 @@ def serve_hello3d():
 def serve_hello3d_slash():
     return FileResponse(PUBLIC_DIR / "hello3d.html")
 
+@app.get("/spinor-lab")
+def serve_spinor_lab():
+    return FileResponse(PUBLIC_DIR / "spinor_lab.html")
+
+@app.get("/spinor-lab/")
+def serve_spinor_lab_slash():
+    return FileResponse(PUBLIC_DIR / "spinor_lab.html")
+
 @app.get("/cycle/g15")
 def serve_cycle_g15():
     return FileResponse(PUBLIC_DIR / "cycle.html")

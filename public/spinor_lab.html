@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spinor Lab · Aletheos</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="stylesheet" href="/assets/spinor_lab.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="topbar-row">
+        <div>
+          <div class="title">Spinor Lab</div>
+          <div class="sub">Validated witness harness · play button + console output only</div>
+        </div>
+        <nav class="header-links" aria-label="Page links">
+          <a href="/">Home</a>
+          <a href="/witness">Witness</a>
+          <a href="/hello3d">Hello3D</a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="controls-card">
+      <div class="button-row">
+        <button id="reset-btn" type="button">Reset</button>
+        <button id="step-btn" type="button">Step</button>
+        <button id="play-btn" type="button">Play</button>
+      </div>
+
+      <div class="form-grid">
+        <label class="field">
+          <span>Frame</span>
+          <input id="frame-input" type="number" min="0" step="1" value="0" />
+        </label>
+
+        <label class="field">
+          <span>Phase</span>
+          <select id="phase-input">
+            <option value="0" selected>0 · subjective</option>
+            <option value="1">1 · objective</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Rate (Hz)</span>
+          <input id="hz-input" type="number" min="1" max="60" step="1" value="2" />
+        </label>
+
+        <label class="field">
+          <span>Mode</span>
+          <select id="mode-input">
+            <option value="tau" selected>tau</option>
+            <option value="mu">mu</option>
+            <option value="alternate">alternate tau / mu</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="status-bar">
+      <span>Status <strong id="status-text">ready</strong></span>
+      <span>Code <strong id="code-text">----</strong></span>
+      <span>State <strong id="state-text">(0,0)</strong></span>
+      <span>Phase <strong id="phase-text">subjective</strong></span>
+      <span>Alignment <strong id="alignment-text">return</strong></span>
+      <span>Payload <strong id="payload-text">-</strong></span>
+    </section>
+
+    <section class="console-card">
+      <div class="console-title">Console</div>
+      <pre id="console-output">booting...</pre>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/spinor_lab.js"></script>
+</body>
+</html>
