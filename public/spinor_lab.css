@@ -575,3 +575,26 @@ pre {
   max-width: 280px;
 }
 
+
+.field-slider span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.field-slider strong {
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.field input[type="range"] {
+  width: 100%;
+  min-width: 0;
+  accent-color: var(--accent);
+  padding: 0;
+  min-height: 32px;
+  background: transparent;
+  border: 0;
+}
+

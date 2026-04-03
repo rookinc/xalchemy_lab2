@@ -7,6 +7,7 @@ const els = {
   phaseInput: document.getElementById('phase-input'),
   sheetInput: document.getElementById('sheet-input'),
   hzInput: document.getElementById('hz-input'),
+  hzValue: document.getElementById('hz-value'),
   opsInput: document.getElementById('ops-input'),
   statusText: document.getElementById('status-text'),
   startText: document.getElementById('start-text'),
@@ -52,6 +53,13 @@ function setStatus(text) {
   }
   if (els.metricStatus) {
     els.metricStatus.textContent = text;
+  }
+}
+
+
+function updateHzLabel() {
+  if (els.hzInput && els.hzValue) {
+    els.hzValue.textContent = String(els.hzInput.value);
   }
 }
 
@@ -537,8 +545,8 @@ function stopPlayback(status = 'paused') {
 
 function scheduleNextTick() {
   if (!state.isPlaying) return;
-  const hz = Math.max(1, Math.min(10, Number(els.hzInput.value) || 2));
-  const delayMs = Math.max(150, Math.floor(1000 / hz));
+  const hz = Math.max(2, Math.min(60, Number(els.hzInput.value) || 2));
+  const delayMs = Math.max(16, Math.floor(1000 / hz));
   state.timer = setTimeout(playbackTick, delayMs);
 }
 
@@ -614,30 +622,39 @@ function playbackTick() {
 }
 
 function startPlayback() {
-  stopPlayback('running');
+  if (state.timer) {
+    clearTimeout(state.timer);
+    state.timer = null;
+  }
+
+  const isFreshStart = !state.liveState || !state.playStartState || state.playHistory.length === 0;
+
   state.isPlaying = true;
-  state.loopCount = 0;
-  state.playIndex = 0;
-  state.playStartState = getStartStateFromInputs();
-  state.liveState = cloneState(state.playStartState);
-  state.playHistory = [];
+
+  if (isFreshStart) {
+    state.loopCount = 0;
+    state.playIndex = 0;
+    state.playStartState = getStartStateFromInputs();
+    state.liveState = cloneState(state.playStartState);
+    state.playHistory = [];
+
+    const seed = {
+      start: cloneState(state.playStartState),
+      ops: [],
+      trace: [
+        {
+          step: 0,
+          op: 'start',
+          state: cloneState(state.playStartState),
+          projected_witness_state: projectWitnessState(state.playStartState),
+        },
+      ],
+    };
+    renderPayload(seed);
+  }
+
   setRunningUI(true);
   setStatus('running');
-
-  const seed = {
-    start: cloneState(state.playStartState),
-    ops: [],
-    trace: [
-      {
-        step: 0,
-        op: 'start',
-        state: cloneState(state.playStartState),
-        projected_witness_state: projectWitnessState(state.playStartState),
-      },
-    ],
-  };
-  renderPayload(seed);
-
   playbackTick();
 }
 
@@ -740,11 +757,10 @@ els.playBtn.addEventListener('click', () => {
   }
 });
 
-els.hzInput.addEventListener('change', () => {
-  if (state.isPlaying) {
-    startPlayback();
-  }
+els.hzInput.addEventListener('input', () => {
+  updateHzLabel();
 });
 
 setRunningUI(false);
+updateHzLabel();
 runTraceFromInputs();
