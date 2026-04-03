@@ -8,6 +8,7 @@
   --text: #e8f0f8;
   --muted: #9fb0c3;
   --accent: #8ab4ff;
+  --reg: #ffd6ea;
 }
 
 * { box-sizing: border-box; }
@@ -110,13 +111,23 @@ body { padding: 0; }
   background: rgba(8, 16, 25, 0.65);
 }
 
-#stage {
+#stage,
+.overlay-canvas {
   display: block;
   width: 100%;
   height: 34vh;
   min-height: 240px;
   max-height: 360px;
+}
+
+#stage {
   touch-action: none;
+}
+
+.overlay-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
 .label-layer {
@@ -143,7 +154,14 @@ body { padding: 0; }
 .stage-label.face-label {
   border-color: rgba(255, 170, 210, 0.28);
   background: rgba(28, 16, 28, 0.74);
-  color: #ffd6ea;
+  color: var(--reg);
+}
+
+.stage-label.register-label {
+  border-color: rgba(255, 214, 234, 0.36);
+  background: rgba(22, 14, 26, 0.84);
+  color: var(--reg);
+  padding: 3px 7px;
 }
 
 .stage-label.is-hidden {
@@ -228,7 +246,13 @@ button.is-active {
 button.is-active-face {
   border-color: rgba(255, 170, 210, 0.45);
   box-shadow: inset 0 0 0 1px rgba(255, 170, 210, 0.22);
-  color: #ffd6ea;
+  color: var(--reg);
+}
+
+button.is-active-reg {
+  border-color: rgba(255, 214, 234, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(255, 214, 234, 0.18);
+  color: var(--reg);
 }
 
 .range-row {
@@ -277,7 +301,8 @@ input[type="range"] {
     grid-template-columns: 52px 52px 52px minmax(0, 1fr);
   }
 
-  #stage {
+  #stage,
+  .overlay-canvas {
     height: 32vh;
     min-height: 220px;
   }

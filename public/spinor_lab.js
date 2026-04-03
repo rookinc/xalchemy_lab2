@@ -19,6 +19,7 @@ const els = {
 
 const LAB = {
   frameModulus: 15,
+  maxHistory: 240,
 };
 
 const state = {
@@ -28,6 +29,7 @@ const state = {
   playIndex: 0,
   liveState: null,
   lastPayload: null,
+  playHistory: [],
 };
 
 function setStatus(text) {
@@ -40,10 +42,7 @@ function setRunningUI(isRunning) {
 }
 
 function parseOps(text) {
-  return text
-    .split(',')
-    .map(x => x.trim())
-    .filter(Boolean);
+  return text.split(',').map(x => x.trim()).filter(Boolean);
 }
 
 function normalizeFrame(n) {
@@ -104,6 +103,12 @@ function formatWitnessPair(pair) {
   return `(${pair[0]},${pair[1]})`;
 }
 
+function currentOpLabel() {
+  const ops = getOpsFromInput();
+  if (!ops.length) return '(none)';
+  return ops[state.playIndex % ops.length];
+}
+
 function buildTrace(startState, ops) {
   const trace = [
     {
@@ -135,8 +140,21 @@ function buildTrace(startState, ops) {
 function renderTrace(payload) {
   const lines = [];
   for (const row of payload.trace) {
+    const marker = row.step === payload.trace.length - 1 ? '>' : ' ';
     lines.push(
-      `${String(row.step).padEnd(3)} ${row.op.padEnd(8)} ${formatStateTriple(row.state).padEnd(12)} -> ${formatWitnessPair(row.projected_witness_state)}`
+      `${marker} ${String(row.step).padEnd(3)} ${row.op.padEnd(8)} ${formatStateTriple(row.state).padEnd(12)} -> ${formatWitnessPair(row.projected_witness_state)}`
+    );
+  }
+  els.traceOutput.textContent = lines.join('\n');
+}
+
+function renderPlayHistory() {
+  if (!state.isPlaying || state.playHistory.length === 0) return;
+
+  const lines = ['play history', ''];
+  for (const row of state.playHistory) {
+    lines.push(
+      `${String(row.index).padEnd(3)} ${row.op.padEnd(8)} ${formatStateTriple(row.before).padEnd(12)} -> ${formatStateTriple(row.after).padEnd(12)} -> ${formatWitnessPair(projectWitnessState(row.after))}`
     );
   }
   els.traceOutput.textContent = lines.join('\n');
@@ -155,6 +173,7 @@ function renderSummary(payload, verification = null) {
     `step_count          : ${payload.trace.length - 1}`,
     `loop_count          : ${state.loopCount}`,
     `play_index          : ${state.playIndex}`,
+    `current_op          : ${state.isPlaying ? currentOpLabel() : '(stopped)'}`,
     ``,
     `end_state           : ${formatStateTriple(end.state)}`,
     `end_projected       : ${formatWitnessPair(end.projected_witness_state)}`,
@@ -170,6 +189,11 @@ function renderSummary(payload, verification = null) {
     lines.push('');
     lines.push(`g15_count          : ${g15Count}`);
     lines.push(`g30_count          : ${g30Count}`);
+  }
+
+  if (state.isPlaying) {
+    lines.push('');
+    lines.push(`history_rows        : ${state.playHistory.length}`);
   }
 
   if (verification) {
@@ -188,7 +212,11 @@ function renderPayload(payload, verification = null) {
   els.projectedText.textContent = formatWitnessPair(payload.trace[0].projected_witness_state);
   els.stepsText.textContent = String(payload.trace.length - 1);
   els.opsText.textContent = payload.ops.join(',');
-  renderTrace(payload);
+  if (state.isPlaying) {
+    renderPlayHistory();
+  } else {
+    renderTrace(payload);
+  }
   renderSummary(payload, verification);
   state.lastPayload = payload;
 }
@@ -229,6 +257,9 @@ function stopPlayback(status = 'paused') {
   state.isPlaying = false;
   setRunningUI(false);
   setStatus(status);
+  if (state.lastPayload) {
+    renderPayload(state.lastPayload);
+  }
 }
 
 function scheduleNextTick() {
@@ -236,6 +267,13 @@ function scheduleNextTick() {
   const hz = Math.max(1, Math.min(10, Number(els.hzInput.value) || 2));
   const delayMs = Math.max(150, Math.floor(1000 / hz));
   state.timer = setTimeout(playbackTick, delayMs);
+}
+
+function pushHistory(entry) {
+  state.playHistory.push(entry);
+  if (state.playHistory.length > LAB.maxHistory) {
+    state.playHistory.shift();
+  }
 }
 
 function playbackTick() {
@@ -252,38 +290,44 @@ function playbackTick() {
   }
 
   const op = ops[state.playIndex % ops.length];
-  const start = cloneState(state.liveState);
-  const end = applyOp(start, op);
+  const before = cloneState(state.liveState);
+  const after = applyOp(before, op);
+
+  pushHistory({
+    index: state.playIndex,
+    op,
+    before,
+    after,
+  });
 
   const payload = {
-    start,
+    start: before,
     ops: [op],
     trace: [
       {
         step: 0,
         op: 'start',
-        state: cloneState(start),
-        projected_witness_state: projectWitnessState(start),
+        state: cloneState(before),
+        projected_witness_state: projectWitnessState(before),
       },
       {
         step: 1,
         op,
-        state: cloneState(end),
-        projected_witness_state: projectWitnessState(end),
+        state: cloneState(after),
+        projected_witness_state: projectWitnessState(after),
       },
     ],
   };
 
-  renderPayload(payload);
-
-  state.liveState = cloneState(end);
-  syncInputsFromState(end);
+  state.liveState = cloneState(after);
+  syncInputsFromState(after);
 
   state.playIndex += 1;
   if (state.playIndex % ops.length === 0) {
     state.loopCount += 1;
   }
 
+  renderPayload(payload);
   setStatus('running');
   scheduleNextTick();
 }
@@ -294,6 +338,7 @@ function startPlayback() {
   state.loopCount = 0;
   state.playIndex = 0;
   state.liveState = getStartStateFromInputs();
+  state.playHistory = [];
   setRunningUI(true);
   setStatus('running');
   scheduleNextTick();
@@ -360,6 +405,7 @@ els.resetBtn.addEventListener('click', () => {
   stopPlayback('ready');
   state.loopCount = 0;
   state.playIndex = 0;
+  state.playHistory = [];
   els.frameInput.value = '0';
   els.phaseInput.value = '0';
   els.sheetInput.value = '+';
@@ -371,6 +417,7 @@ els.traceBtn.addEventListener('click', () => {
   stopPlayback('ready');
   state.loopCount = 0;
   state.playIndex = 0;
+  state.playHistory = [];
   runTraceFromInputs();
 });
 

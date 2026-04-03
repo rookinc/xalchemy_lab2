@@ -2,6 +2,8 @@ import * as THREE from '/assets/vendor/three/three.module.js';
 import { OrbitControls } from '/assets/vendor/three/OrbitControls.js';
 
 const canvas = document.getElementById('stage');
+const overlayCanvas = document.getElementById('overlay-canvas');
+const overlayCtx = overlayCanvas.getContext('2d');
 const labelLayer = document.getElementById('label-layer');
 
 const metricTick = document.getElementById('metric-tick');
@@ -19,12 +21,12 @@ const stepRightBtn = document.getElementById('step-right');
 const spinBtn = document.getElementById('toggle-spin');
 const toggleVLabelsBtn = document.getElementById('toggle-vlabels');
 const toggleFLabelsBtn = document.getElementById('toggle-flabels');
+const toggleRegisterBtn = document.getElementById('toggle-register');
 
 const camIsoBtn = document.getElementById('cam-iso');
 const camFrontBtn = document.getElementById('cam-front');
 const camTopBtn = document.getElementById('cam-top');
 
-const zoomSlider = document.getElementById('zoom-slider');
 const faceOpacityInput = document.getElementById('face-opacity');
 const innerOpacityInput = document.getElementById('inner-opacity');
 const glowOpacityInput = document.getElementById('glow-opacity');
@@ -144,9 +146,6 @@ const inner = new THREE.Mesh(
 );
 scene.add(inner);
 
-console.log('canonical tetra vertices', tetraGeometry.userData.vertices);
-console.log('canonical tetra faces', tetraGeometry.userData.faces);
-
 const edges = new THREE.LineSegments(
   new THREE.EdgesGeometry(tetraGeometry),
   new THREE.LineBasicMaterial({
@@ -201,23 +200,61 @@ const faceLabelElements = canonicalFaces.map((face, i) => {
   return el;
 });
 
+const witnessRegister = {
+  order: ["W", "X", "Y", "Z", "T", "I"],
+  closedWord: ["W", "X", "Y", "Z", "T", "I", "W"],
+  diads: [["W", "X"], ["Y", "Z"], ["T", "I"]],
+  couplers: [["X", "Y"], ["Z", "T"], ["I", "W"]],
+  slots: {
+    W: "o0",
+    X: "o1",
+    Y: "o2",
+    Z: "s2",
+    T: "t0",
+    I: "s0",
+  }
+};
+
+const registerAnchors = {
+  W: new THREE.Vector3(-1.30,  0.95,  0.10),
+  X: new THREE.Vector3(-0.45,  1.22,  0.72),
+  Y: new THREE.Vector3( 0.62,  1.05,  0.80),
+  Z: new THREE.Vector3( 1.24,  0.12,  0.18),
+  T: new THREE.Vector3( 0.42, -0.98, -0.72),
+  I: new THREE.Vector3(-0.92, -0.72, -0.44),
+};
+
+const registerLabelElements = {};
+for (const key of witnessRegister.order) {
+  const el = document.createElement('div');
+  el.className = 'stage-label register-label';
+  el.textContent = `${key}:${witnessRegister.slots[key]}`;
+  labelLayer.appendChild(el);
+  registerLabelElements[key] = el;
+}
+
 let spinning = true;
 let tick = 0;
 let currentPreset = 'iso';
 let vertexLabelsVisible = true;
 let faceLabelsVisible = true;
+let registerVisible = true;
 
 function resize() {
   const rect = canvas.getBoundingClientRect();
   const width = Math.max(1, Math.floor(rect.width));
   const height = Math.max(1, Math.floor(rect.height));
+
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
   renderer.setSize(width, height, false);
-}
 
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  overlayCanvas.width = Math.floor(width * dpr);
+  overlayCanvas.height = Math.floor(height * dpr);
+  overlayCanvas.style.width = `${width}px`;
+  overlayCanvas.style.height = `${height}px`;
+  overlayCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
 function setActivePreset(name) {
@@ -245,11 +282,11 @@ function setFaceLabelsVisible(flag) {
   faceLabelElements.forEach(el => el.classList.toggle('is-hidden', !flag));
 }
 
-function syncZoomSlider() {
-  const minDist = 2.4;
-  const maxDist = 8.0;
-  const t = (camera.position.distanceTo(controls.target) - minDist) / (maxDist - minDist);
-  zoomSlider.value = String(Math.round(clamp(1 - t, 0, 1) * 100));
+function setRegisterVisible(flag) {
+  registerVisible = flag;
+  toggleRegisterBtn.classList.toggle('is-active-reg', flag);
+  toggleRegisterBtn.textContent = flag ? 'WXYZTIW overlay' : 'WXYZTIW overlay off';
+  Object.values(registerLabelElements).forEach(el => el.classList.toggle('is-hidden', !flag));
 }
 
 function applyCameraPreset(name) {
@@ -265,7 +302,6 @@ function applyCameraPreset(name) {
   }
   controls.update();
   setActivePreset(name);
-  syncZoomSlider();
 }
 
 function resetCamera() {
@@ -287,21 +323,6 @@ function applyGlowOpacity() {
 
 function applyWireOpacity() {
   edges.material.opacity = Number(wireOpacityInput.value) / 100;
-}
-
-function applyZoomSlider() {
-  const minDist = 2.4;
-  const maxDist = 8.0;
-  const alpha = Number(zoomSlider.value) / 100;
-  const dist = maxDist - alpha * (maxDist - minDist);
-
-  const direction = new THREE.Vector3()
-    .subVectors(camera.position, controls.target)
-    .normalize()
-    .multiplyScalar(dist);
-
-  camera.position.copy(controls.target).add(direction);
-  controls.update();
 }
 
 function stepRotation(dir) {
@@ -328,7 +349,7 @@ function updateTelemetry() {
 function placeLabel(el, worldPoint, visibleFlag) {
   if (!visibleFlag) {
     el.classList.add('is-hidden');
-    return;
+    return null;
   }
 
   const projected = worldPoint.clone().project(camera);
@@ -336,7 +357,7 @@ function placeLabel(el, worldPoint, visibleFlag) {
 
   if (!visible) {
     el.classList.add('is-hidden');
-    return;
+    return null;
   }
 
   const x = (projected.x * 0.5 + 0.5) * canvas.clientWidth;
@@ -345,6 +366,8 @@ function placeLabel(el, worldPoint, visibleFlag) {
   el.classList.remove('is-hidden');
   el.style.left = `${x}px`;
   el.style.top = `${y}px`;
+
+  return { x, y };
 }
 
 function updateVertexLabels() {
@@ -359,6 +382,58 @@ function updateFaceLabels() {
     const world = tetra.localToWorld(face.centroid.clone());
     placeLabel(faceLabelElements[i], world, faceLabelsVisible);
   });
+}
+
+function drawRegisterEdges(points) {
+  overlayCtx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+  if (!registerVisible) return;
+
+  const isDiad = (a, b) =>
+    witnessRegister.diads.some(([x, y]) => x === a && y === b);
+
+  const isCoupler = (a, b) =>
+    witnessRegister.couplers.some(([x, y]) => x === a && y === b);
+
+  overlayCtx.lineCap = 'round';
+  overlayCtx.lineJoin = 'round';
+
+  for (let i = 0; i < witnessRegister.closedWord.length - 1; i++) {
+    const a = witnessRegister.closedWord[i];
+    const b = witnessRegister.closedWord[i + 1];
+    const pa = points[a];
+    const pb = points[b];
+    if (!pa || !pb) continue;
+
+    if (isDiad(a, b)) {
+      overlayCtx.strokeStyle = 'rgba(138,180,255,0.92)';
+      overlayCtx.lineWidth = 2.2;
+    } else if (isCoupler(a, b)) {
+      overlayCtx.strokeStyle = 'rgba(255,214,234,0.92)';
+      overlayCtx.lineWidth = 1.8;
+      overlayCtx.setLineDash([7, 5]);
+    } else {
+      overlayCtx.strokeStyle = 'rgba(232,240,248,0.75)';
+      overlayCtx.lineWidth = 1.5;
+    }
+
+    overlayCtx.beginPath();
+    overlayCtx.moveTo(pa.x, pa.y);
+    overlayCtx.lineTo(pb.x, pb.y);
+    overlayCtx.stroke();
+    overlayCtx.setLineDash([]);
+  }
+}
+
+function updateRegisterOverlay() {
+  const points = {};
+  for (const key of witnessRegister.order) {
+    const local = registerAnchors[key].clone();
+    const world = tetra.localToWorld(local);
+    registerLabelElements[key].textContent = `${key}:${witnessRegister.slots[key]}`;
+    const p = placeLabel(registerLabelElements[key], world, registerVisible);
+    if (p) points[key] = p;
+  }
+  drawRegisterEdges(points);
 }
 
 resetBtn.addEventListener('click', resetCamera);
@@ -376,6 +451,10 @@ toggleFLabelsBtn.addEventListener('click', () => {
   setFaceLabelsVisible(!faceLabelsVisible);
 });
 
+toggleRegisterBtn.addEventListener('click', () => {
+  setRegisterVisible(!registerVisible);
+});
+
 stepLeftBtn.addEventListener('click', () => stepRotation(-1));
 stepRightBtn.addEventListener('click', () => stepRotation(1));
 
@@ -387,7 +466,6 @@ faceOpacityInput.addEventListener('input', applyFaceOpacity);
 innerOpacityInput.addEventListener('input', applyInnerOpacity);
 glowOpacityInput.addEventListener('input', applyGlowOpacity);
 wireOpacityInput.addEventListener('input', applyWireOpacity);
-zoomSlider.addEventListener('input', applyZoomSlider);
 
 window.addEventListener('resize', resize);
 
@@ -405,6 +483,7 @@ function animate() {
   updateTelemetry();
   updateVertexLabels();
   updateFaceLabels();
+  updateRegisterOverlay();
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
@@ -418,6 +497,7 @@ try {
   applyCameraPreset('iso');
   setVertexLabelsVisible(true);
   setFaceLabelsVisible(true);
+  setRegisterVisible(true);
   animate();
 } catch (err) {
   console.error(err);

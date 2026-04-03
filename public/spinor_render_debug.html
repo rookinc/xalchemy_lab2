@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spinor Render Debug</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #081019;
+      --panel: rgba(10,18,30,0.88);
+      --line: rgba(120,170,255,0.2);
+      --text: #e8f0f8;
+      --muted: #9fb0c3;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.4 ui-monospace, monospace;
+    }
+    body { padding: 12px; }
+    .shell {
+      max-width: 980px;
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--panel);
+      padding: 12px;
+    }
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(15,24,38,0.96);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 12px;
+      font: inherit;
+      min-height: 46px;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    #stage {
+      display: block;
+      width: 100%;
+      height: 62vh;
+      min-height: 360px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #081019;
+      touch-action: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="card">
+      <h1>Spinor Render Debug</h1>
+      <div class="meta">Mode: <strong id="mode-text">booting</strong></div>
+    </section>
+
+    <section class="card">
+      <div class="button-row">
+        <button id="single-btn" type="button">Single</button>
+        <button id="history-btn" type="button">History</button>
+        <button id="toggle-btn" type="button">Toggle</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <canvas id="stage"></canvas>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/spinor/spinor_render_debug.js"></script>
+</body>
+</html>

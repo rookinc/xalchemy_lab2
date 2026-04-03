@@ -13,7 +13,7 @@
       <div class="topbar-row">
         <div>
           <div class="title">Tetra Lab Zero</div>
-          <div class="sub">Fresh 3D baseline · stage first · controls below</div>
+          <div class="sub">WXYZTIW first pass · canonical tetra host · witness register overlay</div>
         </div>
         <nav class="header-links" aria-label="Page links">
           <a href="/">Home</a>
@@ -26,6 +26,7 @@
       <div class="stage-frame">
         <div class="stage-inner">
           <canvas id="stage"></canvas>
+          <canvas id="overlay-canvas" class="overlay-canvas"></canvas>
           <div id="label-layer" class="label-layer"></div>
         </div>
       </div>
@@ -40,41 +41,11 @@
         <span>Face <strong id="metric-face">78%</strong></span>
         <span>Vtx <strong id="metric-vlabels">on</strong></span>
         <span>FaceLbl <strong id="metric-flabels">on</strong></span>
+        <span>Reg <strong id="metric-reg">WXYZTIW</strong></span>
       </div>
     </section>
 
     <section class="controls">
-      <div class="control-row">
-        <div class="control-label">Zoom</div>
-        <div class="range-row long">
-          <div class="range-tag">Zoom</div>
-          <input id="zoom-slider" type="range" min="0" max="100" step="1" value="76" />
-        </div>
-      </div>
-
-      <div class="control-row">
-        <div class="control-label">View</div>
-        <div class="button-grid">
-          <button id="cam-front" type="button">Front</button>
-          <button id="cam-top" type="button">Top</button>
-          <button id="cam-iso" class="is-active" type="button">Iso</button>
-        </div>
-      </div>
-
-      <div class="control-row">
-        <div class="button-row-4">
-          <button id="reset-camera" type="button">↺</button>
-          <button id="step-left" type="button">|◀</button>
-          <button id="step-right" type="button">▶|</button>
-          <button id="toggle-spin" type="button">Pause</button>
-        </div>
-      </div>
-
-      <div class="button-grid">
-        <button id="toggle-vlabels" type="button" class="is-active">Vertex labels</button>
-        <button id="toggle-flabels" type="button" class="is-active-face">Face labels</button>
-      </div>
-
       <div class="section-card">
         <div class="control-row">
           <div class="range-row">
@@ -99,8 +70,32 @@
         </div>
       </div>
 
+      <div class="control-row">
+        <div class="control-label">View</div>
+        <div class="button-grid">
+          <button id="cam-front" type="button">Front</button>
+          <button id="cam-top" type="button">Top</button>
+          <button id="cam-iso" class="is-active" type="button">Iso</button>
+        </div>
+      </div>
+
+      <div class="control-row">
+        <div class="button-row-4">
+          <button id="reset-camera" type="button">↺</button>
+          <button id="step-left" type="button">|◀</button>
+          <button id="step-right" type="button">▶|</button>
+          <button id="toggle-spin" type="button">Pause</button>
+        </div>
+      </div>
+
+      <div class="button-grid">
+        <button id="toggle-vlabels" type="button" class="is-active">Vertex labels</button>
+        <button id="toggle-flabels" type="button" class="is-active-face">Face labels</button>
+        <button id="toggle-register" type="button" class="is-active-reg">WXYZTIW overlay</button>
+      </div>
+
       <div class="footer-note">
-        Stage first. Thin telemetry. Compact instrument controls.
+        Register order: W → X → Y → Z → T → I → W · diads: WX, YZ, TI · couplers: XY, ZT, IW
       </div>
     </section>
   </main>
