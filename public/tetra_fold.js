@@ -1,6 +1,13 @@
 import { TETRA_FOLD_LADDER } from '/assets/spinor/tetra_fold_ladder.js';
 
 const els = {
+  ghostUpstairsFacePolys: document.getElementById('ghost-upstairs-face-polys'),
+  ghostUpstairsEdgeLines: document.getElementById('ghost-upstairs-edge-lines'),
+  ghostUpstairsMarkLayer: document.getElementById('ghost-upstairs-mark-layer'),
+
+  ghostDownstairsFacePolys: document.getElementById('ghost-downstairs-face-polys'),
+  ghostDownstairsEdgeLines: document.getElementById('ghost-downstairs-edge-lines'),
+
   correspondenceLines: document.getElementById('correspondence-lines'),
 
   upstairsFacePolys: document.getElementById('upstairs-face-polys'),
@@ -25,6 +32,7 @@ const els = {
   toggleDownstairs: document.getElementById('toggle-downstairs'),
   toggleCorrespondence: document.getElementById('toggle-correspondence'),
   toggleDownstairsLabels: document.getElementById('toggle-downstairs-labels'),
+  toggleGhost: document.getElementById('toggle-ghost'),
   metricStep: document.getElementById('metric-step'),
   metricIndex: document.getElementById('metric-index'),
   metricFaces: document.getElementById('metric-faces'),
@@ -44,6 +52,7 @@ const state = {
   showDownstairs: true,
   showCorrespondence: true,
   showDownstairsLabels: true,
+  showGhost: true,
 };
 
 function svgEl(name, attrs = {}) {
@@ -56,6 +65,22 @@ function svgEl(name, attrs = {}) {
 
 function currentStep() {
   return TETRA_FOLD_LADDER.steps[state.index];
+}
+
+function previousStep() {
+  if (state.index <= 0) return null;
+  return TETRA_FOLD_LADDER.steps[state.index - 1];
+}
+
+function paletteForStep(step) {
+  if (step.phase === 'objective') {
+    return ['#ff4d4d', '#4dff88', '#4d88ff'];
+  }
+  return ['#00ffff', '#ff00ff', '#ffff00'];
+}
+
+function orientedFacePoints(facePoints, chirality) {
+  return chirality === 'right' ? [...facePoints].reverse() : facePoints;
 }
 
 function projectPoint([x, y, z]) {
@@ -125,6 +150,87 @@ function polyString(step, ids, projector = projectPointUpstairs) {
     .join(' ');
 }
 
+function drawGhost(step) {
+  els.ghostUpstairsFacePolys.textContent = '';
+  els.ghostUpstairsEdgeLines.textContent = '';
+  els.ghostUpstairsMarkLayer.textContent = '';
+  els.ghostDownstairsFacePolys.textContent = '';
+  els.ghostDownstairsEdgeLines.textContent = '';
+
+  if (!state.showGhost || !step) return;
+
+  if (state.showUpstairs && state.showFaces) {
+    const palette = paletteForStep(step);
+    step.faces.forEach((face, i) => {
+      const poly = svgEl('polygon', {
+        points: polyString(step, orientedFacePoints(face.points, step.chirality), projectPointUpstairs),
+        class: 'ghost-face-poly',
+        fill: palette[i % palette.length],
+      });
+      els.ghostUpstairsFacePolys.appendChild(poly);
+    });
+  }
+
+  if (state.showUpstairs) {
+    for (const [a, b] of step.edges) {
+      const path = svgEl('path', {
+        d: pathString(step, [a, b], projectPointUpstairs),
+        class: 'ghost-edge-line',
+      });
+      els.ghostUpstairsEdgeLines.appendChild(path);
+    }
+  }
+
+  if (state.showUpstairs && state.showMarks) {
+    for (const mark of step.marks || []) {
+      if (mark.kind === 'number') {
+        const [x, y] = projectPointUpstairs(mark.at);
+        const t = svgEl('text', {
+          x,
+          y,
+          class: 'ghost-mark-label',
+        });
+        t.textContent = mark.label;
+        els.ghostUpstairsMarkLayer.appendChild(t);
+      }
+    }
+  }
+
+  if (state.showDownstairs) {
+    const ds = downstairsAnchorEntries(step);
+    if (ds.length >= 3 && state.showFaces) {
+      const poly = svgEl('polygon', {
+        points: ds.slice(0, 3).map((row) => {
+          const [x, y] = projectPointDownstairs(row.point);
+          return `${x},${y}`;
+        }).join(' '),
+        class: 'ghost-face-poly',
+        fill: 'rgba(138,180,255,0.18)',
+      });
+      els.ghostDownstairsFacePolys.appendChild(poly);
+    }
+
+    for (let i = 0; i < ds.length - 1; i += 1) {
+      const [x1, y1] = projectPointDownstairs(ds[i].point);
+      const [x2, y2] = projectPointDownstairs(ds[i + 1].point);
+      const path = svgEl('path', {
+        d: `M ${x1} ${y1} L ${x2} ${y2}`,
+        class: 'ghost-edge-line',
+      });
+      els.ghostDownstairsEdgeLines.appendChild(path);
+    }
+
+    const centroid = [0, 0, 0];
+    const [cx, cy] = projectPointDownstairs(centroid);
+    const [nx, ny] = projectPointDownstairs([0, 0.85, 0]);
+    const spine = svgEl('path', {
+      d: `M ${cx} ${cy} L ${nx} ${ny}`,
+      class: 'ghost-edge-line',
+    });
+    els.ghostDownstairsEdgeLines.appendChild(spine);
+  }
+}
+
 function drawUpstairs(step) {
   els.upstairsFacePolys.textContent = '';
   els.upstairsEdgeLines.textContent = '';
@@ -133,14 +239,15 @@ function drawUpstairs(step) {
   els.upstairsAnchorLabels.textContent = '';
 
   if (state.showUpstairs && state.showFaces) {
-    for (const face of step.faces) {
+    const palette = paletteForStep(step);
+    step.faces.forEach((face, i) => {
       const poly = svgEl('polygon', {
-        points: polyString(step, face.points, projectPointUpstairs),
+        points: polyString(step, orientedFacePoints(face.points, step.chirality), projectPointUpstairs),
         class: 'face-poly',
-        fill: face.color,
+        fill: palette[i % palette.length],
       });
       els.upstairsFacePolys.appendChild(poly);
-    }
+    });
   }
 
   if (state.showUpstairs) {
@@ -327,6 +434,8 @@ function updateReadout(step) {
   els.readout.textContent = [
     `id                : ${step.id}`,
     `label             : ${step.label}`,
+    `phase             : ${step.phase}`,
+    `chirality         : ${step.chirality}`,
     `note              : ${step.note}`,
     ``,
     `level             : ${step.metrics.level}`,
@@ -339,6 +448,7 @@ function updateReadout(step) {
     `upstairs          : ${state.showUpstairs}`,
     `downstairs        : ${state.showDownstairs}`,
     `correspondence    : ${state.showCorrespondence}`,
+    `ghost_prev        : ${state.showGhost}`,
   ].join('\n');
 }
 
@@ -351,10 +461,13 @@ function setButtonState() {
   els.toggleDownstairs.classList.toggle('is-active', state.showDownstairs);
   els.toggleCorrespondence.classList.toggle('is-active', state.showCorrespondence);
   els.toggleDownstairsLabels.classList.toggle('is-active', state.showDownstairsLabels);
+  els.toggleGhost.classList.toggle('is-active', state.showGhost);
 }
 
 function render() {
   const step = currentStep();
+  const prev = previousStep();
+  drawGhost(prev);
   drawCorrespondence(step);
   drawUpstairs(step);
   drawDownstairs(step);
@@ -409,6 +522,11 @@ els.toggleCorrespondence.addEventListener('click', () => {
 
 els.toggleDownstairsLabels.addEventListener('click', () => {
   state.showDownstairsLabels = !state.showDownstairsLabels;
+  render();
+});
+
+els.toggleGhost.addEventListener('click', () => {
+  state.showGhost = !state.showGhost;
   render();
 });
 
