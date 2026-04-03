@@ -222,3 +222,230 @@ pre {
     font-size: 1.22rem;
   }
 }
+
+
+/* --- stage shell -------------------------------------------------------- */
+
+.stage-shell {
+  position: relative;
+  border-bottom: 1px solid var(--line);
+  background:
+    radial-gradient(circle at 50% 34%, rgba(120,170,255,0.10), transparent 34%),
+    linear-gradient(180deg, #081019 0%, #0b1623 100%);
+}
+
+.stage-frame {
+  position: relative;
+  padding: 10px 14px 0;
+}
+
+.stage-inner {
+  position: relative;
+  min-height: 250px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(8,16,25,0.92), rgba(8,16,25,0.82));
+}
+
+.stage-grid {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(138,180,255,0.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(138,180,255,0.10) 1px, transparent 1px);
+  background-size: 26px 26px, 26px 26px;
+  transform: perspective(500px) rotateX(68deg) scale(1.35);
+  transform-origin: center 72%;
+  opacity: 0.55;
+}
+
+.stage-orb {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: 220px;
+  height: 220px;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 45%,
+      rgba(138,180,255,0.18) 0%,
+      rgba(138,180,255,0.09) 35%,
+      rgba(138,180,255,0.04) 58%,
+      rgba(138,180,255,0.00) 74%);
+  box-shadow:
+    0 0 0 1px rgba(138,180,255,0.08) inset,
+    0 0 70px rgba(138,180,255,0.08);
+  pointer-events: none;
+}
+
+.stage-content {
+  position: relative;
+  z-index: 1;
+  min-height: 250px;
+  padding: 18px 18px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+
+.stage-kicker {
+  color: var(--muted);
+  font-size: 0.92rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stage-state-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stage-pill {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(10, 18, 30, 0.76);
+  padding: 12px 14px;
+  display: grid;
+  gap: 4px;
+  box-shadow: 0 0 0 1px rgba(138,180,255,0.06) inset;
+}
+
+.stage-pill-label {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.stage-pill strong {
+  color: var(--text);
+  font-size: 1.45rem;
+  line-height: 1.1;
+}
+
+.stage-op-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  border: 1px solid rgba(138,180,255,0.22);
+  border-radius: 999px;
+  background: rgba(10, 18, 30, 0.80);
+  padding: 10px 14px;
+}
+
+.stage-op-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.telemetry {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  overflow-x: auto;
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--line);
+  background: rgba(10, 18, 30, 0.86);
+  color: var(--muted);
+  white-space: nowrap;
+  scrollbar-width: none;
+  font-size: 0.95rem;
+}
+
+.telemetry::-webkit-scrollbar {
+  display: none;
+}
+
+.telemetry strong {
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+@media (max-width: 640px) {
+  .stage-inner,
+  .stage-content {
+    min-height: 220px;
+  }
+
+  .stage-state-row {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-pill strong {
+    font-size: 1.2rem;
+  }
+
+  .telemetry {
+    font-size: 0.9rem;
+    gap: 12px;
+  }
+
+  .telemetry strong {
+    font-size: 0.96rem;
+  }
+}
+
+
+/* --- stage tuning ------------------------------------------------------- */
+
+.stage-inner {
+  min-height: 220px;
+}
+
+.stage-content {
+  min-height: 220px;
+  padding: 16px 16px 18px;
+}
+
+.stage-grid {
+  opacity: 0.42;
+}
+
+.stage-orb {
+  width: 190px;
+  height: 190px;
+  top: 57%;
+}
+
+.controls-card {
+  margin-top: 8px;
+}
+
+@media (max-width: 640px) {
+  .stage-inner {
+    min-height: 188px;
+  }
+
+  .stage-content {
+    min-height: 188px;
+    padding: 14px 14px 16px;
+    gap: 12px;
+  }
+
+  .stage-kicker {
+    font-size: 0.82rem;
+  }
+
+  .stage-pill {
+    padding: 10px 12px;
+  }
+
+  .stage-pill strong {
+    font-size: 1.08rem;
+  }
+
+  .stage-op-row {
+    padding: 8px 12px;
+  }
+
+  .telemetry {
+    padding: 8px 12px 10px;
+  }
+}
+

@@ -23,6 +23,42 @@
       </div>
     </header>
 
+
+    <section class="stage-shell">
+      <div class="stage-frame">
+        <div class="stage-inner">
+          <div class="stage-grid"></div>
+          <div class="stage-orb"></div>
+
+          <div class="stage-content">
+            <div class="stage-kicker">Lifted witness stage</div>
+            <div class="stage-state-row">
+              <div class="stage-pill">
+                <span class="stage-pill-label">Lifted</span>
+                <strong id="stage-live-state">(0,0,+)</strong>
+              </div>
+              <div class="stage-pill">
+                <span class="stage-pill-label">Projected</span>
+                <strong id="stage-live-projected">(0,0)</strong>
+              </div>
+            </div>
+
+            <div class="stage-op-row">
+              <span class="stage-op-label">Current op</span>
+              <strong id="stage-current-op">start</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="telemetry" id="stage-telemetry">
+        <span>Status <strong id="metric-status">ready</strong></span>
+        <span>Loops <strong id="metric-loops">0</strong></span>
+        <span>Steps <strong id="metric-steps">0</strong></span>
+        <span>End <strong id="metric-end">(0,0,+)</strong></span>
+      </div>
+    </section>
+
     <section class="controls-card">
       <div class="button-row button-row-4">
         <button id="reset-btn" type="button">Reset</button>
@@ -65,13 +101,6 @@
       </div>
     </section>
 
-    <section class="status-bar">
-      <span>Status <strong id="status-text">ready</strong></span>
-      <span>Start <strong id="start-text">(0,0,+)</strong></span>
-      <span>Projected <strong id="projected-text">(0,0)</strong></span>
-      <span>Steps <strong id="steps-text">0</strong></span>
-      <span>Ops <strong id="ops-text">tau,mu,g15</strong></span>
-    </section>
 
     <section class="console-grid">
       <section class="console-card">

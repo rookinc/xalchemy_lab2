@@ -15,6 +15,13 @@ const els = {
   opsText: document.getElementById('ops-text'),
   traceOutput: document.getElementById('trace-output'),
   summaryOutput: document.getElementById('summary-output'),
+  stageLiveState: document.getElementById('stage-live-state'),
+  stageLiveProjected: document.getElementById('stage-live-projected'),
+  stageCurrentOp: document.getElementById('stage-current-op'),
+  metricStatus: document.getElementById('metric-status'),
+  metricLoops: document.getElementById('metric-loops'),
+  metricSteps: document.getElementById('metric-steps'),
+  metricEnd: document.getElementById('metric-end'),
 };
 
 const LAB = {
@@ -28,12 +35,18 @@ const state = {
   loopCount: 0,
   playIndex: 0,
   liveState: null,
+  playStartState: null,
   lastPayload: null,
   playHistory: [],
 };
 
 function setStatus(text) {
-  els.statusText.textContent = text;
+  if (els.statusText) {
+    els.statusText.textContent = text;
+  }
+  if (els.metricStatus) {
+    els.metricStatus.textContent = text;
+  }
 }
 
 function setRunningUI(isRunning) {
@@ -207,17 +220,45 @@ function renderSummary(payload, verification = null) {
   els.summaryOutput.textContent = lines.join('\n');
 }
 
+
+function updateStagePanel(payload) {
+  if (!els.stageLiveState) return;
+
+  const end = payload.trace[payload.trace.length - 1];
+  const live = state.isPlaying && state.liveState ? state.liveState : end.state;
+  const liveProjected = projectWitnessState(live);
+  const currentOp = state.isPlaying ? currentOpLabel() : end.op;
+
+  els.stageLiveState.textContent = formatStateTriple(live);
+  els.stageLiveProjected.textContent = formatWitnessPair(liveProjected);
+  els.stageCurrentOp.textContent = currentOp || 'start';
+
+  if (els.metricStatus) els.metricStatus.textContent = state.isPlaying ? 'running' : 'ready';
+  if (els.metricLoops) els.metricLoops.textContent = String(state.loopCount);
+  if (els.metricSteps) els.metricSteps.textContent = String(state.isPlaying ? state.playIndex : (payload.trace.length - 1));
+  if (els.metricEnd) els.metricEnd.textContent = formatStateTriple(live);
+}
+
 function renderPayload(payload, verification = null) {
-  els.startText.textContent = formatStateTriple(payload.start);
-  els.projectedText.textContent = formatWitnessPair(payload.trace[0].projected_witness_state);
-  els.stepsText.textContent = String(payload.trace.length - 1);
-  els.opsText.textContent = payload.ops.join(',');
+  if (els.startText) {
+    els.startText.textContent = formatStateTriple(payload.start);
+  }
+  if (els.projectedText) {
+    els.projectedText.textContent = formatWitnessPair(payload.trace[0].projected_witness_state);
+  }
+  if (els.stepsText) {
+    els.stepsText.textContent = String(payload.trace.length - 1);
+  }
+  if (els.opsText) {
+    els.opsText.textContent = payload.ops.join(',');
+  }
   if (state.isPlaying) {
     renderPlayHistory();
   } else {
     renderTrace(payload);
   }
   renderSummary(payload, verification);
+  updateStagePanel(payload);
   state.lastPayload = payload;
 }
 
@@ -296,6 +337,7 @@ function runTraceFromInputs() {
   const ops = getOpsFromInput();
   const payload = buildTrace(start, ops);
   renderPayload(payload);
+  state.playStartState = cloneState(start);
   state.liveState = cloneState(payload.trace[payload.trace.length - 1].state);
   setStatus(state.isPlaying ? 'running' : 'ready');
 }
@@ -328,59 +370,67 @@ function pushHistory(entry) {
 }
 
 function playbackTick() {
-  if (!state.isPlaying) return;
+  try {
+    if (!state.isPlaying) return;
 
-  const ops = getOpsFromInput();
-  if (!ops.length) {
-    stopPlayback('ready');
-    return;
+    const ops = getOpsFromInput();
+    if (!ops.length) {
+      stopPlayback('ready');
+      return;
+    }
+
+    if (!state.liveState) {
+      state.liveState = getStartStateFromInputs();
+    }
+
+    const op = ops[state.playIndex % ops.length];
+    const before = cloneState(state.liveState);
+    const after = applyOp(before, op);
+
+    pushHistory({
+      index: state.playIndex,
+      op,
+      before,
+      after,
+    });
+
+    const start = cloneState(state.playStartState || getStartStateFromInputs());
+    const payload = {
+      start,
+      ops: state.playHistory.map(row => row.op),
+      trace: [
+        {
+          step: 0,
+          op: 'start',
+          state: cloneState(start),
+          projected_witness_state: projectWitnessState(start),
+        },
+        ...state.playHistory.map((row, idx) => ({
+          step: idx + 1,
+          op: row.op,
+          state: cloneState(row.after),
+          projected_witness_state: projectWitnessState(row.after),
+        })),
+      ],
+    };
+
+    state.liveState = cloneState(after);
+    syncInputsFromState(after);
+
+    state.playIndex += 1;
+    if (state.playIndex % ops.length === 0) {
+      state.loopCount += 1;
+    }
+
+    renderPayload(payload);
+    setStatus('running');
+    scheduleNextTick();
+  } catch (err) {
+    console.error('playbackTick failed:', err);
+    stopPlayback('play error');
+    const fallback = state.lastPayload || buildTrace(getStartStateFromInputs(), getOpsFromInput());
+    renderPayload(fallback, { ok: false, reason: `playback error: ${String(err.message || err)}` });
   }
-
-  if (!state.liveState) {
-    state.liveState = getStartStateFromInputs();
-  }
-
-  const op = ops[state.playIndex % ops.length];
-  const before = cloneState(state.liveState);
-  const after = applyOp(before, op);
-
-  pushHistory({
-    index: state.playIndex,
-    op,
-    before,
-    after,
-  });
-
-  const payload = {
-    start: before,
-    ops: [op],
-    trace: [
-      {
-        step: 0,
-        op: 'start',
-        state: cloneState(before),
-        projected_witness_state: projectWitnessState(before),
-      },
-      {
-        step: 1,
-        op,
-        state: cloneState(after),
-        projected_witness_state: projectWitnessState(after),
-      },
-    ],
-  };
-
-  state.liveState = cloneState(after);
-  syncInputsFromState(after);
-
-  state.playIndex += 1;
-  if (state.playIndex % ops.length === 0) {
-    state.loopCount += 1;
-  }
-
-  renderPayload(payload);
-  setStatus('running');
-  scheduleNextTick();
 }
 
 function startPlayback() {
@@ -388,11 +438,27 @@ function startPlayback() {
   state.isPlaying = true;
   state.loopCount = 0;
   state.playIndex = 0;
-  state.liveState = getStartStateFromInputs();
+  state.playStartState = getStartStateFromInputs();
+  state.liveState = cloneState(state.playStartState);
   state.playHistory = [];
   setRunningUI(true);
   setStatus('running');
-  scheduleNextTick();
+
+  const seed = {
+    start: cloneState(state.playStartState),
+    ops: [],
+    trace: [
+      {
+        step: 0,
+        op: 'start',
+        state: cloneState(state.playStartState),
+        projected_witness_state: projectWitnessState(state.playStartState),
+      },
+    ],
+  };
+  renderPayload(seed);
+
+  playbackTick();
 }
 
 async function fetchServerTrace(start, ops) {
