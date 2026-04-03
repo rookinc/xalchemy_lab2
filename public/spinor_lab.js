@@ -1,38 +1,32 @@
 const els = {
   resetBtn: document.getElementById('reset-btn'),
-  stepBtn: document.getElementById('step-btn'),
+  traceBtn: document.getElementById('trace-btn'),
   playBtn: document.getElementById('play-btn'),
   frameInput: document.getElementById('frame-input'),
   phaseInput: document.getElementById('phase-input'),
+  sheetInput: document.getElementById('sheet-input'),
   hzInput: document.getElementById('hz-input'),
-  modeInput: document.getElementById('mode-input'),
+  opsInput: document.getElementById('ops-input'),
   statusText: document.getElementById('status-text'),
-  codeText: document.getElementById('code-text'),
-  stateText: document.getElementById('state-text'),
-  phaseText: document.getElementById('phase-text'),
-  alignmentText: document.getElementById('alignment-text'),
-  payloadText: document.getElementById('payload-text'),
-  consoleOutput: document.getElementById('console-output'),
+  startText: document.getElementById('start-text'),
+  projectedText: document.getElementById('projected-text'),
+  stepsText: document.getElementById('steps-text'),
+  opsText: document.getElementById('ops-text'),
+  traceOutput: document.getElementById('trace-output'),
+  summaryOutput: document.getElementById('summary-output'),
+};
+
+const LAB = {
+  frameModulus: 15,
 };
 
 const state = {
-  frame: 0,
-  phase: 0,
-  r: 1,
   isPlaying: false,
   timer: null,
-  stepCount: 0,
-  alternateFlip: false,
+  loopCount: 0,
+  playIndex: 0,
+  liveState: null,
 };
-
-function frameCount(r = 1) {
-  return 5 * r;
-}
-
-function clampFrame(frame, r = 1) {
-  const n = frameCount(r);
-  return ((frame % n) + n) % n;
-}
 
 function setStatus(text) {
   els.statusText.textContent = text;
@@ -43,118 +37,182 @@ function setRunningUI(isRunning) {
   els.playBtn.textContent = isRunning ? 'Pause' : 'Play';
 }
 
-async function fetchAssembly(frame, phase, r = 1) {
-  const url = `/witness/api/assembly?frame=${frame}&phase=${phase}&r=${r}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
-  }
-  return res.json();
+function parseOps(text) {
+  return text
+    .split(',')
+    .map(x => x.trim())
+    .filter(Boolean);
 }
 
-function renderConsole(payload) {
-  const lines = [
-    `state            : (${payload.frame},${payload.phase})`,
-    `code             : ${payload.code}`,
-    `phase_label      : ${payload.phase_label}`,
-    `alignment        : ${payload.alignment}`,
-    `spread           : ${payload.spread}`,
-    `fiber            : ${payload.fiber}`,
-    `payload          : ${payload.payload}`,
-    `is_exact_payload : ${payload.is_exact_payload}`,
-    ``,
-    `assembly         : ${JSON.stringify(payload.assembly, null, 2)}`,
-    ``,
-    `witness_cycle    : ${JSON.stringify(payload.witness_cycle)}`,
-    `action_cell      : ${JSON.stringify(payload.action_cell)}`,
-    `closed_word      : ${JSON.stringify(payload.closed_witness_word)}`,
-    ``,
-    `diads            : ${JSON.stringify(payload.diads)}`,
-    `couplers         : ${JSON.stringify(payload.couplers)}`,
-    `rigid_edges      : ${JSON.stringify(payload.rigid_edges)}`,
-    `variable_edges   : ${JSON.stringify(payload.variable_edges)}`,
-    ``,
-    `tau              : ${JSON.stringify(payload.tau)}`,
-    `tau_inv          : ${JSON.stringify(payload.tau_inv)}`,
-    `mu               : ${JSON.stringify(payload.mu)}`,
-    ``,
-    `step_count       : ${state.stepCount}`,
+function normalizeFrame(n) {
+  return ((n % LAB.frameModulus) + LAB.frameModulus) % LAB.frameModulus;
+}
+
+function makeState(frame, phase, sheet) {
+  return {
+    frame: normalizeFrame(Number(frame) || 0),
+    phase: Number(phase) === 1 ? 1 : 0,
+    sheet: sheet === '-' ? '-' : '+',
+  };
+}
+
+function cloneState(s) {
+  return { frame: s.frame, phase: s.phase, sheet: s.sheet };
+}
+
+function flipSheet(sheet) {
+  return sheet === '+' ? '-' : '+';
+}
+
+function projectWitnessState(s) {
+  return [s.frame, s.phase];
+}
+
+function applyOp(s, op) {
+  const cur = cloneState(s);
+
+  if (op === 'tau') {
+    cur.frame = normalizeFrame(cur.frame + 1);
+    return cur;
+  }
+  if (op === 'tau_inv') {
+    cur.frame = normalizeFrame(cur.frame - 1);
+    return cur;
+  }
+  if (op === 'mu') {
+    cur.phase = cur.phase === 0 ? 1 : 0;
+    return cur;
+  }
+  if (op === 'g15') {
+    cur.sheet = flipSheet(cur.sheet);
+    return cur;
+  }
+  if (op === 'g30') {
+    return cur;
+  }
+
+  throw new Error(`Unknown op: ${op}`);
+}
+
+function formatStateTriple(s) {
+  return `(${s.frame},${s.phase},${s.sheet})`;
+}
+
+function formatWitnessPair(pair) {
+  return `(${pair[0]},${pair[1]})`;
+}
+
+function buildTrace(startState, ops) {
+  const trace = [
+    {
+      step: 0,
+      op: 'start',
+      state: cloneState(startState),
+      projected_witness_state: projectWitnessState(startState),
+    },
   ];
 
-  els.consoleOutput.textContent = lines.join('\n');
-}
-
-function renderStatus(payload) {
-  els.codeText.textContent = payload.code;
-  els.stateText.textContent = `(${payload.frame},${payload.phase})`;
-  els.phaseText.textContent = payload.phase_label;
-  els.alignmentText.textContent = payload.alignment;
-  els.payloadText.textContent = payload.payload;
-}
-
-async function syncFromInputs() {
-  state.frame = clampFrame(Number(els.frameInput.value) || 0, state.r);
-  state.phase = Number(els.phaseInput.value) || 0;
-  els.frameInput.value = String(state.frame);
-  els.phaseInput.value = String(state.phase);
-  await loadCurrentState();
-}
-
-function nextStateByMode(payload) {
-  const mode = els.modeInput.value;
-
-  if (mode === 'tau') {
-    return { frame: payload.tau[0], phase: payload.tau[1] };
+  let cur = cloneState(startState);
+  for (let i = 0; i < ops.length; i += 1) {
+    cur = applyOp(cur, ops[i]);
+    trace.push({
+      step: i + 1,
+      op: ops[i],
+      state: cloneState(cur),
+      projected_witness_state: projectWitnessState(cur),
+    });
   }
 
-  if (mode === 'mu') {
-    return { frame: payload.mu[0], phase: payload.mu[1] };
-  }
-
-  if (mode === 'alternate') {
-    state.alternateFlip = !state.alternateFlip;
-    const target = state.alternateFlip ? payload.tau : payload.mu;
-    return { frame: target[0], phase: target[1] };
-  }
-
-  return { frame: payload.tau[0], phase: payload.tau[1] };
+  return {
+    start: cloneState(startState),
+    ops: [...ops],
+    trace,
+  };
 }
 
-async function loadCurrentState() {
-  setStatus('loading');
-  try {
-    const data = await fetchAssembly(state.frame, state.phase, state.r);
-    const payload = data.payload;
-    renderStatus(payload);
-    renderConsole(payload);
-    setStatus('ready');
-    return payload;
-  } catch (err) {
-    console.error(err);
-    setStatus('error');
-    els.consoleOutput.textContent = String(err);
-    return null;
+function renderTrace(payload) {
+  const lines = [];
+  for (const row of payload.trace) {
+    lines.push(
+      `${String(row.step).padEnd(3)} ${row.op.padEnd(8)} ${formatStateTriple(row.state).padEnd(12)} -> ${formatWitnessPair(row.projected_witness_state)}`
+    );
   }
+  els.traceOutput.textContent = lines.join('\n');
 }
 
-async function stepOnce() {
-  const payload = await loadCurrentState();
-  if (!payload) return;
+function renderSummary(payload) {
+  const start = payload.start;
+  const end = payload.trace[payload.trace.length - 1];
+  const ops = payload.ops;
 
-  const next = nextStateByMode(payload);
-  state.frame = clampFrame(next.frame, state.r);
-  state.phase = next.phase;
-  state.stepCount += 1;
+  const lines = [
+    `start_state         : ${formatStateTriple(start)}`,
+    `start_projected     : ${formatWitnessPair(payload.trace[0].projected_witness_state)}`,
+    ``,
+    `op_word             : ${ops.join(',') || '(none)'}`,
+    `step_count          : ${payload.trace.length - 1}`,
+    `loop_count          : ${state.loopCount}`,
+    `play_index          : ${state.playIndex}`,
+    ``,
+    `end_state           : ${formatStateTriple(end.state)}`,
+    `end_projected       : ${formatWitnessPair(end.projected_witness_state)}`,
+    ``,
+    `sheet_changed       : ${start.sheet !== end.state.sheet}`,
+    `phase_changed       : ${start.phase !== end.state.phase}`,
+    `frame_changed       : ${start.frame !== end.state.frame}`,
+  ];
 
-  els.frameInput.value = String(state.frame);
-  els.phaseInput.value = String(state.phase);
+  const g15Count = ops.filter(op => op === 'g15').length;
+  const g30Count = ops.filter(op => op === 'g30').length;
+  if (g15Count || g30Count) {
+    lines.push('');
+    lines.push(`g15_count          : ${g15Count}`);
+    lines.push(`g30_count          : ${g30Count}`);
+  }
 
-  await loadCurrentState();
+  els.summaryOutput.textContent = lines.join('\n');
+}
+
+function renderPayload(payload) {
+  els.startText.textContent = formatStateTriple(payload.start);
+  els.projectedText.textContent = formatWitnessPair(payload.trace[0].projected_witness_state);
+  els.stepsText.textContent = String(payload.trace.length - 1);
+  els.opsText.textContent = payload.ops.join(',');
+  renderTrace(payload);
+  renderSummary(payload);
+}
+
+function getStartStateFromInputs() {
+  return makeState(
+    els.frameInput.value,
+    els.phaseInput.value,
+    els.sheetInput.value
+  );
+}
+
+function getOpsFromInput() {
+  const ops = parseOps(els.opsInput.value.trim() || 'tau');
+  return ops.length ? ops : ['tau'];
+}
+
+function syncInputsFromState(s) {
+  els.frameInput.value = String(s.frame);
+  els.phaseInput.value = String(s.phase);
+  els.sheetInput.value = s.sheet;
+}
+
+function runTraceFromInputs() {
+  const start = getStartStateFromInputs();
+  const ops = getOpsFromInput();
+  const payload = buildTrace(start, ops);
+  renderPayload(payload);
+  state.liveState = cloneState(payload.trace[payload.trace.length - 1].state);
+  setStatus(state.isPlaying ? 'running' : 'ready');
 }
 
 function stopPlayback(status = 'paused') {
   if (state.timer) {
-    clearInterval(state.timer);
+    clearTimeout(state.timer);
     state.timer = null;
   }
   state.isPlaying = false;
@@ -162,35 +220,90 @@ function stopPlayback(status = 'paused') {
   setStatus(status);
 }
 
+function scheduleNextTick() {
+  if (!state.isPlaying) return;
+  const hz = Math.max(1, Math.min(10, Number(els.hzInput.value) || 2));
+  const delayMs = Math.max(150, Math.floor(1000 / hz));
+  state.timer = setTimeout(playbackTick, delayMs);
+}
+
+function playbackTick() {
+  if (!state.isPlaying) return;
+
+  const ops = getOpsFromInput();
+  if (!ops.length) {
+    stopPlayback('ready');
+    return;
+  }
+
+  if (!state.liveState) {
+    state.liveState = getStartStateFromInputs();
+  }
+
+  const op = ops[state.playIndex % ops.length];
+  const start = cloneState(state.liveState);
+  const end = applyOp(start, op);
+
+  const payload = {
+    start,
+    ops: [op],
+    trace: [
+      {
+        step: 0,
+        op: 'start',
+        state: cloneState(start),
+        projected_witness_state: projectWitnessState(start),
+      },
+      {
+        step: 1,
+        op,
+        state: cloneState(end),
+        projected_witness_state: projectWitnessState(end),
+      },
+    ],
+  };
+
+  renderPayload(payload);
+
+  state.liveState = cloneState(end);
+  syncInputsFromState(end);
+
+  state.playIndex += 1;
+  if (state.playIndex % ops.length === 0) {
+    state.loopCount += 1;
+  }
+
+  setStatus('running');
+  scheduleNextTick();
+}
+
 function startPlayback() {
   stopPlayback('running');
   state.isPlaying = true;
+  state.loopCount = 0;
+  state.playIndex = 0;
+  state.liveState = getStartStateFromInputs();
   setRunningUI(true);
   setStatus('running');
-
-  const hz = Math.max(1, Math.min(60, Number(els.hzInput.value) || 2));
-  const intervalMs = Math.floor(1000 / hz);
-
-  state.timer = setInterval(async () => {
-    if (!state.isPlaying) return;
-    await stepOnce();
-  }, intervalMs);
+  scheduleNextTick();
 }
 
-els.resetBtn.addEventListener('click', async () => {
+els.resetBtn.addEventListener('click', () => {
   stopPlayback('ready');
-  state.frame = 0;
-  state.phase = 0;
-  state.stepCount = 0;
-  state.alternateFlip = false;
+  state.loopCount = 0;
+  state.playIndex = 0;
   els.frameInput.value = '0';
   els.phaseInput.value = '0';
-  await loadCurrentState();
+  els.sheetInput.value = '+';
+  els.opsInput.value = 'tau,mu,g15';
+  runTraceFromInputs();
 });
 
-els.stepBtn.addEventListener('click', async () => {
+els.traceBtn.addEventListener('click', () => {
   stopPlayback('ready');
-  await stepOnce();
+  state.loopCount = 0;
+  state.playIndex = 0;
+  runTraceFromInputs();
 });
 
 els.playBtn.addEventListener('click', () => {
@@ -201,14 +314,11 @@ els.playBtn.addEventListener('click', () => {
   }
 });
 
-els.frameInput.addEventListener('change', syncFromInputs);
-els.phaseInput.addEventListener('change', syncFromInputs);
-els.modeInput.addEventListener('change', () => {
-  state.alternateFlip = false;
-});
 els.hzInput.addEventListener('change', () => {
-  if (state.isPlaying) startPlayback();
+  if (state.isPlaying) {
+    startPlayback();
+  }
 });
 
 setRunningUI(false);
-loadCurrentState();
+runTraceFromInputs();
