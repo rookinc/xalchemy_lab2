@@ -25,9 +25,15 @@ def _incident_edge_ids(node_id: str) -> list[str]:
 def _primary_member(members: list[str], phase: int, sheet: str) -> str:
     if len(members) == 1:
         return members[0]
-    if sheet == "-":
-        return members[-1]
-    return members[0]
+
+    # First-pass lift choice:
+    # - sheet chooses the default side of the fiber
+    # - phase toggles which side is emphasized
+    use_last = (sheet == "-")
+    if phase == 1:
+        use_last = not use_last
+
+    return members[-1] if use_last else members[0]
 
 
 def g30_state_to_g60_focus(frame: int, phase: int, sheet: str) -> dict[str, Any]:
@@ -65,6 +71,7 @@ def g30_state_to_g60_focus(frame: int, phase: int, sheet: str) -> dict[str, Any]
             "active_edges": _incident_edge_ids(primary),
             "phase_band": phase_band,
             "sheet_accent": state["sheet"],
+            "fiber_size": len(members),
         },
         "legend": {
             "note": "First-pass scaffold focus driven by provisional quotient classes.",

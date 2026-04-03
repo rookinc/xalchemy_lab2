@@ -38,6 +38,9 @@ const els = {
   g60G30Class: document.getElementById('g60-g30-class'),
   g60G15Class: document.getElementById('g60-g15-class'),
   g60PrimaryNode: document.getElementById('g60-primary-node'),
+  g60OpLabel: document.getElementById('g60-op-label'),
+  g60PhaseLabel: document.getElementById('g60-phase-label'),
+  g60SheetLabel: document.getElementById('g60-sheet-label'),
 };
 
 const LAB = {
@@ -57,6 +60,7 @@ const state = {
   playHistory: [],
   g60LayoutReady: false,
   g60LastFocusKey: '',
+  lastTransitionOp: 'start',
 };
 
 function setStatus(text) {
@@ -367,16 +371,35 @@ async function updateG60Panel(payload) {
   const key = JSON.stringify(focus.input_state);
   state.g60LastFocusKey = key;
 
+  const opLabel = state.lastTransitionOp || 'start';
+  const phaseLabel = sf.phase_band || 'subjective';
+  const sheetLabel = sf.sheet_accent || '+';
+
+  const g60Card = els.g60Stage.closest('.g60-card');
+  if (g60Card) {
+    g60Card.classList.remove('op-tau', 'op-mu', 'op-g15');
+    if (opLabel === 'tau') g60Card.classList.add('op-tau');
+    if (opLabel === 'mu') g60Card.classList.add('op-mu');
+    if (opLabel === 'g15') g60Card.classList.add('op-g15');
+  }
+
   if (els.g60G30Class) els.g60G30Class.textContent = focus.g30_focus.class_id;
   if (els.g60G15Class) els.g60G15Class.textContent = focus.g15_focus.class_id;
   if (els.g60PrimaryNode) els.g60PrimaryNode.textContent = sf.primary_node;
+  if (els.g60OpLabel) els.g60OpLabel.textContent = opLabel;
+  if (els.g60PhaseLabel) els.g60PhaseLabel.textContent = phaseLabel;
+  if (els.g60SheetLabel) {
+    els.g60SheetLabel.textContent = sheetLabel;
+    els.g60SheetLabel.classList.remove('sheet-plus', 'sheet-minus');
+    els.g60SheetLabel.classList.add(sheetLabel === '-' ? 'sheet-minus' : 'sheet-plus');
+  }
 
   els.g60StageEdgeOverlay.textContent = '';
   els.g60StageNodeOverlay.textContent = '';
 
   const nodeEls = Array.from(els.g60StageNodes.querySelectorAll('.g60-node'));
   nodeEls.forEach((node) => {
-    node.classList.remove('active', 'neighbor', 'primary', 'sheet-minus');
+    node.classList.remove('active', 'neighbor', 'primary', 'sheet-minus', 'op-mu', 'op-g15');
   });
 
   const active = new Set(sf.active_nodes || []);
@@ -390,6 +413,8 @@ async function updateG60Panel(payload) {
     if (active.has(id)) node.classList.add('active');
     if (id === primary) node.classList.add('primary');
     if (minus && (active.has(id) || id === primary)) node.classList.add('sheet-minus');
+    if (opLabel === 'mu' && (active.has(id) || id === primary)) node.classList.add('op-mu');
+    if (opLabel === 'g15' && (active.has(id) || id === primary)) node.classList.add('op-g15');
   });
 
   const overlayDefs = [
@@ -412,20 +437,22 @@ async function updateG60Panel(payload) {
     }
     const [x1, y1] = G60_LAYOUT[a];
     const [x2, y2] = G60_LAYOUT[b];
+    const extraOpClass = opLabel === 'tau' ? ' op-tau' : (opLabel === 'mu' ? ' op-mu' : (opLabel === 'g15' ? ' op-g15' : ''));
     const line = svgEl('line', {
       x1, y1, x2, y2,
-      class: `g60-edge active${minus ? ' sheet-minus' : ''}`,
+      class: `g60-edge active${minus ? ' sheet-minus' : ''}${extraOpClass}`,
     });
     els.g60StageEdgeOverlay.appendChild(line);
   }
 
   if (primary && G60_LAYOUT[primary]) {
     const [x, y] = G60_LAYOUT[primary];
+    const extraOpClass = opLabel === 'tau' ? ' op-tau' : (opLabel === 'mu' ? ' op-mu' : (opLabel === 'g15' ? ' op-g15' : ''));
     const ring = svgEl('circle', {
       cx: x,
       cy: y,
       r: 20,
-      class: `g60-ring ${sf.phase_band === 'objective' ? 'phase-objective' : 'phase-subjective'}`,
+      class: `g60-ring ${sf.phase_band === 'objective' ? 'phase-objective' : 'phase-subjective'}${extraOpClass}`,
     });
     els.g60StageNodeOverlay.appendChild(ring);
   }
@@ -698,6 +725,8 @@ function runTraceFromInputs() {
   const start = getStartStateFromInputs();
   const ops = getOpsFromInput();
   const payload = buildTrace(start, ops);
+  const end = payload.trace[payload.trace.length - 1];
+  state.lastTransitionOp = end && end.op ? end.op : 'start';
   renderPayload(payload);
   state.playStartState = cloneState(start);
   state.liveState = cloneState(payload.trace[payload.trace.length - 1].state);
@@ -755,6 +784,8 @@ function playbackTick() {
       before,
       after,
     });
+
+    state.lastTransitionOp = op;
 
     const start = cloneState(state.playStartState || getStartStateFromInputs());
     const payload = {

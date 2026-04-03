@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any, TypedDict
 
-from .core import validate_state as validate_witness_state
 
 
 class G30State(TypedDict):
@@ -114,7 +113,13 @@ def validate_g30_state(state: G30State) -> G30State:
     phase = state["phase"]
     sheet = state["sheet"]
 
-    validate_witness_state((frame, phase), 1)
+    if not isinstance(frame, int):
+        raise ValueError("frame must be an int")
+    if not (0 <= frame < 15):
+        raise ValueError("frame must satisfy 0 <= frame < 15")
+
+    if phase not in {0, 1}:
+        raise ValueError("phase must be 0 or 1")
 
     if sheet not in {"+", "-"}:
         raise ValueError("sheet must be '+' or '-'")
