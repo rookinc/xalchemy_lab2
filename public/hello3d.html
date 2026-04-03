@@ -10,7 +10,9 @@
       color-scheme: dark;
       --bg: #081019;
       --panel: rgba(10, 18, 30, 0.84);
+      --panel-2: rgba(15, 24, 38, 0.92);
       --line: rgba(120, 170, 255, 0.20);
+      --line-strong: rgba(120, 170, 255, 0.45);
       --text: #e8f0f8;
       --muted: #9fb0c3;
       --accent: #8ab4ff;
@@ -23,163 +25,317 @@
       min-height: 100%;
       background: var(--bg);
       color: var(--text);
-      font: 16px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font: 16px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      overflow-x: hidden;
     }
 
-    body { padding: 16px; }
+    body { padding: 0; }
 
     .shell {
-      max-width: 1120px;
+      width: 100%;
+      max-width: 960px;
       margin: 0 auto;
       display: grid;
-      gap: 16px;
+      gap: 0;
+      overflow-x: hidden;
     }
 
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 16px;
-      backdrop-filter: blur(8px);
+    .topbar {
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(8,16,25,0.98), rgba(8,16,25,0.92));
     }
 
-    .hero h1 {
-      margin: 0 0 6px;
-      font-size: 1.7rem;
+    .title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0 0 2px;
     }
 
-    .sub { color: var(--muted); }
-
-    .links,
-    .controls {
-      margin-top: 12px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: end;
-    }
-
-    a.button,
-    button,
-    input[type="range"] {
-      font: inherit;
-    }
-
-    a.button,
-    button {
-      display: inline-block;
-      text-decoration: none;
-      color: var(--text);
-      background: rgba(138, 180, 255, 0.08);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px 12px;
-      cursor: pointer;
-    }
-
-    .field {
-      display: grid;
-      gap: 6px;
-      min-width: 180px;
-    }
-
-    .field label {
+    .sub {
       color: var(--muted);
-      font-size: 0.95rem;
+      font-size: 0.9rem;
     }
 
-    input[type="range"] {
-      width: 220px;
-      accent-color: var(--accent);
+    .stage-shell,
+    .stage-frame,
+    .stage-inner,
+    .controls,
+    .control-row,
+    .section-card,
+    .telemetry,
+    .button-grid,
+    .button-row-4,
+    .nav-row,
+    .range-row,
+    .range-row.long {
+      min-width: 0;
     }
 
-    .stage-wrap {
+    .stage-shell {
       position: relative;
-      overflow: hidden;
-      border-radius: 18px;
-      border: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
       background:
-        radial-gradient(circle at 50% 40%, rgba(120,170,255,0.10), transparent 34%),
+        radial-gradient(circle at 50% 36%, rgba(120,170,255,0.10), transparent 34%),
         linear-gradient(180deg, #081019 0%, #0b1623 100%);
-      min-height: 72vh;
+    }
+
+    .stage-frame {
+      position: relative;
+      padding: 10px;
+    }
+
+    .stage-inner {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      overflow: hidden;
+      background: rgba(8, 16, 25, 0.65);
     }
 
     #stage {
       display: block;
       width: 100%;
-      height: 72vh;
+      height: 34vh;
+      min-height: 240px;
+      max-height: 360px;
       touch-action: none;
     }
 
-    .hud {
-      position: absolute;
-      left: 16px;
-      top: 16px;
+    .telemetry {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      overflow-x: auto;
+      padding: 10px 14px 12px;
+      border-top: 1px solid var(--line);
+      background: rgba(10, 18, 30, 0.86);
+      color: var(--muted);
+      white-space: nowrap;
+      scrollbar-width: none;
+      font-size: 0.95rem;
+    }
+
+    .telemetry::-webkit-scrollbar {
+      display: none;
+    }
+
+    .telemetry strong {
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 700;
+      margin-left: 4px;
+    }
+
+    .controls {
+      padding: 12px 14px 18px;
+      display: grid;
+      gap: 12px;
+      overflow-x: hidden;
+    }
+
+    .control-row {
       display: grid;
       gap: 8px;
-      z-index: 2;
-      max-width: min(94vw, 480px);
     }
 
-    .pill {
-      background: rgba(10, 18, 30, 0.80);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 10px 12px;
+    .control-label {
       color: var(--muted);
+      font-size: 0.92rem;
     }
 
-    .pill strong { color: var(--text); }
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
 
-    .footer-note { color: var(--muted); }
+    .button-row-4 {
+      display: grid;
+      grid-template-columns: 56px 56px 56px minmax(0, 1fr);
+      gap: 10px;
+    }
+
+    .nav-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    button,
+    a.button {
+      appearance: none;
+      width: 100%;
+      min-width: 0;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--text);
+      border-radius: 18px;
+      padding: 10px 12px;
+      font: inherit;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      min-height: 48px;
+    }
+
+    button.is-active {
+      border-color: var(--line-strong);
+      box-shadow: inset 0 0 0 1px rgba(138,180,255,0.35);
+      color: var(--accent);
+    }
+
+    .compact {
+      min-height: 48px;
+      border-radius: 16px;
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+    }
+
+    .range-row.long {
+      grid-template-columns: 54px minmax(0, 1fr);
+    }
+
+    .range-tag {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      min-width: 0;
+      accent-color: var(--accent);
+    }
+
+    .section-card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 10px 12px;
+      background: rgba(10, 18, 30, 0.52);
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.3;
+    }
 
     @media (max-width: 640px) {
-      body { padding: 10px; }
-      .stage-wrap, #stage { min-height: 64vh; height: 64vh; }
-      .hero h1 { font-size: 1.35rem; }
-      input[type="range"] { width: 100%; }
-      .field { min-width: 100%; }
+      .title { font-size: 1.25rem; }
+
+      .button-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .button-row-4 {
+        grid-template-columns: 52px 52px 52px minmax(0, 1fr);
+      }
+
+      #stage {
+        height: 32vh;
+        min-height: 220px;
+      }
+
+      .telemetry {
+        font-size: 0.9rem;
+        gap: 12px;
+      }
+
+      .telemetry strong {
+        font-size: 0.96rem;
+      }
     }
   </style>
 </head>
 <body>
   <main class="shell">
-    <section class="panel hero">
-      <h1>Tetra Lab Zero</h1>
-      <div class="sub">
-        Minimal tetra sandbox for Aletheos. One tetrahedron, one camera, one light, one orbit control.
+    <header class="topbar">
+      <div class="title">Tetra Lab Zero</div>
+      <div class="sub">Fresh 3D baseline · stage first · controls below</div>
+    </header>
+
+    <section class="stage-shell">
+      <div class="stage-frame">
+        <div class="stage-inner">
+          <canvas id="stage"></canvas>
+        </div>
       </div>
 
-      <div class="links">
-        <a class="button" href="/">← Home</a>
-        <a class="button" href="/witness">Witness</a>
-        <button id="reset-camera" type="button">Reset camera</button>
-        <button id="toggle-spin" type="button">Pause spin</button>
-      </div>
-
-      <div class="controls">
-        <div class="field">
-          <label for="face-opacity">Face opacity</label>
-          <input id="face-opacity" type="range" min="0" max="100" step="1" value="78" />
-        </div>
-        <div class="field">
-          <label for="wire-opacity">Wire opacity</label>
-          <input id="wire-opacity" type="range" min="0" max="100" step="1" value="100" />
-        </div>
+      <div class="telemetry" id="telemetry">
+        <span>Tick <strong id="metric-tick">0</strong></span>
+        <span>Dist <strong id="metric-dist">0.00</strong></span>
+        <span>Yaw <strong id="metric-yaw">0.00</strong></span>
+        <span>Pitch <strong id="metric-pitch">0.00</strong></span>
+        <span>View <strong id="metric-view">Iso</strong></span>
+        <span>Face <strong id="metric-face">78%</strong></span>
       </div>
     </section>
 
-    <section class="stage-wrap">
-      <div class="hud">
-        <div class="pill"><strong>Mode:</strong> tetra lab zero</div>
-        <div class="pill"><strong>Controls:</strong> drag orbit · pinch / wheel zoom · right-drag pan</div>
-        <div class="pill" id="readout"><strong>Status:</strong> booting</div>
+    <section class="controls">
+      <div class="control-row">
+        <div class="nav-row">
+          <a class="button compact" href="/">← Home</a>
+          <a class="button compact" href="/witness">Witness</a>
+        </div>
       </div>
-      <canvas id="stage"></canvas>
-    </section>
 
-    <section class="panel footer-note">
-      This page is intentionally small and clean. It is the new 3D baseline: a stable tetra interface before any witness or graph machinery is mapped into space.
+      <div class="control-row">
+        <div class="control-label">Zoom</div>
+        <div class="range-row long">
+          <div class="range-tag">Zoom</div>
+          <input id="zoom-slider" type="range" min="0" max="100" step="1" value="76" />
+        </div>
+      </div>
+
+      <div class="control-row">
+        <div class="control-label">View</div>
+        <div class="button-grid">
+          <button id="cam-front" type="button">Front</button>
+          <button id="cam-top" type="button">Top</button>
+          <button id="cam-iso" class="is-active" type="button">Iso</button>
+        </div>
+      </div>
+
+      <div class="control-row">
+        <div class="button-row-4">
+          <button id="reset-camera" type="button">↺</button>
+          <button id="step-left" type="button">|◀</button>
+          <button id="step-right" type="button">▶|</button>
+          <button id="toggle-spin" type="button">Pause</button>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="control-row">
+          <div class="range-row">
+            <div class="range-tag">OUT</div>
+            <input id="face-opacity" type="range" min="0" max="100" step="1" value="78" />
+          </div>
+
+          <div class="range-row">
+            <div class="range-tag">IN</div>
+            <input id="inner-opacity" type="range" min="0" max="100" step="1" value="78" />
+          </div>
+
+          <div class="range-row">
+            <div class="range-tag">Ψ</div>
+            <input id="glow-opacity" type="range" min="0" max="100" step="1" value="8" />
+          </div>
+
+          <div class="range-row long">
+            <div class="range-tag">Edge</div>
+            <input id="wire-opacity" type="range" min="0" max="100" step="1" value="100" />
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-note">
+        Stage first. Thin telemetry. Compact instrument controls.
+      </div>
     </section>
   </main>
 
@@ -188,10 +344,27 @@
     import { OrbitControls } from '/assets/vendor/three/OrbitControls.js';
 
     const canvas = document.getElementById('stage');
-    const readout = document.getElementById('readout');
+
+    const metricTick = document.getElementById('metric-tick');
+    const metricDist = document.getElementById('metric-dist');
+    const metricYaw = document.getElementById('metric-yaw');
+    const metricPitch = document.getElementById('metric-pitch');
+    const metricView = document.getElementById('metric-view');
+    const metricFace = document.getElementById('metric-face');
+
     const resetBtn = document.getElementById('reset-camera');
+    const stepLeftBtn = document.getElementById('step-left');
+    const stepRightBtn = document.getElementById('step-right');
     const spinBtn = document.getElementById('toggle-spin');
+
+    const camIsoBtn = document.getElementById('cam-iso');
+    const camFrontBtn = document.getElementById('cam-front');
+    const camTopBtn = document.getElementById('cam-top');
+
+    const zoomSlider = document.getElementById('zoom-slider');
     const faceOpacityInput = document.getElementById('face-opacity');
+    const innerOpacityInput = document.getElementById('inner-opacity');
+    const glowOpacityInput = document.getElementById('glow-opacity');
     const wireOpacityInput = document.getElementById('wire-opacity');
 
     const renderer = new THREE.WebGLRenderer({
@@ -205,11 +378,9 @@
     scene.background = new THREE.Color(0x081019);
 
     const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
-    camera.position.set(2.8, 2.2, 3.6);
-
     const controls = new OrbitControls(camera, canvas);
     controls.enableDamping = true;
-    controls.target.set(0, 0.1, 0);
+    controls.target.set(0, 0.12, 0);
 
     const ambient = new THREE.AmbientLight(0xffffff, 0.82);
     scene.add(ambient);
@@ -226,10 +397,8 @@
     grid.position.y = -1.15;
     scene.add(grid);
 
-    const axes = new THREE.AxesHelper(1.8);
-    scene.add(axes);
-
     const tetraGeometry = new THREE.TetrahedronGeometry(1.1, 0);
+
     const tetraMaterial = new THREE.MeshStandardMaterial({
       color: 0x8ab4ff,
       transparent: true,
@@ -240,8 +409,24 @@
       side: THREE.DoubleSide,
     });
 
+    const innerMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffa8d6,
+      transparent: true,
+      opacity: 0.78,
+      metalness: 0.02,
+      roughness: 0.42,
+      flatShading: true,
+      side: THREE.DoubleSide,
+    });
+
     const tetra = new THREE.Mesh(tetraGeometry, tetraMaterial);
     scene.add(tetra);
+
+    const inner = new THREE.Mesh(
+      new THREE.TetrahedronGeometry(0.92, 0),
+      innerMaterial
+    );
+    scene.add(inner);
 
     const edges = new THREE.LineSegments(
       new THREE.EdgesGeometry(tetraGeometry),
@@ -254,7 +439,7 @@
     tetra.add(edges);
 
     const glow = new THREE.Mesh(
-      new THREE.CircleGeometry(1.45, 48),
+      new THREE.CircleGeometry(1.5, 48),
       new THREE.MeshBasicMaterial({
         color: 0x8ab4ff,
         transparent: true,
@@ -267,6 +452,7 @@
 
     let spinning = true;
     let tick = 0;
+    let currentPreset = 'iso';
 
     function resize() {
       const rect = canvas.getBoundingClientRect();
@@ -277,62 +463,147 @@
       renderer.setSize(width, height, false);
     }
 
-    function resetCamera() {
-      camera.position.set(2.8, 2.2, 3.6);
-      controls.target.set(0, 0.1, 0);
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function setActivePreset(name) {
+      currentPreset = name;
+      metricView.textContent = name[0].toUpperCase() + name.slice(1);
+      [camIsoBtn, camFrontBtn, camTopBtn].forEach(btn => btn.classList.remove('is-active'));
+      if (name === 'iso') camIsoBtn.classList.add('is-active');
+      if (name === 'front') camFrontBtn.classList.add('is-active');
+      if (name === 'top') camTopBtn.classList.add('is-active');
+    }
+
+    function syncZoomSlider() {
+      const minDist = 2.4;
+      const maxDist = 8.0;
+      const t = (camera.position.distanceTo(controls.target) - minDist) / (maxDist - minDist);
+      zoomSlider.value = String(Math.round(clamp(1 - t, 0, 1) * 100));
+    }
+
+    function applyCameraPreset(name) {
+      if (name === 'front') {
+        camera.position.set(0, 0.35, 4.4);
+        controls.target.set(0, 0.10, 0);
+      } else if (name === 'top') {
+        camera.position.set(0, 4.8, 0.01);
+        controls.target.set(0, 0.02, 0);
+      } else {
+        camera.position.set(2.8, 2.2, 3.6);
+        controls.target.set(0, 0.12, 0);
+      }
       controls.update();
+      setActivePreset(name);
+      syncZoomSlider();
+    }
+
+    function resetCamera() {
+      applyCameraPreset(currentPreset);
     }
 
     function applyFaceOpacity() {
       tetraMaterial.opacity = Number(faceOpacityInput.value) / 100;
+      metricFace.textContent = `${Math.round(tetraMaterial.opacity * 100)}%`;
+    }
+
+    function applyInnerOpacity() {
+      innerMaterial.opacity = Number(innerOpacityInput.value) / 100;
+    }
+
+    function applyGlowOpacity() {
+      glow.material.opacity = Number(glowOpacityInput.value) / 100;
     }
 
     function applyWireOpacity() {
       edges.material.opacity = Number(wireOpacityInput.value) / 100;
     }
 
+    function applyZoomSlider() {
+      const minDist = 2.4;
+      const maxDist = 8.0;
+      const alpha = Number(zoomSlider.value) / 100;
+      const dist = maxDist - alpha * (maxDist - minDist);
+
+      const direction = new THREE.Vector3()
+        .subVectors(camera.position, controls.target)
+        .normalize()
+        .multiplyScalar(dist);
+
+      camera.position.copy(controls.target).add(direction);
+      controls.update();
+    }
+
+    function stepRotation(dir) {
+      tetra.rotation.y += 0.18 * dir;
+      tetra.rotation.x += 0.05 * dir;
+      inner.rotation.y += 0.14 * dir;
+      inner.rotation.x += 0.04 * dir;
+    }
+
+    function updateTelemetry() {
+      const dx = camera.position.x - controls.target.x;
+      const dy = camera.position.y - controls.target.y;
+      const dz = camera.position.z - controls.target.z;
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      const yaw = Math.atan2(dx, dz);
+      const pitch = Math.atan2(dy, Math.sqrt(dx * dx + dz * dz));
+
+      metricTick.textContent = String(tick);
+      metricDist.textContent = dist.toFixed(2);
+      metricYaw.textContent = yaw.toFixed(2);
+      metricPitch.textContent = pitch.toFixed(2);
+    }
+
     resetBtn.addEventListener('click', resetCamera);
 
     spinBtn.addEventListener('click', () => {
       spinning = !spinning;
-      spinBtn.textContent = spinning ? 'Pause spin' : 'Resume spin';
+      spinBtn.textContent = spinning ? 'Pause' : 'Play';
     });
 
+    stepLeftBtn.addEventListener('click', () => stepRotation(-1));
+    stepRightBtn.addEventListener('click', () => stepRotation(1));
+
+    camIsoBtn.addEventListener('click', () => applyCameraPreset('iso'));
+    camFrontBtn.addEventListener('click', () => applyCameraPreset('front'));
+    camTopBtn.addEventListener('click', () => applyCameraPreset('top'));
+
     faceOpacityInput.addEventListener('input', applyFaceOpacity);
+    innerOpacityInput.addEventListener('input', applyInnerOpacity);
+    glowOpacityInput.addEventListener('input', applyGlowOpacity);
     wireOpacityInput.addEventListener('input', applyWireOpacity);
+    zoomSlider.addEventListener('input', applyZoomSlider);
+
     window.addEventListener('resize', resize);
 
     function animate() {
       tick += 1;
 
       if (spinning) {
-        tetra.rotation.x += 0.006;
-        tetra.rotation.y += 0.010;
+        tetra.rotation.x += 0.004;
+        tetra.rotation.y += 0.008;
+        inner.rotation.x += 0.003;
+        inner.rotation.y += 0.006;
       }
 
-      glow.material.opacity = 0.06 + 0.02 * Math.sin(tick * 0.02);
       controls.update();
-
-      readout.innerHTML =
-        `<strong>Camera:</strong> ` +
-        `x ${camera.position.x.toFixed(2)} · ` +
-        `y ${camera.position.y.toFixed(2)} · ` +
-        `z ${camera.position.z.toFixed(2)} · ` +
-        `face ${(tetraMaterial.opacity * 100).toFixed(0)}%`;
-
+      updateTelemetry();
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     }
 
     try {
       applyFaceOpacity();
+      applyInnerOpacity();
+      applyGlowOpacity();
       applyWireOpacity();
       resize();
-      readout.innerHTML = '<strong>Status:</strong> ready';
+      applyCameraPreset('iso');
       animate();
     } catch (err) {
       console.error(err);
-      readout.innerHTML = '<strong>Status:</strong> error';
     }
   </script>
 </body>
