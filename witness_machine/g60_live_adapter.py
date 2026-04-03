@@ -7,10 +7,22 @@ from .g60_quotient import scaffold_to_g30_classes, g30_to_g15_classes
 from .g60_scaffold import scaffold_adjacency, scaffold_edges
 
 
-ORDERED_G30_CLASSES = [
-    "g30_00", "g30_01", "g30_02", "g30_03",
-    "g30_04", "g30_05", "g30_06", "g30_07",
-    "g30_08", "g30_09", "g30_10", "g30_11",
+FRAME_TO_G30_SLOT = [
+    "g30_00",
+    "g30_01",
+    "g30_02",
+    "g30_03",
+    "g30_04",
+    "g30_05",
+    "g30_06",
+    "g30_07",
+    "g30_08",
+    "g30_09",
+    "g30_10",
+    "g30_11",
+    "g30_00",
+    "g30_01",
+    "g30_02",
 ]
 
 
@@ -44,8 +56,8 @@ def g30_state_to_g60_focus(frame: int, phase: int, sheet: str) -> dict[str, Any]
     g30_to_g15 = g30_to_g15_classes()["g30_to_g15"]
     adj = scaffold_adjacency()
 
-    g30_index = state["frame"] % len(ORDERED_G30_CLASSES)
-    g30_class_id = ORDERED_G30_CLASSES[g30_index]
+    frame_slot = state["frame"] % 15
+    g30_class_id = FRAME_TO_G30_SLOT[frame_slot]
     members = list(s2g30["classes"][g30_class_id])
     primary = _primary_member(members, state["phase"], state["sheet"])
 
@@ -59,7 +71,7 @@ def g30_state_to_g60_focus(frame: int, phase: int, sheet: str) -> dict[str, Any]
         "g30_focus": {
             "class_id": g30_class_id,
             "members": members,
-            "index": g30_index,
+            "frame_slot": frame_slot,
         },
         "g15_focus": {
             "class_id": g30_to_g15[g30_class_id],
