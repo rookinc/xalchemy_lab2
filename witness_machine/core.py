@@ -739,3 +739,42 @@ def so_orbit_summary(i: int, r: int = 1) -> dict[str, Any]:
             "identity_restoring_rule": "n_30 = n_0",
         },
     }
+
+
+def state_assembly(state: State, r: int = 1) -> dict[str, Any]:
+    state = validate_state(state, r)
+    cyc = witness_cycle(state, r)
+    asm = witness_assembly(cyc, r)
+    frame, phase = state
+
+    return {
+        "state": [frame, phase],
+        "code": state_code(state, r),
+        "frame": frame,
+        "phase": phase,
+        "phase_label": phase_label(state, r),
+        "alignment": alignment(state, r),
+        "spread": spread(state, r),
+        "fiber": fiber_size(state, r),
+        "witness_cycle": cyc,
+        "action_cell": action_cell(frame, r),
+        "assembly": asm["assembly"],
+        "scaffold_register": asm["scaffold_register"],
+        "socket": asm["socket"],
+        "payload": asm["payload"],
+        "exact_frame2_payload": asm["exact_frame2_payload"],
+        "is_exact_payload": asm["is_exact_payload"],
+        "closed_witness_word": asm["closed_witness_word"],
+        "rigid_edges": asm["rigid_edges"],
+        "variable_edges": asm["variable_edges"],
+        "diads": asm["diads"],
+        "couplers": asm["couplers"],
+        "output": {
+            "alignment": alignment(state, r),
+            "spread": spread(state, r),
+            "fiber": fiber_size(state, r),
+        },
+        "tau": list(tau(state, r)),
+        "tau_inv": list(tau_inv(state, r)),
+        "mu": list(mu(state, r)),
+    }

@@ -37,4 +37,5 @@ from .core import (
     state_dict,
     action_dict,
     export_machine,
+    state_assembly,
 )
