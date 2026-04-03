@@ -22,6 +22,12 @@ const els = {
   metricLoops: document.getElementById('metric-loops'),
   metricSteps: document.getElementById('metric-steps'),
   metricEnd: document.getElementById('metric-end'),
+  stageViz: document.getElementById('stage-viz'),
+  stageVizGrid: document.getElementById('stage-viz-grid'),
+  stageVizPath: document.getElementById('stage-viz-path'),
+  stageVizPulses: document.getElementById('stage-viz-pulses'),
+  stageVizNodes: document.getElementById('stage-viz-nodes'),
+  stageVizLabels: document.getElementById('stage-viz-labels'),
 };
 
 const LAB = {
@@ -113,7 +119,26 @@ function formatStateTriple(s) {
 }
 
 function formatWitnessPair(pair) {
+
   return `(${pair[0]},${pair[1]})`;
+}
+
+
+function summarizeOpsForDisplay(ops, maxChars = 120) {
+  const text = ops.join(',');
+  if (text.length <= maxChars) return text || '(none)';
+
+  let out = '';
+  let count = 0;
+  for (const op of ops) {
+    const next = out ? `${out},${op}` : op;
+    if (next.length > maxChars - 12) break;
+    out = next;
+    count += 1;
+  }
+
+  const remaining = Math.max(ops.length - count, 0);
+  return remaining > 0 ? `${out}, … (+${remaining} more)` : out;
 }
 
 function currentOpLabel() {
@@ -151,6 +176,7 @@ function buildTrace(startState, ops) {
 }
 
 function renderTrace(payload) {
+  if (!els.traceOutput) return;
   const lines = [];
   for (const row of payload.trace) {
     const marker = row.step === payload.trace.length - 1 ? '>' : ' ';
@@ -162,6 +188,7 @@ function renderTrace(payload) {
 }
 
 function renderPlayHistory() {
+  if (!els.traceOutput) return;
   if (!state.isPlaying || state.playHistory.length === 0) return;
 
   const lines = ['play history', ''];
@@ -221,6 +248,159 @@ function renderSummary(payload, verification = null) {
 }
 
 
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function svgEl(name, attrs = {}) {
+  const el = document.createElementNS(SVG_NS, name);
+  for (const [k, v] of Object.entries(attrs)) {
+    el.setAttribute(k, String(v));
+  }
+  return el;
+}
+
+function stagePoint(frame, phase) {
+  const left = 74;
+  const right = 860;
+  const topY = 72;
+  const bottomY = 190;
+  const stepX = (right - left) / 14;
+  return {
+    x: left + (stepX * frame),
+    y: phase === 1 ? topY : bottomY,
+  };
+}
+
+function drawStageGrid() {
+  if (!els.stageVizGrid || !els.stageVizNodes || !els.stageVizLabels) return;
+  if (els.stageVizGrid.dataset.ready === '1') return;
+
+  for (let f = 0; f < 15; f += 1) {
+    const p0 = stagePoint(f, 0);
+    const p1 = stagePoint(f, 1);
+
+    els.stageVizGrid.appendChild(svgEl('line', {
+      x1: p1.x,
+      y1: 42,
+      x2: p0.x,
+      y2: 220,
+      class: 'stage-grid-line',
+    }));
+
+    const label = svgEl('text', {
+      x: p0.x,
+      y: 242,
+      class: 'stage-node-label',
+    });
+    label.textContent = String(f);
+    els.stageVizLabels.appendChild(label);
+  }
+
+  els.stageVizGrid.appendChild(svgEl('line', {
+    x1: 46,
+    y1: 72,
+    x2: 874,
+    y2: 72,
+    class: 'stage-grid-line phase-divider',
+  }));
+  els.stageVizGrid.appendChild(svgEl('line', {
+    x1: 46,
+    y1: 190,
+    x2: 874,
+    y2: 190,
+    class: 'stage-grid-line phase-divider',
+  }));
+
+  const phase1 = svgEl('text', { x: 16, y: 76, class: 'stage-phase-label' });
+  phase1.textContent = 'φ1';
+  els.stageVizLabels.appendChild(phase1);
+
+  const phase0 = svgEl('text', { x: 16, y: 194, class: 'stage-phase-label' });
+  phase0.textContent = 'φ0';
+  els.stageVizLabels.appendChild(phase0);
+
+  for (let phase = 0; phase <= 1; phase += 1) {
+    for (let frame = 0; frame < 15; frame += 1) {
+      const p = stagePoint(frame, phase);
+      els.stageVizNodes.appendChild(svgEl('circle', {
+        cx: p.x,
+        cy: p.y,
+        r: 7,
+        class: 'stage-node',
+        'data-frame': frame,
+        'data-phase': phase,
+      }));
+    }
+  }
+
+  els.stageVizGrid.dataset.ready = '1';
+}
+
+function updateStageViz(payload) {
+  if (!els.stageViz) return;
+  drawStageGrid();
+
+  els.stageVizPath.textContent = '';
+  els.stageVizPulses.textContent = '';
+
+  const nodes = Array.from(els.stageVizNodes.querySelectorAll('.stage-node'));
+  nodes.forEach((node) => {
+    node.classList.remove('visited', 'current', 'sheet-flip');
+  });
+
+  const trace = payload.trace || [];
+  const pts = [];
+
+  for (const row of trace) {
+    const pair = row.projected_witness_state;
+    if (!pair || pair.length !== 2) continue;
+    const p = stagePoint(pair[0], pair[1]);
+    pts.push({ ...p, row });
+  }
+
+  if (pts.length >= 2) {
+    const d = pts.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+    els.stageVizPath.appendChild(svgEl('path', {
+      d,
+      class: 'stage-path-line',
+    }));
+  }
+
+  for (const p of pts) {
+    els.stageVizPath.appendChild(svgEl('circle', {
+      cx: p.x,
+      cy: p.y,
+      r: 3.4,
+      class: 'stage-path-dot',
+    }));
+  }
+
+  for (const row of trace) {
+    const pair = row.projected_witness_state;
+    if (!pair || pair.length !== 2) continue;
+    const sel = `.stage-node[data-frame="${pair[0]}"][data-phase="${pair[1]}"]`;
+    const node = els.stageVizNodes.querySelector(sel);
+    if (node) node.classList.add('visited');
+    if (node && row.op === 'g15') node.classList.add('sheet-flip');
+  }
+
+  const end = trace[trace.length - 1];
+  if (end && end.projected_witness_state) {
+    const [frame, phase] = end.projected_witness_state;
+    const sel = `.stage-node[data-frame="${frame}"][data-phase="${phase}"]`;
+    const node = els.stageVizNodes.querySelector(sel);
+    if (node) node.classList.add('current');
+
+    const pulse = svgEl('circle', {
+      cx: stagePoint(frame, phase).x,
+      cy: stagePoint(frame, phase).y,
+      r: 13,
+      class: 'stage-pulse',
+    });
+    els.stageVizPulses.appendChild(pulse);
+  }
+}
+
 function updateStagePanel(payload) {
   if (!els.stageLiveState) return;
 
@@ -237,6 +417,7 @@ function updateStagePanel(payload) {
   if (els.metricLoops) els.metricLoops.textContent = String(state.loopCount);
   if (els.metricSteps) els.metricSteps.textContent = String(state.isPlaying ? state.playIndex : (payload.trace.length - 1));
   if (els.metricEnd) els.metricEnd.textContent = formatStateTriple(live);
+  updateStageViz(payload);
 }
 
 function renderPayload(payload, verification = null) {
@@ -314,22 +495,21 @@ async function verifyAgainstBackend() {
 }
 
 function getStartStateFromInputs() {
-  return makeState(
-    els.frameInput.value,
-    els.phaseInput.value,
-    els.sheetInput.value
-  );
+  return makeState(0, 0, '+');
 }
 
 function getOpsFromInput() {
-  const ops = parseOps(els.opsInput.value.trim() || 'tau');
-  return ops.length ? ops : ['tau'];
+  return ['tau', 'mu', 'g15'];
 }
 
 function syncInputsFromState(s) {
-  els.frameInput.value = String(s.frame);
-  els.phaseInput.value = String(s.phase);
-  els.sheetInput.value = s.sheet;
+  if (els.frameInput) {
+    els.frameInput.value = String(s.frame);
+  }
+  if (els.phaseInput) {
+    els.phaseInput.value = String(s.phase);
+  }
+  void s;
 }
 
 function runTraceFromInputs() {
@@ -523,10 +703,10 @@ els.resetBtn.addEventListener('click', () => {
   state.loopCount = 0;
   state.playIndex = 0;
   state.playHistory = [];
-  els.frameInput.value = '0';
-  els.phaseInput.value = '0';
-  els.sheetInput.value = '+';
-  els.opsInput.value = 'tau,mu,g15';
+  if (els.frameInput) els.frameInput.value = '0';
+  if (els.phaseInput) els.phaseInput.value = '0';
+  
+  if (els.opsInput) els.opsInput.value = 'tau,mu,g15';
   runTraceFromInputs();
 });
 

@@ -32,6 +32,17 @@
 
           <div class="stage-content">
             <div class="stage-kicker">Lifted witness stage</div>
+
+            <div class="stage-viz-shell">
+              <svg id="stage-viz" class="stage-viz" viewBox="0 0 900 260" preserveAspectRatio="none" aria-label="Projected witness lattice">
+                <g id="stage-viz-grid"></g>
+                <g id="stage-viz-path"></g>
+                <g id="stage-viz-pulses"></g>
+                <g id="stage-viz-nodes"></g>
+                <g id="stage-viz-labels"></g>
+              </svg>
+            </div>
+
             <div class="stage-state-row">
               <div class="stage-pill">
                 <span class="stage-pill-label">Lifted</span>
@@ -67,47 +78,16 @@
         <button id="play-btn" type="button">Play</button>
       </div>
 
-      <div class="form-grid">
-        <label class="field">
-          <span>Frame</span>
-          <input id="frame-input" type="number" min="0" max="14" step="1" value="0" />
-        </label>
-
-        <label class="field">
-          <span>Phase</span>
-          <select id="phase-input">
-            <option value="0" selected>0 · subjective</option>
-            <option value="1">1 · objective</option>
-          </select>
-        </label>
-
-        <label class="field">
-          <span>Sheet</span>
-          <select id="sheet-input">
-            <option value="+" selected>+</option>
-            <option value="-">-</option>
-          </select>
-        </label>
-
+      <div class="form-grid form-grid-single">
         <label class="field">
           <span>Rate (Hz)</span>
           <input id="hz-input" type="number" min="1" max="30" step="1" value="2" />
-        </label>
-
-        <label class="field field-wide">
-          <span>Op word</span>
-          <input id="ops-input" type="text" value="tau,mu,g15" />
         </label>
       </div>
     </section>
 
 
-    <section class="console-grid">
-      <section class="console-card">
-        <div class="console-title">Lifted trace</div>
-        <pre id="trace-output">booting...</pre>
-      </section>
-
+    <section class="console-grid console-grid-summary-only">
       <section class="console-card">
         <div class="console-title">Trace summary</div>
         <pre id="summary-output">booting...</pre>
