@@ -61,6 +61,12 @@ def serve_spinor_scene_debug():
 
 
 
+
+
+@app.get("/g60-vessel")
+def serve_g60_vessel():
+    return FileResponse(BASE_DIR / "public" / "g60_vessel.html")
+
 @app.get("/prime-chain")
 def serve_prime_chain():
     return FileResponse(BASE_DIR / "public" / "prime_chain.html")

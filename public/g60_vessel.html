@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>G60 Vessel · Aletheos</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="stylesheet" href="/public/g60_vessel.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="title">G60 Vessel</div>
+      <div class="sub">AT4val[60,6] as host vessel for prime closure and ratcheted propagation</div>
+      <nav class="links">
+        <a href="/">Home</a>
+        <a href="/prime-chain">Prime Chain</a>
+        <a href="/tetra-fold">Fold</a>
+        <a href="/field">Field</a>
+      </nav>
+    </header>
+
+    <section class="stage-card">
+      <div class="stage-shell">
+        <svg id="stage" class="stage" viewBox="0 0 900 620" preserveAspectRatio="xMidYMid meet">
+          <g id="grid-layer"></g>
+          <g id="link-layer"></g>
+          <g id="node-layer"></g>
+          <g id="label-layer"></g>
+        </svg>
+      </div>
+
+      <div class="status-strip">
+        <span>Host <strong id="status-host">AT4val[60,6]</strong></span>
+        <span>Domains <strong id="status-domains">7↓ / 7↑</strong></span>
+        <span>Register <strong id="status-register">WXYZTIW</strong></span>
+        <span>Prime pair <strong id="status-prime">t0 / u0</strong></span>
+      </div>
+    </section>
+
+    <section class="controls-card">
+      <div class="button-row button-row-4">
+        <button id="toggle-upstairs" class="is-active" type="button">Upstairs</button>
+        <button id="toggle-downstairs" class="is-active" type="button">Downstairs</button>
+        <button id="toggle-links" class="is-active" type="button">Links</button>
+        <button id="toggle-labels" class="is-active" type="button">Labels</button>
+      </div>
+
+      <div class="button-row button-row-4">
+        <button id="focus-all" class="is-active" type="button">All</button>
+        <button id="focus-prime" type="button">Prime pair</button>
+        <button id="focus-cycle2" type="button">Cycle²</button>
+        <button id="focus-next" type="button">Next orbit</button>
+      </div>
+    </section>
+
+    <section class="readout-card">
+      <div class="readout-title">Vessel readout</div>
+      <pre id="readout">booting...</pre>
+    </section>
+  </main>
+
+  <script type="module" src="/public/g60_vessel.js"></script>
+</body>
+</html>
