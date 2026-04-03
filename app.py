@@ -59,6 +59,12 @@ def serve_spinor_scene_debug():
 
 
 
+
+
+@app.get("/prime-chain")
+def serve_prime_chain():
+    return FileResponse(BASE_DIR / "public" / "prime_chain.html")
+
 @app.get("/field")
 def serve_field():
     return FileResponse(BASE_DIR / "public" / "field.html")
