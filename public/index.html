@@ -3,58 +3,172 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Aletheos.ai</title>
-  <meta name="description" content="Aletheos.ai — witness harness, cycle views, and machine-facing tools." />
+  <title>Aletheos.ai Lab</title>
+  <meta
+    name="description"
+    content="Aletheos.ai Lab — witness harnesses, cycle routes, spinor scenes, and machine-facing tools."
+  />
   <link rel="icon" href="/favicon.ico" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <style>
     :root {
       color-scheme: dark;
       --bg: #0b0f14;
+      --bg-2: #0f141c;
       --panel: #121821;
-      --panel-2: #0f141c;
+      --panel-2: #0d131b;
       --line: #223041;
+      --line-2: #2b3c50;
       --text: #e8f0f8;
       --muted: #9fb0c3;
       --accent: #8ab4ff;
+      --accent-2: #b7d0ff;
+      --ok: #7ee787;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
 
     * {
       box-sizing: border-box;
     }
 
-    html, body {
+    html,
+    body {
       margin: 0;
       min-height: 100%;
-      background: var(--bg);
+      background:
+        radial-gradient(circle at top, rgba(138, 180, 255, 0.08), transparent 28%),
+        linear-gradient(180deg, var(--bg) 0%, #0a0e13 100%);
       color: var(--text);
-      font: 16px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font: 16px/1.5 var(--mono);
     }
 
     body {
       padding: 20px;
     }
 
+    a {
+      color: inherit;
+    }
+
     .shell {
-      max-width: 980px;
+      max-width: 1120px;
       margin: 0 auto;
       display: grid;
       gap: 16px;
     }
 
     .panel {
-      background: var(--panel);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
       border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 18px;
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow);
     }
 
-    h1, h2 {
-      margin: 0 0 10px;
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.8fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .hero-main {
+      display: grid;
+      gap: 12px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      gap: 8px;
+      padding: 6px 10px;
+      border: 1px solid var(--line-2);
+      border-radius: 999px;
+      color: var(--accent-2);
+      background: rgba(138, 180, 255, 0.08);
+      font-size: 0.82rem;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: clamp(1.8rem, 4vw, 2.9rem);
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      font-size: 1.05rem;
+      margin-bottom: 14px;
     }
 
     .sub {
       color: var(--muted);
+      max-width: 70ch;
+    }
+
+    .hero-actions,
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .hero-side {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .hero-side .label {
+      color: var(--muted);
+      font-size: 0.84rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat {
+      display: grid;
+      gap: 2px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .stat strong {
+      font-size: 1rem;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .section-head .sub {
+      max-width: none;
+      font-size: 0.95rem;
     }
 
     .grid {
@@ -64,102 +178,302 @@
     }
 
     .card {
-      background: var(--panel-2);
+      background: linear-gradient(180deg, var(--bg-2) 0%, var(--panel-2) 100%);
       border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 14px;
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      min-height: 190px;
     }
 
     .card h3 {
-      margin: 0 0 8px;
       font-size: 1rem;
     }
 
     .card p {
-      margin: 0 0 12px;
+      margin: 0;
       color: var(--muted);
+      font-size: 0.95rem;
     }
 
-    a.button {
-      display: inline-block;
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: rgba(255,255,255,0.02);
+      font-size: 0.78rem;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 10px 14px;
       text-decoration: none;
       color: var(--text);
-      border: 1px solid var(--line);
+      border: 1px solid var(--line-2);
       background: rgba(138, 180, 255, 0.08);
       border-radius: 10px;
-      padding: 10px 12px;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
     }
 
-    a.button:hover {
+    .button:hover {
       border-color: var(--accent);
+      background: rgba(138, 180, 255, 0.14);
+      transform: translateY(-1px);
     }
 
-    .links {
+    .button.secondary {
+      background: rgba(255,255,255,0.03);
+    }
+
+    .button-row {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-top: 10px;
+      margin-top: auto;
     }
 
     code {
       color: var(--accent);
+      font-family: var(--mono);
+      font-size: 0.95em;
+    }
+
+    .api-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .api-item {
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel-2);
+    }
+
+    .api-item strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .api-item span {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 860px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 640px) {
       body {
         padding: 12px;
       }
+
+      .panel {
+        padding: 16px;
+      }
+
+      .card {
+        min-height: unset;
+      }
     }
   </style>
 </head>
 <body>
   <main class="shell">
-    <section class="panel">
-      <h1>Aletheos.ai</h1>
-      <div class="sub">
-        Machine-facing tools, witness harnesses, and cycle views.
+    <section class="panel hero">
+      <div class="hero-main">
+        <div class="eyebrow">Aletheos.ai / Lab Surface</div>
+        <h1>Witnesses, cycles, and render labs.</h1>
+        <div class="sub">
+          Public landing page for the current lab stack: witness-machine inspection,
+          route-facing cycle pages, and spinor / 3D experiments.
+        </div>
+        <div class="hero-actions">
+          <a class="button" href="/witness">Open Witness Harness</a>
+          <a class="button secondary" href="/cycle/g15">Open G15 Cycle</a>
+          <a class="button secondary" href="/spinor-lab">Open Spinor Lab</a>
+        </div>
       </div>
+
+      <aside class="hero-side">
+        <div class="label">Current Surface</div>
+        <div class="stat">
+          <strong>Witness + Cycle + Spinor</strong>
+          <span>Primary public-facing lab pages</span>
+        </div>
+        <div class="stat">
+          <strong>G15 / G30 / G60</strong>
+          <span>Route families exposed via cycle views</span>
+        </div>
+        <div class="stat">
+          <strong style="color: var(--ok);">API live under <code>/witness/api/...</code></strong>
+          <span>Machine-facing inspection endpoints</span>
+        </div>
+      </aside>
     </section>
 
     <section class="panel">
-      <h2>Launch</h2>
+      <div class="section-head">
+        <h2>Core Pages</h2>
+        <div class="sub">Primary pages for walking the current lab.</div>
+      </div>
+
       <div class="grid">
-        <div class="card">
+        <article class="card">
+          <div class="tag-row">
+            <span class="tag">primary</span>
+            <span class="tag">interactive</span>
+          </div>
           <h3>Witness Harness</h3>
           <p>
             Direct inspection and stepping of the live witness machine.
           </p>
-          <a class="button" href="/witness">Open /witness</a>
-        </div>
+          <div class="button-row">
+            <a class="button" href="/witness">/witness</a>
+          </div>
+        </article>
 
-        <div class="card">
-          <h3>Cycle View</h3>
+        <article class="card">
+          <div class="tag-row">
+            <span class="tag">routes</span>
+            <span class="tag">cycle-facing</span>
+          </div>
+          <h3>Cycle Views</h3>
           <p>
-            Cycle-facing visual page for G15 / G30 / G60 routes.
+            Route pages for the current machine families. Use these when the
+            cycle itself is the teaching surface.
           </p>
-          <div class="links">
+          <div class="button-row">
             <a class="button" href="/cycle/g15">G15</a>
-            <a class="button" href="/cycle/g30">G30</a>
-            <a class="button" href="/cycle/g60">G60</a>
+            <a class="button secondary" href="/cycle/g30">G30</a>
+            <a class="button secondary" href="/cycle/g60">G60</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="tag-row">
+            <span class="tag">render</span>
+            <span class="tag">3D</span>
+          </div>
+          <h3>Spinor Lab</h3>
+          <p>
+            Dedicated surface for spinor scene experiments and visual render work.
+          </p>
+          <div class="button-row">
+            <a class="button" href="/spinor-lab">/spinor-lab</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <h2>Secondary Pages</h2>
+        <div class="sub">Useful side surfaces and debug-friendly entries.</div>
+      </div>
+
+      <div class="grid">
+        <article class="card">
+          <div class="tag-row">
+            <span class="tag">3D</span>
+            <span class="tag">hello</span>
+          </div>
+          <h3>Hello 3D</h3>
+          <p>
+            Lightweight 3D page for quick scene and rendering checks.
+          </p>
+          <div class="button-row">
+            <a class="button" href="/hello3d">/hello3d</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="tag-row">
+            <span class="tag">debug</span>
+            <span class="tag">spinor</span>
+          </div>
+          <h3>Spinor Scene Debug</h3>
+          <p>
+            Scene-level debug entry for checking geometry, layout, and wiring.
+          </p>
+          <div class="button-row">
+            <a class="button" href="/spinor-scene-debug">scene debug</a>
+            <a class="button secondary" href="/spinor-render-debug">render debug</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="tag-row">
+            <span class="tag">static</span>
+            <span class="tag">reference</span>
+          </div>
+          <h3>Cycle Shell</h3>
+          <p>
+            Route shell for cycle-facing pages.
+          </p>
+          <div class="button-row">
+            <a class="button" href="/cycle/g15">open cycle</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <h2>API Surface</h2>
+        <div class="sub">Machine-facing endpoints for state and trace inspection.</div>
+      </div>
+
+      <div class="api-list">
+        <div class="api-item">
+          <strong>Witness state sample</strong>
+          <span>Read a sample witness state from <code>/witness/api/state?frame=0&phase=0</code>.</span>
+          <div class="button-row" style="margin-top:10px;">
+            <a class="button" href="/witness/api/state?frame=0&phase=0">Sample state</a>
           </div>
         </div>
+
+        <div class="api-item">
+          <strong>Route family examples</strong>
+          <span>
+            Cycle pages currently expose G15, G30, and G60 as the public route families.
+          </span>
+        </div>
       </div>
     </section>
 
     <section class="panel">
-      <h2>API</h2>
-      <div class="sub">
-        The witness API currently lives under <code>/witness/api/...</code>.
+      <div class="section-head">
+        <h2>Orientation</h2>
+        <div class="sub">How to think about the root page.</div>
       </div>
-      <div class="links">
-        <a class="button" href="/witness/api/state?frame=0&phase=0">Sample state</a>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h2>Notes</h2>
-      <div class="sub">
-        This root page is the public landing page. The witness harness is a dedicated subpage.
+      <div class="footer-note">
+        The root page is a stable landing surface, not the main instrument panel.
+        The witness harness remains the operational subpage, while cycle and spinor pages
+        act as specialized views for teaching, rendering, and route inspection.
       </div>
     </section>
   </main>

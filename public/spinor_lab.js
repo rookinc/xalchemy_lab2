@@ -221,6 +221,57 @@ function renderPayload(payload, verification = null) {
   state.lastPayload = payload;
 }
 
+
+async function verifyAgainstBackend() {
+  const start = getStartStateFromInputs();
+  const ops = getOpsFromInput();
+  const localPayload = buildTrace(start, ops);
+
+  const params = new URLSearchParams({
+    frame: String(start.frame),
+    phase: String(start.phase),
+    sheet: String(start.sheet),
+    ops: ops.join(','),
+  });
+
+  const res = await fetch(`/witness/api/g30/trace?${params.toString()}`);
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status} :: ${await res.text()}`);
+  }
+
+  const data = await res.json();
+  const remote = data.payload;
+
+  const localTrace = localPayload.trace.map((row) => ({
+    op: row.op,
+    state: [row.state.frame, row.state.phase, row.state.sheet],
+    projected: row.projected_witness_state,
+  }));
+
+  const remoteTrace = remote.trace.map((row) => ({
+    op: row.op,
+    state: row.state,
+    projected: row.projected_witness_state,
+  }));
+
+  const sameLength = localTrace.length === remoteTrace.length;
+  const sameRows = sameLength && localTrace.every((row, i) => {
+    const other = remoteTrace[i];
+    return (
+      row.op === other.op &&
+      JSON.stringify(row.state) === JSON.stringify(other.state) &&
+      JSON.stringify(row.projected) === JSON.stringify(other.projected)
+    );
+  });
+
+  return {
+    payload: localPayload,
+    verification: sameRows
+      ? { ok: true, reason: 'local trace matches /witness/api/g30/trace' }
+      : { ok: false, reason: 'local trace differs from /witness/api/g30/trace' },
+  };
+}
+
 function getStartStateFromInputs() {
   return makeState(
     els.frameInput.value,
@@ -422,22 +473,16 @@ els.traceBtn.addEventListener('click', () => {
 });
 
 els.verifyBtn.addEventListener('click', async () => {
-  stopPlayback('verifying');
-
-  const start = getStartStateFromInputs();
-  const ops = getOpsFromInput();
-  const localPayload = buildTrace(start, ops);
-  renderPayload(localPayload);
-
   try {
-    const serverPayload = await fetchServerTrace(start, ops);
-    const verdict = comparePayloads(localPayload, serverPayload);
-    renderPayload(localPayload, verdict);
-    setStatus(verdict.ok ? 'verified' : 'mismatch');
+    setStatus('verifying');
+    const { payload, verification } = await verifyAgainstBackend();
+    renderPayload(payload, verification);
+    state.liveState = cloneState(payload.trace[payload.trace.length - 1].state);
+    setStatus(verification.ok ? 'verified' : 'mismatch');
   } catch (err) {
-    console.error(err);
-    renderPayload(localPayload, { ok: false, reason: String(err) });
-    setStatus('verify-error');
+    const fallback = state.lastPayload || buildTrace(getStartStateFromInputs(), getOpsFromInput());
+    renderPayload(fallback, { ok: false, reason: String(err.message || err) });
+    setStatus('verify error');
   }
 });
 
