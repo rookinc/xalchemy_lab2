@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hello 3D · Aletheos</title>
+  <link rel="icon" href="/favicon.ico" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #081019;
+      --panel: rgba(10, 18, 30, 0.84);
+      --line: rgba(120, 170, 255, 0.20);
+      --text: #e8f0f8;
+      --muted: #9fb0c3;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    body { padding: 16px; }
+
+    .shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .hero h1 {
+      margin: 0 0 6px;
+      font-size: 1.7rem;
+    }
+
+    .sub { color: var(--muted); }
+
+    .links {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    a.button, button {
+      display: inline-block;
+      text-decoration: none;
+      color: var(--text);
+      background: rgba(138, 180, 255, 0.08);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .stage-wrap {
+      position: relative;
+      overflow: hidden;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background:
+        radial-gradient(circle at 50% 40%, rgba(120,170,255,0.10), transparent 34%),
+        linear-gradient(180deg, #081019 0%, #0b1623 100%);
+      min-height: 70vh;
+    }
+
+    #stage {
+      display: block;
+      width: 100%;
+      height: 70vh;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      left: 16px;
+      top: 16px;
+      display: grid;
+      gap: 8px;
+      z-index: 2;
+      max-width: min(92vw, 420px);
+    }
+
+    .pill {
+      background: rgba(10, 18, 30, 0.80);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--muted);
+    }
+
+    .pill strong { color: var(--text); }
+
+    .footer-note { color: var(--muted); }
+
+    @media (max-width: 640px) {
+      body { padding: 10px; }
+      .stage-wrap, #stage { min-height: 62vh; height: 62vh; }
+      .hero h1 { font-size: 1.35rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="panel hero">
+      <h1>Hello 3D</h1>
+      <div class="sub">
+        Minimal 3D sandbox page for Aletheos. One cube, one camera, one light, one orbit control.
+      </div>
+      <div class="links">
+        <a class="button" href="/">← Home</a>
+        <a class="button" href="/witness">Witness</a>
+        <button id="reset-camera" type="button">Reset camera</button>
+      </div>
+    </section>
+
+    <section class="stage-wrap">
+      <div class="hud">
+        <div class="pill"><strong>Mode:</strong> hello world 3D</div>
+        <div class="pill"><strong>Controls:</strong> drag orbit · pinch / wheel zoom · right-drag pan</div>
+        <div class="pill" id="readout"><strong>Status:</strong> booting</div>
+      </div>
+      <canvas id="stage"></canvas>
+    </section>
+
+    <section class="panel footer-note">
+      This page is intentionally simple. The goal is to verify a clean 3D interface path before connecting any witness or graph machinery.
+    </section>
+  </main>
+
+  <script type="module">
+    import * as THREE from '/assets/vendor/three/three.module.js';
+    import { OrbitControls } from '/assets/vendor/three/OrbitControls.js';
+
+    const canvas = document.getElementById('stage');
+    const readout = document.getElementById('readout');
+    const resetBtn = document.getElementById('reset-camera');
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: true,
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x081019);
+
+    const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+    camera.position.set(2.8, 2.2, 3.6);
+
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.target.set(0, 0, 0);
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambient);
+
+    const key = new THREE.DirectionalLight(0xffffff, 1.2);
+    key.position.set(4, 5, 3);
+    scene.add(key);
+
+    const grid = new THREE.GridHelper(12, 24, 0x2f5d9a, 0x1d3557);
+    grid.position.y = -1.1;
+    scene.add(grid);
+
+    const axes = new THREE.AxesHelper(1.8);
+    scene.add(axes);
+
+    const geo = new THREE.BoxGeometry(1, 1, 1);
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0x8ab4ff,
+      metalness: 0.15,
+      roughness: 0.32,
+    });
+    const cube = new THREE.Mesh(geo, mat);
+    scene.add(cube);
+
+    const wire = new THREE.LineSegments(
+      new THREE.EdgesGeometry(geo),
+      new THREE.LineBasicMaterial({ color: 0xffffff })
+    );
+    cube.add(wire);
+
+    const floorGlow = new THREE.Mesh(
+      new THREE.CircleGeometry(1.4, 48),
+      new THREE.MeshBasicMaterial({
+        color: 0x8ab4ff,
+        transparent: true,
+        opacity: 0.08,
+      })
+    );
+    floorGlow.rotation.x = -Math.PI / 2;
+    floorGlow.position.y = -1.08;
+    scene.add(floorGlow);
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      const width = Math.max(1, Math.floor(rect.width));
+      const height = Math.max(1, Math.floor(rect.height));
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height, false);
+    }
+
+    function resetCamera() {
+      camera.position.set(2.8, 2.2, 3.6);
+      controls.target.set(0, 0, 0);
+      controls.update();
+    }
+
+    resetBtn.addEventListener('click', resetCamera);
+    window.addEventListener('resize', resize);
+
+    let t = 0;
+    function animate() {
+      t += 0.01;
+      cube.rotation.x += 0.008;
+      cube.rotation.y += 0.012;
+      floorGlow.material.opacity = 0.06 + 0.02 * Math.sin(t * 2.0);
+      controls.update();
+
+      readout.innerHTML =
+        `<strong>Camera:</strong> ` +
+        `x ${camera.position.x.toFixed(2)} · ` +
+        `y ${camera.position.y.toFixed(2)} · ` +
+        `z ${camera.position.z.toFixed(2)}`;
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+
+    try {
+      resize();
+      readout.innerHTML = '<strong>Status:</strong> ready';
+      animate();
+    } catch (err) {
+      console.error(err);
+      readout.innerHTML = `<strong>Status:</strong> error`;
+    }
+  </script>
+</body>
+</html>

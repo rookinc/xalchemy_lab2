@@ -11,13 +11,9 @@ PUBLIC_DIR = BASE_DIR / "public"
 
 app = FastAPI(title="Aletheos")
 
-# API
 app.include_router(witness_router, prefix="/witness/api")
-
-# Static assets
 app.mount("/assets", StaticFiles(directory=PUBLIC_DIR), name="assets")
 
-# Public pages
 @app.get("/")
 def serve_root():
     return FileResponse(PUBLIC_DIR / "index.html")
@@ -29,6 +25,14 @@ def serve_witness():
 @app.get("/witness/")
 def serve_witness_slash():
     return FileResponse(PUBLIC_DIR / "witness.html")
+
+@app.get("/hello3d")
+def serve_hello3d():
+    return FileResponse(PUBLIC_DIR / "hello3d.html")
+
+@app.get("/hello3d/")
+def serve_hello3d_slash():
+    return FileResponse(PUBLIC_DIR / "hello3d.html")
 
 @app.get("/cycle/g15")
 def serve_cycle_g15():
@@ -42,7 +46,6 @@ def serve_cycle_g30():
 def serve_cycle_g60():
     return FileResponse(PUBLIC_DIR / "cycle.html")
 
-# Common top-level assets
 @app.get("/favicon.ico")
 def serve_favicon():
     return FileResponse(PUBLIC_DIR / "favicon.ico")
