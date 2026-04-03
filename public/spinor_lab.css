@@ -769,3 +769,7 @@ pre {
 .g60-meta strong.sheet-plus {
   color: rgba(138,180,255,1);
 }
+
+.g60-node.primary.op-tau {
+  filter: drop-shadow(0 0 10px rgba(138,180,255,0.42));
+}

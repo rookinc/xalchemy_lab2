@@ -61,6 +61,8 @@ const state = {
   g60LayoutReady: false,
   g60LastFocusKey: '',
   lastTransitionOp: 'start',
+  g60LastPrimaryNode: null,
+  g60TauPulseToken: 0,
 };
 
 function setStatus(text) {
@@ -306,6 +308,58 @@ async function fetchG60Focus(stateTriple) {
   return data.payload;
 }
 
+function animateG60TauPulse(fromNodeId, toNodeId, minus = false) {
+  if (!els.g60StageNodeOverlay) return;
+  if (!fromNodeId || !toNodeId) return;
+  if (!G60_LAYOUT[fromNodeId] || !G60_LAYOUT[toNodeId]) return;
+
+  const token = ++state.g60TauPulseToken;
+  const [x1, y1] = G60_LAYOUT[fromNodeId];
+  const [x2, y2] = G60_LAYOUT[toNodeId];
+
+  const line = svgEl('line', {
+    x1, y1, x2, y2,
+    class: `g60-edge active op-tau${minus ? ' sheet-minus' : ''}`,
+    'stroke-opacity': '0.75',
+  });
+
+  const dot = svgEl('circle', {
+    cx: x1,
+    cy: y1,
+    r: 7,
+    class: `g60-node active primary${minus ? ' sheet-minus' : ''}`,
+  });
+
+  els.g60StageNodeOverlay.appendChild(line);
+  els.g60StageNodeOverlay.appendChild(dot);
+
+  const durationMs = 260;
+  const started = performance.now();
+
+  function step(now) {
+    if (token !== state.g60TauPulseToken) return;
+
+    const t = Math.min(1, (now - started) / durationMs);
+    const ease = 1 - Math.pow(1 - t, 3);
+
+    const x = x1 + (x2 - x1) * ease;
+    const y = y1 + (y2 - y1) * ease;
+
+    dot.setAttribute('cx', String(x));
+    dot.setAttribute('cy', String(y));
+    dot.setAttribute('opacity', String(1 - 0.35 * t));
+
+    if (t < 1) {
+      requestAnimationFrame(step);
+    } else {
+      if (line.parentNode) line.parentNode.removeChild(line);
+      if (dot.parentNode) dot.parentNode.removeChild(dot);
+    }
+  }
+
+  requestAnimationFrame(step);
+}
+
 function drawG60Base() {
   if (!els.g60Stage || !els.g60StageEdges || !els.g60StageNodes || !els.g60StageLabels) return;
   if (state.g60LayoutReady) return;
@@ -366,6 +420,7 @@ async function updateG60Panel(payload) {
   const end = payload.trace[payload.trace.length - 1];
   if (!end || !end.state) return;
 
+  const previousPrimary = state.g60LastPrimaryNode;
   const focus = await fetchG60Focus(end.state);
   const sf = focus.scaffold_focus;
   const key = JSON.stringify(focus.input_state);
@@ -456,6 +511,12 @@ async function updateG60Panel(payload) {
     });
     els.g60StageNodeOverlay.appendChild(ring);
   }
+
+  if (opLabel === 'tau' && previousPrimary && previousPrimary !== primary) {
+    animateG60TauPulse(previousPrimary, primary, minus);
+  }
+
+  state.g60LastPrimaryNode = primary || null;
 }
 
 
