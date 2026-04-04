@@ -5,13 +5,17 @@ const stage = document.getElementById("stage");
 const lensSelect = document.getElementById("lens-select");
 const lensNote = document.getElementById("lens-note");
 
+const stateStepEl = document.getElementById("state-step");
+const stateLandmarkEl = document.getElementById("state-landmark");
 const stateFrameEl = document.getElementById("state-frame");
 const statePhaseEl = document.getElementById("state-phase");
 const stateSheetEl = document.getElementById("state-sheet");
 const stateHostPassEl = document.getElementById("state-host-pass");
 const stateRegionEl = document.getElementById("state-region");
 
-const DEFAULT_MODE = "single";
+const playToggleBtn = document.getElementById("play-toggle");
+const stepBackBtn = document.getElementById("step-back");
+const stepForwardBtn = document.getElementById("step-forward");
 
 const REGION_COLORS = {
   upstairs: 0x96d95d,
@@ -154,22 +158,44 @@ async function loadJson(path) {
 }
 
 let shellGrammar = null;
-let stateMachine = null;
 let shellProjection = null;
-let hostStateMachine = null;
+
+let currentStep = 0;
+let isPlaying = false;
+let lastAdvanceMs = 0;
+const STEP_INTERVAL_MS = 700;
+const TRAIL_LENGTH = 5;
+
+function stepToState(step) {
+  const s = ((step % 60) + 60) % 60;
+  const frame = s % 15;
+  const quarter = Math.floor(s / 15);
+  const sheet = quarter === 0 || quarter === 2 ? "+" : "-";
+  const host_pass = quarter;
+  const phase = 0;
+  return { step: s, frame, phase, sheet, host_pass };
+}
+
+function landmarkForStep(step) {
+  if (step === 0) return "origin";
+  if (step === 15) return "sign closure";
+  if (step === 30) return "identity closure";
+  if (step === 45) return "third-pass return";
+  return step === 59 ? "approaching host closure" : "in flight";
+}
+
+function isLandmarkStep(step) {
+  return step === 0 || step === 15 || step === 30 || step === 45;
+}
 
 async function loadSpecs() {
   try {
-    const [grammar, machine, projection, hostMachine] = await Promise.all([
+    const [grammar, projection] = await Promise.all([
       loadJson("/specs/g15_transport/transport_shell_grammar.json"),
-      loadJson("/specs/g15_transport/transport_state_machine.json"),
       loadJson("/specs/g15_transport/transport_shell_projection.json"),
-      loadJson("/specs/g15_transport/transport_host_state_machine.json"),
     ]);
     shellGrammar = grammar;
-    stateMachine = machine;
     shellProjection = projection;
-    hostStateMachine = hostMachine;
     applySpecsToUI();
   } catch (err) {
     console.warn("Failed to load one or more transport specs:", err);
@@ -366,14 +392,6 @@ function addHighlightLine(a, b, color, opacity = 0.95) {
   highlightLines.push(line);
 }
 
-function addHighlightPath(indices, color, opacity = 0.95) {
-  const pts = indices.map((i) => positions[i]).filter(Boolean);
-  if (pts.length < 2) return;
-  const line = makeLine(pts, color, opacity);
-  highlightGroup.add(line);
-  highlightLines.push(line);
-}
-
 function addHalo(index, color, scale = 1.6, opacity = 0.35) {
   const base = nodeMeshes[index];
   if (!base) return;
@@ -403,25 +421,10 @@ function regionForFrame(frame) {
   return "stairs";
 }
 
-function buildHostState(mode = DEFAULT_MODE) {
-  const single = mode !== "double";
-  return {
-    frame: 0,
-    phase: 0,
-    sheet: single ? "+" : "-",
-    host_pass: single ? 0 : 2,
-  };
-}
-
-function buildFrameCycle(sheetValue) {
-  const base = Array.from({ length: 15 }, (_, i) => i);
-  if (sheetValue === "+") return base;
-  return [...base].reverse();
-}
-
 function updateStateReadout(state) {
-  if (!state) return;
   const region = regionForFrame(state.frame);
+  stateStepEl.textContent = `step: ${state.step}`;
+  stateLandmarkEl.textContent = `landmark: ${landmarkForStep(state.step)}`;
   stateFrameEl.textContent = `frame: ${state.frame}`;
   statePhaseEl.textContent = `phase: ${state.phase}`;
   stateSheetEl.textContent = `sheet: ${state.sheet}`;
@@ -448,25 +451,46 @@ function signedLiftClassForEdge(edgeIndex, a, b) {
   return parity === 0 ? "parallel" : "crossed";
 }
 
-function renderProjectedLift(mode = DEFAULT_MODE) {
+function trailOpacity(rank) {
+  const values = [0.95, 0.72, 0.52, 0.34, 0.20];
+  return values[Math.min(rank, values.length - 1)];
+}
+
+function pulseOpacity(step, nowMs) {
+  if (!isLandmarkStep(step)) return 0.18;
+  const t = (nowMs % 1000) / 1000;
+  return 0.28 + 0.22 * (0.5 + 0.5 * Math.sin(2 * Math.PI * t));
+}
+
+function renderProjectedLift(nowMs = 0) {
   clearHighlights();
   applyNodeRegionColors();
 
-  const state = buildHostState(mode);
+  const state = stepToState(currentStep);
   updateStateReadout(state);
 
-  const frameCycle = buildFrameCycle(state.sheet);
-
-  for (let i = 0; i < frameCycle.length; i += 1) {
-    const a = frameCycle[i];
-    const b = frameCycle[(i + 1) % frameCycle.length];
-    const region = regionForFrame(a);
-    addHighlightLine(a, b, REGION_COLORS[region], 0.92);
+  for (let i = 0; i < TRAIL_LENGTH; i += 1) {
+    const s = stepToState(currentStep - i);
+    const next = stepToState(currentStep - i + 1);
+    const color = REGION_COLORS[regionForFrame(s.frame)];
+    addHighlightLine(s.frame, next.frame, color, trailOpacity(i));
   }
 
   const stairsFrames = shellProjection?.frame_partition?.stairs_frames || [0, 5, 10];
   for (const f of stairsFrames) {
-    addHalo(f, REGION_COLORS.stairs, f === 0 ? 2.2 : 1.5, f === 0 ? 0.42 : 0.22);
+    const pulse = isLandmarkStep(currentStep) && f === state.frame;
+    addHalo(
+      f,
+      REGION_COLORS.stairs,
+      f === 0 ? 2.2 : 1.5,
+      pulse ? pulseOpacity(currentStep, nowMs) : 0.16
+    );
+  }
+
+  addHalo(state.frame, REGION_COLORS[regionForFrame(state.frame)], 2.0, 0.34);
+
+  if (isLandmarkStep(currentStep)) {
+    addHalo(state.frame, 0xffffff, 2.8, pulseOpacity(currentStep, nowMs) * 0.75);
   }
 
   const lensName = lensSelect?.value || "tetra";
@@ -481,7 +505,7 @@ function renderProjectedLift(mode = DEFAULT_MODE) {
     `${lensText} Step 15: sign closure. Step 30: identity closure. Step 45: third-pass return. Step 60: host closure.`;
 }
 
-function renderSignedLift() {
+function renderSignedLift(nowMs = 0) {
   clearHighlights();
   applyNodeRegionColors();
 
@@ -490,13 +514,18 @@ function renderSignedLift() {
     addHighlightLine(a, b, SIGN_COLORS[cls], 0.88);
   }
 
+  const state = stepToState(currentStep);
   addHalo(0, REGION_COLORS.stairs, 2.2, 0.42);
-  updateStateReadout({ frame: 0, phase: 0, sheet: "+", host_pass: 0 });
+  if (isLandmarkStep(currentStep)) {
+    addHalo(state.frame, 0xffffff, 2.8, pulseOpacity(currentStep, nowMs) * 0.75);
+  }
+  updateStateReadout(state);
+
   lensNote.textContent =
     "Signed-lift lens: edge colors show the lift layer. Blue = parallel, pink = crossed. This is companion transport memory, not the quadratic overlap law.";
 }
 
-function setPositions(source) {
+function setPositions(source, nowMs = 0) {
   positions = source.map(([x, y, z]) => new THREE.Vector3(x, y, z));
 
   nodeMeshes.forEach((mesh, i) => mesh.position.copy(positions[i]));
@@ -506,25 +535,18 @@ function setPositions(source) {
     line.geometry = new THREE.BufferGeometry().setFromPoints([positions[a], positions[b]]);
   });
 
-  haloMeshes.forEach((mesh) => {
-    highlightGroup.remove(mesh);
-    mesh.geometry.dispose();
-    mesh.material.dispose();
-  });
-  haloMeshes = [];
-
   if ((lensSelect?.value || "tetra") === "signed") {
-    renderSignedLift();
+    renderSignedLift(nowMs);
   } else {
-    renderProjectedLift(DEFAULT_MODE);
+    renderProjectedLift(nowMs);
   }
 }
 
-function applyLens(lens) {
+function applyLens(lens, nowMs = 0) {
   applySpecsToUI();
 
   if (lens === "cube" || lens === "signed") {
-    setPositions(CUBE_POSITIONS);
+    setPositions(CUBE_POSITIONS, nowMs);
     upstairsPlane.mesh.visible = false;
     upstairsPlane.edge.visible = false;
     downstairsPlane.mesh.visible = false;
@@ -536,14 +558,8 @@ function applyLens(lens) {
     arrows.forEach((a) => { a.visible = lens !== "signed"; });
     camera.position.set(6.0, 4.6, 8.2);
     controls.target.set(0, 0, 0);
-
-    if (lens === "signed") {
-      renderSignedLift();
-    } else {
-      renderProjectedLift(DEFAULT_MODE);
-    }
   } else if (lens === "tetra") {
-    setPositions(TETRA_POSITIONS);
+    setPositions(TETRA_POSITIONS, nowMs);
     upstairsPlane.mesh.visible = false;
     upstairsPlane.edge.visible = false;
     downstairsPlane.mesh.visible = false;
@@ -555,9 +571,8 @@ function applyLens(lens) {
     arrows.forEach((a) => { a.visible = false; });
     camera.position.set(0.0, 2.8, 8.6);
     controls.target.set(0, -0.2, 0);
-    renderProjectedLift(DEFAULT_MODE);
   } else {
-    setPositions(SHEET_POSITIONS);
+    setPositions(SHEET_POSITIONS, nowMs);
     upstairsPlane.mesh.visible = true;
     upstairsPlane.edge.visible = true;
     downstairsPlane.mesh.visible = true;
@@ -569,7 +584,6 @@ function applyLens(lens) {
     arrows.forEach((a) => { a.visible = true; });
     camera.position.set(5.8, 4.0, 7.2);
     controls.target.set(0, 0.1, 0);
-    renderProjectedLift(DEFAULT_MODE);
   }
 
   camera.updateProjectionMatrix();
@@ -593,7 +607,32 @@ function updateLabels() {
   }
 }
 
-function animate() {
+function setStep(step, nowMs = 0) {
+  currentStep = ((step % 60) + 60) % 60;
+  if ((lensSelect?.value || "tetra") === "signed") {
+    renderSignedLift(nowMs);
+  } else {
+    renderProjectedLift(nowMs);
+  }
+}
+
+function togglePlay() {
+  isPlaying = !isPlaying;
+  playToggleBtn.textContent = isPlaying ? "Pause" : "Play";
+}
+
+function animate(now = 0) {
+  if (isPlaying && now - lastAdvanceMs > STEP_INTERVAL_MS) {
+    currentStep = (currentStep + 1) % 60;
+    lastAdvanceMs = now;
+  }
+
+  if ((lensSelect?.value || "tetra") === "signed") {
+    renderSignedLift(now);
+  } else {
+    renderProjectedLift(now);
+  }
+
   controls.update();
   renderer.render(scene, camera);
   updateLabels();
@@ -614,7 +653,18 @@ if (lensSelect) {
   lensSelect.addEventListener("change", (e) => applyLens(e.target.value));
 }
 
+if (playToggleBtn) {
+  playToggleBtn.addEventListener("click", togglePlay);
+}
+if (stepBackBtn) {
+  stepBackBtn.addEventListener("click", () => setStep(currentStep - 1));
+}
+if (stepForwardBtn) {
+  stepForwardBtn.addEventListener("click", () => setStep(currentStep + 1));
+}
+
 await loadSpecs();
 applySpecsToUI();
 applyLens(lensSelect?.value || "tetra");
+setStep(0);
 animate();

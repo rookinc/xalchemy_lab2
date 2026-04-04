@@ -32,6 +32,19 @@
         </div>
 
         <div class="control-group">
+          <label>Host cycle</label>
+          <div class="state-readout">
+            <span id="state-step">step: 0</span>
+            <span id="state-landmark">landmark: origin</span>
+          </div>
+          <div class="state-readout">
+            <button id="play-toggle" type="button">Play</button>
+            <button id="step-back" type="button">-1</button>
+            <button id="step-forward" type="button">+1</button>
+          </div>
+        </div>
+
+        <div class="control-group">
           <label>Lifted host state</label>
           <div class="state-readout" id="state-readout">
             <span id="state-frame">frame: 0</span>
