@@ -1,0 +1,14 @@
+{
+  "name": "g15_transport",
+  "status": "canonical",
+  "source_artifact": "artifacts/g15_transport_search/cpsat_exact_solution.json",
+  "row_weight": 14,
+  "column_weight": 7,
+  "distance_overlap": {
+    "0": 14,
+    "1": 9,
+    "2": 5,
+    "3": 4
+  },
+  "adjacency_polynomial": "Q = 2 I + 2 A^2 + A^3"
+}

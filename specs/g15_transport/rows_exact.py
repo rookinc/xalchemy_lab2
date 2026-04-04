@@ -1,5 +1,3 @@
-# Exact theorem rows for the canonical G15 transport-sector witness.
-
 TRANSPORT_SECTOR_ROWS_EXACT = {
     "v0": ["e16", "e17", "e18", "e19", "e20", "e21", "e22", "e23", "e24", "e25", "e26", "e27", "e28", "e29"],
     "v1": ["e11", "e12", "e13", "e14", "e15", "e21", "e22", "e23", "e24", "e25", "e26", "e27", "e28", "e29"],

@@ -2,27 +2,25 @@ from __future__ import annotations
 
 from typing import Any
 
-from .g15_core import g15_core
+from .g15_transport_witness import load_g15_transport_witness
 
 
-# Fill this with the theorem object once locked.
-# Each row must contain exactly 14 distinct edge labels from e0..e29.
 TRANSPORT_SECTOR_ROWS: dict[str, list[str]] = {
-    "v0": [],
-    "v1": [],
-    "v2": [],
-    "v3": [],
-    "v4": [],
-    "v5": [],
-    "v6": [],
-    "v7": [],
-    "v8": [],
-    "v9": [],
-    "v10": [],
-    "v11": [],
-    "v12": [],
-    "v13": [],
-    "v14": [],
+    "v0": ["e16", "e17", "e18", "e19", "e20", "e21", "e22", "e23", "e24", "e25", "e26", "e27", "e28", "e29"],
+    "v1": ["e11", "e12", "e13", "e14", "e15", "e21", "e22", "e23", "e24", "e25", "e26", "e27", "e28", "e29"],
+    "v2": ["e6", "e7", "e8", "e9", "e10", "e21", "e22", "e23", "e24", "e25", "e26", "e27", "e28", "e29"],
+    "v3": ["e2", "e3", "e4", "e5", "e8", "e9", "e10", "e13", "e14", "e15", "e19", "e20", "e28", "e29"],
+    "v4": ["e1", "e3", "e4", "e5", "e7", "e9", "e10", "e12", "e15", "e18", "e19", "e20", "e27", "e29"],
+    "v5": ["e3", "e4", "e5", "e6", "e7", "e8", "e9", "e10", "e15", "e20", "e24", "e25", "e26", "e29"],
+    "v6": ["e0", "e1", "e2", "e5", "e6", "e7", "e10", "e11", "e12", "e14", "e16", "e17", "e23", "e26"],
+    "v7": ["e0", "e1", "e4", "e5", "e7", "e9", "e11", "e12", "e14", "e17", "e18", "e20", "e23", "e27"],
+    "v8": ["e0", "e2", "e5", "e7", "e11", "e12", "e13", "e14", "e15", "e17", "e22", "e23", "e25", "e27"],
+    "v9": ["e0", "e1", "e2", "e3", "e6", "e8", "e10", "e11", "e13", "e16", "e17", "e18", "e21", "e26"],
+    "v10": ["e0", "e2", "e3", "e4", "e6", "e8", "e13", "e14", "e15", "e16", "e18", "e19", "e21", "e28"],
+    "v11": ["e0", "e1", "e3", "e6", "e13", "e16", "e17", "e18", "e19", "e20", "e21", "e22", "e24", "e28"],
+    "v12": ["e0", "e1", "e2", "e6", "e7", "e8", "e9", "e10", "e11", "e16", "e24", "e25", "e26", "e29"],
+    "v13": ["e2", "e4", "e5", "e8", "e11", "e12", "e13", "e14", "e15", "e19", "e21", "e22", "e25", "e28"],
+    "v14": ["e1", "e3", "e4", "e9", "e12", "e16", "e17", "e18", "e19", "e20", "e22", "e23", "e24", "e27"],
 }
 
 
@@ -96,7 +94,7 @@ def _distance_overlap_histogram(Q: list[list[int]], D: list[list[int]]) -> dict[
 
 
 def transport_sector_validation_report() -> dict[str, Any]:
-    core = g15_core()
+    witness = load_g15_transport_witness()
     rows = transport_sector_rows()
     labels = transport_sector_labels()
 
@@ -129,22 +127,23 @@ def transport_sector_validation_report() -> dict[str, Any]:
             bad_labels[label] = sorted(set(bads))
 
     M = build_transport_M()
-    row_weights = _row_weights(M)
-    column_weights = _column_weights(M)
     Q = _matmul_transpose(M)
-    D = core["distance_matrix"]
+    D = witness["g15_distance_matrix"]
     overlaps = _distance_overlap_histogram(Q, D)
+
+    canonical_M = witness["matrix"]
+    canonical_match = M == canonical_M
 
     return {
         "name": "g15_transport_sectors",
-        "status": "scaffold",
+        "status": "exact_canonical_rows",
         "missing_rows": missing_rows,
         "extra_rows": extra_rows,
         "row_sizes": row_sizes,
         "duplicate_entries": duplicate_entries,
         "bad_labels": bad_labels,
-        "row_weights": row_weights,
-        "column_weights": column_weights,
+        "row_weights": _row_weights(M),
+        "column_weights": _column_weights(M),
         "distance_overlap_values": overlaps,
         "expected_distance_overlap": {
             "0": [14],
@@ -152,11 +151,14 @@ def transport_sector_validation_report() -> dict[str, Any]:
             "2": [5],
             "3": [4],
         },
+        "canonical_match": canonical_match,
+        "canonical_score_sq": witness["score_sq"],
         "theorem_shape_ok": (
-            len(missing_rows) == 0
+            canonical_match
+            and len(missing_rows) == 0
             and len(extra_rows) == 0
-            and all(w == 14 for w in row_weights)
-            and all(w == 7 for w in column_weights)
+            and all(w == 14 for w in _row_weights(M))
+            and all(w == 7 for w in _column_weights(M))
             and overlaps == {"0": [14], "1": [9], "2": [5], "3": [4]}
         ),
         "M": M,
