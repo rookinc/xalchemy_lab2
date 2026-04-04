@@ -18,6 +18,7 @@ app = FastAPI()
 
 app.mount("/assets", StaticFiles(directory=BASE_DIR / "public" / "assets"), name="assets")
 app.mount("/public", StaticFiles(directory=BASE_DIR / "public"), name="public")
+app.mount("/specs", StaticFiles(directory=BASE_DIR / "specs"), name="specs")
 
 app.include_router(witness_api_router, prefix="/witness/api")
 app.include_router(witness_router, prefix="/witness")
@@ -105,6 +106,14 @@ def serve_tetra_instant():
 @app.get("/spinor-render-debug")
 def serve_spinor_render_debug():
     return FileResponse(BASE_DIR / "public" / "spinor_render_debug.html")
+
+@app.get("/g15-transport-shell")
+def serve_g15_transport_shell():
+    return FileResponse(BASE_DIR / "public" / "g15_transport_shell.html")
+
+@app.get("/g15_transport_shell.html")
+def serve_g15_transport_shell_html():
+    return FileResponse(BASE_DIR / "public" / "g15_transport_shell.html")
 
 @app.get("/cycle/{family}")
 def serve_cycle_family(family: str):

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>G15 Transport Shell</title>
+  <link rel="stylesheet" href="/public/g15_transport_shell.css" />
+</head>
+<body>
+  <div class="shell-page">
+    <header class="shell-header">
+      <div>
+        <h1 id="shell-title">G15 Transport Shell</h1>
+        <p id="shell-subtitle">Loading shell grammar...</p>
+      </div>
+      <div class="shell-stats" id="shell-stats">
+        <span id="shell-vertex-count">Vertices: 15</span>
+        <span id="shell-edge-count">Edges: 30</span>
+      </div>
+    </header>
+
+    <main class="shell-main">
+      <section class="controls-panel">
+        <div class="control-group">
+          <label for="lens-select">Lens</label>
+          <select id="lens-select">
+            <option value="sheet">Sheet lens</option>
+            <option value="cube">Cube lens</option>
+            <option value="tetra">Tetra lens</option>
+          </select>
+        </div>
+        <div class="lens-note" id="lens-note">
+          Analysis view with tilted sheets preserved.
+        </div>
+      </section>
+
+      <section class="stage-panel">
+        <div id="stage"></div>
+      </section>
+
+      <section class="legend-panel" id="legend-panel">
+        <div class="legend-item">
+          <span class="legend-swatch upstairs"></span>
+          <span id="legend-green">Upstairs walk</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch mid"></span>
+          <span id="legend-orange">Stairs / middle crossing</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch downstairs"></span>
+          <span id="legend-blue">Downstairs walk</span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/public/g15_transport_shell.js"></script>
+</body>
+</html>
