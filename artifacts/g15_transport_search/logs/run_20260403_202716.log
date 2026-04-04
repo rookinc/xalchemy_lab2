@@ -1,0 +1,13 @@
+[info] python=python3
+[info] outdir=artifacts/g15_transport_search
+[info] workers=8 iterations=1200000 seed=20260403
+[done] worker=1 seed=20270410 score_sq=8 best_iter=40880 path=artifacts/g15_transport_search/worker_01_final.json
+[done] worker=6 seed=20320445 score_sq=6 best_iter=25479 path=artifacts/g15_transport_search/worker_06_final.json
+[done] worker=7 seed=20330452 score_sq=8 best_iter=38052 path=artifacts/g15_transport_search/worker_07_final.json
+[done] worker=0 seed=20260403 score_sq=6 best_iter=42478 path=artifacts/g15_transport_search/worker_00_final.json
+[done] worker=4 seed=20300431 score_sq=10 best_iter=44578 path=artifacts/g15_transport_search/worker_04_final.json
+[done] worker=3 seed=20290424 score_sq=8 best_iter=45293 path=artifacts/g15_transport_search/worker_03_final.json
+[done] worker=2 seed=20280417 score_sq=8 best_iter=20867 path=artifacts/g15_transport_search/worker_02_final.json
+[done] worker=5 seed=20310438 score_sq=14 best_iter=26418 path=artifacts/g15_transport_search/worker_05_final.json
+[summary] best_global_score_sq=6
+[summary] best_global_path=artifacts/g15_transport_search/best_global.json

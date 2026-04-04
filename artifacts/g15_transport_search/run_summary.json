@@ -1,0 +1,69 @@
+{
+  "base_seed": 20260403,
+  "best_global_path": "artifacts/g15_transport_search/best_global.json",
+  "best_global_score_sq": 6,
+  "command": "search",
+  "elapsed_seconds": 13962.525167226791,
+  "finished_unix": 1775287199.3336802,
+  "iterations_per_worker": 1200000,
+  "results": [
+    {
+      "best_iter": 40880,
+      "path": "artifacts/g15_transport_search/worker_01_final.json",
+      "score_sq": 8,
+      "seed": 20270410,
+      "worker_id": 1
+    },
+    {
+      "best_iter": 25479,
+      "path": "artifacts/g15_transport_search/worker_06_final.json",
+      "score_sq": 6,
+      "seed": 20320445,
+      "worker_id": 6
+    },
+    {
+      "best_iter": 38052,
+      "path": "artifacts/g15_transport_search/worker_07_final.json",
+      "score_sq": 8,
+      "seed": 20330452,
+      "worker_id": 7
+    },
+    {
+      "best_iter": 42478,
+      "path": "artifacts/g15_transport_search/worker_00_final.json",
+      "score_sq": 6,
+      "seed": 20260403,
+      "worker_id": 0
+    },
+    {
+      "best_iter": 44578,
+      "path": "artifacts/g15_transport_search/worker_04_final.json",
+      "score_sq": 10,
+      "seed": 20300431,
+      "worker_id": 4
+    },
+    {
+      "best_iter": 45293,
+      "path": "artifacts/g15_transport_search/worker_03_final.json",
+      "score_sq": 8,
+      "seed": 20290424,
+      "worker_id": 3
+    },
+    {
+      "best_iter": 20867,
+      "path": "artifacts/g15_transport_search/worker_02_final.json",
+      "score_sq": 8,
+      "seed": 20280417,
+      "worker_id": 2
+    },
+    {
+      "best_iter": 26418,
+      "path": "artifacts/g15_transport_search/worker_05_final.json",
+      "score_sq": 14,
+      "seed": 20310438,
+      "worker_id": 5
+    }
+  ],
+  "started_unix": 1775273236.808513,
+  "workers": 8
+}
