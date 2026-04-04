@@ -26,11 +26,24 @@
           <select id="lens-select">
             <option value="sheet">Sheet lens</option>
             <option value="cube">Cube lens</option>
-            <option value="tetra">Tetra lens</option>
+            <option value="tetra" selected>Tetra lens</option>
+            <option value="signed">Signed-lift lens</option>
           </select>
         </div>
+
+        <div class="control-group">
+          <label>Lifted host state</label>
+          <div class="state-readout" id="state-readout">
+            <span id="state-frame">frame: 0</span>
+            <span id="state-phase">phase: 0</span>
+            <span id="state-sheet">sheet: +</span>
+            <span id="state-host-pass">host_pass: 0</span>
+            <span id="state-region">region: stairs</span>
+          </div>
+        </div>
+
         <div class="lens-note" id="lens-note">
-          Analysis view with tilted sheets preserved.
+          Tetra lens: simplex view of the projected host state.
         </div>
       </section>
 

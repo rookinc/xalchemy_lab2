@@ -1,0 +1,141 @@
+{
+  "name": "g15_transport_shell_projection",
+  "status": "draft_canonical",
+  "purpose": "Companion projection spec mapping the lifted G30 transport state into shell regions, anchors, and lens-readable positions.",
+  "depends_on": [
+    "transport_state_machine.json",
+    "transport_shell_grammar.json",
+    "transport_cocycle.json"
+  ],
+  "projection_claim": "The shell page should render a projection of the lifted G30 state machine, not invent an independent walk law.",
+  "input_state": {
+    "space": "G30",
+    "fields": ["frame", "phase", "sheet"]
+  },
+  "output_shell_state": {
+    "fields": [
+      "region",
+      "anchor",
+      "inverse_anchor",
+      "orientation_class",
+      "lens_anchor_role"
+    ]
+  },
+  "region_model": {
+    "regions": ["upstairs", "downstairs", "stairs"],
+    "distinguished_region": "stairs",
+    "statement": "The stairs are the overlap region where lift/sign memory becomes legible in the shell."
+  },
+  "anchor_sets": {
+    "cube_lens": {
+      "v0": "stairs_midpoint_cube_centroid",
+      "v1": "bottom_face_centroid",
+      "v2": "top_face_centroid",
+      "v3": "front_top_right_corner",
+      "v4": "back_top_right_corner",
+      "v5": "front_bottom_right_corner",
+      "v6": "back_top_left_corner",
+      "v7": "back_bottom_right_corner",
+      "v8": "front_face_centroid",
+      "v9": "right_face_centroid",
+      "v10": "left_face_centroid",
+      "v11": "back_face_centroid",
+      "v12": "top_sheet_anchor",
+      "v13": "bottom_sheet_anchor",
+      "v14": "stairs_inner_transition_anchor"
+    },
+    "sheet_lens": {
+      "v0": "lower_front_right_corner",
+      "v1": "lower_right_inner",
+      "v2": "upper_back_right_corner",
+      "v3": "upper_right_face_anchor",
+      "v4": "upper_left_face_anchor",
+      "v5": "lower_left_face_anchor",
+      "v6": "upper_front_right_corner",
+      "v7": "mid_right_walk_anchor",
+      "v8": "mid_left_walk_anchor",
+      "v9": "mid_left_inner_anchor",
+      "v10": "stairs_lower_inner_anchor",
+      "v11": "stairs_mid_inner_anchor",
+      "v12": "upper_sheet_anchor",
+      "v13": "lower_sheet_anchor",
+      "v14": "stairs_core_anchor"
+    },
+    "tetra_lens": {
+      "v0": "tetra_centroid",
+      "v1": "edge_midpoint_ab",
+      "v2": "corner_a",
+      "v3": "corner_b",
+      "v4": "corner_c",
+      "v5": "corner_d",
+      "v6": "face_centroid_abc",
+      "v7": "face_centroid_abd",
+      "v8": "face_centroid_acd",
+      "v9": "face_centroid_bcd",
+      "v10": "edge_midpoint_ac",
+      "v11": "edge_midpoint_ad",
+      "v12": "edge_midpoint_bc",
+      "v13": "edge_midpoint_bd",
+      "v14": "edge_midpoint_cd"
+    }
+  },
+  "frame_partition": {
+    "stairs_frames": [0, 5, 10],
+    "upstairs_frames": [1, 2, 3, 4, 11, 12],
+    "downstairs_frames": [6, 7, 8, 9, 13, 14],
+    "statement": "This draft partition gives the shell renderer a first canonical region assignment. It may be refined later, but should not be replaced by ad hoc arithmetic."
+  },
+  "sheet_projection_rule": {
+    "sheet_plus": {
+      "meaning": "base face / present face orientation"
+    },
+    "sheet_minus": {
+      "meaning": "inverse face / sign-flipped orientation"
+    },
+    "statement": "The shell must treat sheet as inverse-face memory, not as a cosmetic flag."
+  },
+  "orientation_classes": {
+    "phase_0": "subjective",
+    "phase_1": "objective",
+    "statement": "Phase is preserved under full G15 and full G30 traversals in the current translator law, but remains part of the visible lifted state."
+  },
+  "projection_rules": {
+    "region_from_frame": "Use frame_partition to assign upstairs/downstairs/stairs.",
+    "anchor_from_frame": "Use frame as the primary anchor index unless an active lens declares a distinguished override.",
+    "inverse_anchor_from_sheet": "If sheet='-', render the corresponding inverse-face counterpart of the anchor in the active lens.",
+    "cube_lens_override": "In cube lens, v0 is always treated as the distinguished stairs midpoint / cube centroid anchor.",
+    "g15_shadow_rule": "When rendering only the G15 shadow, sheet distinctions may be hidden but must not be contradicted."
+  },
+  "walk_reading": {
+    "first_full_walk": {
+      "input": "state(frame, phase, sheet='+')",
+      "output": "state(frame, phase, sheet='-')",
+      "shell_meaning": "same projected frame class, inverse-face counterpart reached, orientation not yet identity-restored"
+    },
+    "second_full_walk": {
+      "input": "state(frame, phase, sheet='-')",
+      "output": "state(frame, phase, sheet='+')",
+      "shell_meaning": "orientation restored, identity restored"
+    }
+  },
+  "render_contract": {
+    "shell_page_must_show": [
+      "region",
+      "anchor",
+      "sheet memory or its absence",
+      "distinguished stairs behavior"
+    ],
+    "shell_page_must_not_assume": [
+      "a pure G15 walk is the full law",
+      "double walking the G15 shadow is sufficient to reconstruct the lift",
+      "sheet can be discarded in the transport truth layer"
+    ]
+  },
+  "anti_drift_rules": [
+    "Do not let the page invent an arithmetic shell walk independent of the lifted state machine.",
+    "Do not collapse inverse-face transport into a color-only distinction.",
+    "Do not remove the distinction between projected anchor and inverse anchor.",
+    "Do not override the cube-lens stairs midpoint role of v0.",
+    "Do not treat provisional visual coordinates as the transport law itself."
+  ]
+}
