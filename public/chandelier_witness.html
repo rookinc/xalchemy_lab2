@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>G60 Vessel · Aletheos</title>
+  <title>Chandelier Witness · Aletheos</title>
   <link rel="icon" href="/favicon.ico" />
-  <link rel="stylesheet" href="/public/prime_chain.css" />
+  <link rel="stylesheet" href="/public/chandelier_witness.css" />
 </head>
 <body>
   <main class="shell">
     <header class="topbar">
-      <div class="title">G60 Vessel</div>
-      <div class="sub">AT4val[60,6] canonical host driven by cumulative occupancy</div>
+      <div class="title">Chandelier Witness</div>
+      <div class="sub">Bilateral occupancy on a transport spine</div>
       <nav class="links">
         <a href="/">Home</a>
-        <a href="/spring-witness">Spring Witness</a>
+        <a href="/spiral-witness">Spiral Witness</a>
         <a href="/prime-chain">Prime Chain</a>
-        <a href="/field">Field</a>
+        <a href="/g60-vessel">G60 Vessel</a>
       </nav>
     </header>
 
@@ -24,35 +24,35 @@
       <div class="stage-shell">
         <svg id="stage" class="stage" viewBox="0 0 900 620" preserveAspectRatio="xMidYMid meet">
           <g id="grid-layer"></g>
-          <g id="face-layer"></g>
+          <g id="guide-layer"></g>
           <g id="edge-layer"></g>
+          <g id="face-layer"></g>
           <g id="node-layer"></g>
           <g id="label-layer"></g>
         </svg>
       </div>
       <div class="status-strip">
-        <span>Host <strong id="status-host">AT4val[60,6]</strong></span>
         <span>Tick <strong id="status-tick">1</strong></span>
-        <span>Nodes <strong id="status-nodes">0</strong></span>
-        <span>Edges <strong id="status-edges">0</strong></span>
-        <span>Faces <strong id="status-faces">0</strong></span>
-        <span>Tetra <strong id="status-tetra">0</strong></span>
+        <span>Slot <strong id="status-slot">W</strong></span>
+        <span>Next <strong id="status-next-slot">X</strong></span>
+        <span>Join <strong id="status-join">f4</strong></span>
+        <span>Sheet <strong id="status-sheet">+</strong></span>
       </div>
     </section>
 
     <section class="controls-card">
-      <div class="button-row button-row-2">
+      <div class="button-row">
         <button id="tick-prev" type="button">-</button>
         <button id="tick-next" type="button">+</button>
       </div>
     </section>
 
     <section class="readout-card">
-      <div class="readout-title">Vessel readout</div>
+      <div class="readout-title">Chandelier readout</div>
       <pre id="readout">booting...</pre>
     </section>
   </main>
 
-  <script type="module" src="/public/g60_vessel.js"></script>
+  <script type="module" src="/public/chandelier_witness.js"></script>
 </body>
 </html>

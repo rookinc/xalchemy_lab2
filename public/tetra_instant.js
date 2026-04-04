@@ -45,6 +45,10 @@ function paletteForPhase() {
   return TETRA_INSTANT.palettes[state.phase];
 }
 
+function activeFaces() {
+  return TETRA_INSTANT.faces[state.phase][state.chirality];
+}
+
 function paletteName() {
   return state.phase === 'subjective' ? 'CMY' : 'RGB';
 }
@@ -55,13 +59,22 @@ function colorMap() {
     : { red: '#ff4d4d', green: '#4dff88', blue: '#4d88ff' };
 }
 
+function activePathSet() {
+  return TETRA_INSTANT.paths[state.phase][state.chirality];
+}
+
 function projectPoint([x, y, z]) {
   const cx = 450;
   const cy = 320;
   const sx = 185;
   const sy = 165;
-  const px = cx + x * sx + z * 90;
-  const py = cy - y * sy + z * 45;
+
+  const chiralitySign = state.chirality === 'right' ? -1 : 1;
+  const zx = chiralitySign * z * 90;
+  const zy = chiralitySign * z * 45;
+
+  const px = cx + x * sx + zx;
+  const py = cy - y * sy + zy;
   return [px, py];
 }
 
@@ -120,7 +133,7 @@ function drawFaces() {
   els.facePolys.textContent = '';
   if (!state.showFaces) return;
 
-  const faces = TETRA_INSTANT.faces[state.phase];
+  const faces = activeFaces();
   const colors = paletteForPhase();
 
   faces.forEach((ids, i) => {
@@ -138,12 +151,9 @@ function drawPaths() {
   if (!state.showPaths) return;
 
   const cmap = colorMap();
-  const keys = state.phase === 'subjective'
-    ? ['cyan', 'magenta', 'yellow']
-    : ['red', 'green', 'blue'];
+  const pathSet = activePathSet();
 
-  for (const key of keys) {
-    const ids = TETRA_INSTANT.paths[key];
+  for (const [key, ids] of Object.entries(pathSet)) {
     const path = svgEl('path', {
       d: pathString(ids),
       class: 'path-line',
@@ -188,16 +198,15 @@ function updateMetrics() {
   els.metricChirality.textContent = state.chirality;
   els.metricPalette.textContent = paletteName();
 
-  const faces = TETRA_INSTANT.faces[state.phase].map((face, i) => `${i}: ${maybeReverse(face).join(' → ')}`);
-  const paths = (state.phase === 'subjective'
-    ? ['cyan', 'magenta', 'yellow']
-    : ['red', 'green', 'blue']
-  ).map((key) => `${key}: ${maybeReverse(TETRA_INSTANT.paths[key]).join(' → ')}`);
+  const faces = activeFaces().map((face, i) => `${i}: ${face.join(' → ')}`);
+  const paths = Object.entries(activePathSet())
+    .map(([key, ids]) => `${key}: ${ids.join(' → ')}`);
 
   els.readout.textContent = [
     `phase              : ${state.phase}`,
     `chirality          : ${state.chirality}`,
     `palette            : ${paletteName()}`,
+    `chirality_rule     : mirrored z-projection`,
     ``,
     `faces`,
     ...faces.map((x) => `  ${x}`),

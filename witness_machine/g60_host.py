@@ -8,8 +8,8 @@ def g60_host_metadata() -> dict[str, Any]:
         "name": "AT4val[60,6]",
         "house_of_graphs_id": "Graph52002",
         "graphsym_id": "AT4val[60,6]",
-        "status": "host_contract_only",
-        "description": "Canonical 60-vertex host target for the G60 layer.",
+        "status": "canonical_host",
+        "description": "Canonical 60-vertex vessel host: AT4val[60,6] / Graph52002.",
     }
 
 

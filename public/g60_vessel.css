@@ -130,10 +130,13 @@ button.is-active {
 #readout {
   margin: 0;
   white-space: pre-wrap;
+  word-break: break-word;
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 12px;
   background: rgba(8,16,25,0.92);
+  font-size: 0.95rem;
+  line-height: 1.28;
 }
 
 .grid-line {

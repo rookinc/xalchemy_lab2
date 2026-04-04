@@ -1,8 +1,15 @@
 export const PRIME_ATTACHMENT = {
-  name: "prime_attachment_v1",
+  name: "prime_attachment_v2",
+
+  cycle_1: {
+    closure_face: "f4",
+    register: ["W","X","Y","Z","T","I","W"],
+  },
 
   prime: {
     id: "t0",
+    domain: "downstairs",
+    role: "prime",
     phase: "objective",
     fold_chirality: "left",
     realized_face_chirality: {
@@ -12,7 +19,6 @@ export const PRIME_ATTACHMENT = {
       f4: "left",
     },
 
-    // Canonical tetra support
     points: {
       A: [-0.72, -0.48, 0.00],
       B: [ 0.72, -0.42, 0.10],
@@ -28,33 +34,32 @@ export const PRIME_ATTACHMENT = {
     },
   },
 
-  attachments: [
-    {
-      id: "t1",
-      parent: "t0",
-      attach_from_face: "f1",
-      mode: "mirror",
-      generated_from: "f4",
-      generated_chirality: "left",
-      register: ["W","X","Y","Z","T","I","W"],
-    },
-    {
-      id: "t2",
-      parent: "t0",
-      attach_from_face: "f2",
-      mode: "mirror",
-      generated_from: "f4",
-      generated_chirality: "left",
-      register: ["W","X","Y","Z","T","I","W"],
-    },
-    {
-      id: "t3",
-      parent: "t0",
-      attach_from_face: "f3",
-      mode: "mirror",
-      generated_from: "f4",
-      generated_chirality: "left",
-      register: ["W","X","Y","Z","T","I","W"],
-    },
-  ],
+  mirrored_prime: {
+    id: "u0",
+    domain: "upstairs",
+    role: "mirrored_prime",
+    mirror_of: "t0",
+  },
+
+  cycle_2: {
+    note: "Ordered bilateral propagation after cycle^1 closure on f4.",
+
+    downstairs_hexad: [
+      { id: "d0", ordinal: 0, attach_from: "f1", chirality: "left"  },
+      { id: "d1", ordinal: 1, attach_from: "f2", chirality: "right" },
+      { id: "d2", ordinal: 2, attach_from: "f3", chirality: "left"  },
+      { id: "d3", ordinal: 3, attach_from: "f1", chirality: "right" },
+      { id: "d4", ordinal: 4, attach_from: "f2", chirality: "left"  },
+      { id: "d5", ordinal: 5, attach_from: "f3", chirality: "right" },
+    ],
+
+    upstairs_hexad: [
+      { id: "u1", ordinal: 0, attach_from: "f1", chirality: "right" },
+      { id: "u2", ordinal: 1, attach_from: "f2", chirality: "left"  },
+      { id: "u3", ordinal: 2, attach_from: "f3", chirality: "right" },
+      { id: "u4", ordinal: 3, attach_from: "f1", chirality: "left"  },
+      { id: "u5", ordinal: 4, attach_from: "f2", chirality: "right" },
+      { id: "u6", ordinal: 5, attach_from: "f3", chirality: "left"  },
+    ],
+  },
 };

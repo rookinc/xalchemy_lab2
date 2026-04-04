@@ -237,3 +237,41 @@ button.is-active {
   text-anchor: start;
   dominant-baseline: middle;
 }
+
+.ghost-edge-line {
+  fill: none;
+  stroke: rgba(232,240,248,0.18);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ghost-face-poly {
+  stroke: rgba(232,240,248,0.10);
+  stroke-width: 1;
+  opacity: 0.10;
+}
+
+.ghost-mark-label {
+  fill: rgba(159,176,195,0.35);
+  font-size: 12px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.slider-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--muted);
+  margin: 10px 2px 6px;
+}
+
+#rate-slider {
+  width: 100%;
+  margin: 0 0 10px;
+}
+
+.button-row-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}

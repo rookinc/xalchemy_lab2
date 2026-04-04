@@ -28,25 +28,57 @@ export const TETRA_INSTANT = {
   },
 
   paths: {
-    cyan:    ["a3", "a8", "a14", "a11", "a12"],
-    magenta: ["a4", "a9", "a10", "a7", "a14"],
-    yellow:  ["a4", "a5", "a6", "a3"],
-    red:     ["a3", "a4", "a5"],
-    green:   ["a5", "a6", "a7"],
-    blue:    ["a3", "a12", "a11"],
+    subjective: {
+      left: {
+        cyan:    ["a3", "a8", "a14", "a11", "a12"],
+        magenta: ["a4", "a9", "a10", "a7", "a14"],
+        yellow:  ["a4", "a5", "a6", "a3"],
+      },
+      right: {
+        cyan:    ["a3", "a14", "a8", "a12", "a11"],
+        magenta: ["a4", "a10", "a9", "a14", "a7"],
+        yellow:  ["a3", "a5", "a4", "a6"],
+      },
+    },
+    objective: {
+      left: {
+        red:   ["a3", "a4", "a5"],
+        green: ["a5", "a6", "a7"],
+        blue:  ["a3", "a12", "a11"],
+      },
+      right: {
+        red:   ["a3", "a5", "a4"],
+        green: ["a5", "a7", "a6"],
+        blue:  ["a3", "a11", "a12"],
+      },
+    },
   },
 
   faces: {
-    subjective: [
-      ["a3", "a8", "a14"],
-      ["a4", "a9", "a14"],
-      ["a10", "a7", "a14"],
-    ],
-    objective: [
-      ["a3", "a4", "a5"],
-      ["a5", "a6", "a7"],
-      ["a3", "a12", "a11"],
-    ],
+    subjective: {
+      left: [
+        ["a3", "a8", "a14"],
+        ["a4", "a9", "a14"],
+        ["a10", "a7", "a14"],
+      ],
+      right: [
+        ["a3", "a14", "a8"],
+        ["a4", "a14", "a10"],
+        ["a9", "a7", "a14"],
+      ],
+    },
+    objective: {
+      left: [
+        ["a3", "a4", "a5"],
+        ["a5", "a6", "a7"],
+        ["a3", "a12", "a11"],
+      ],
+      right: [
+        ["a3", "a5", "a4"],
+        ["a5", "a7", "a6"],
+        ["a3", "a11", "a12"],
+      ],
+    },
   },
 
   palettes: {

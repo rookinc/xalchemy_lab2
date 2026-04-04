@@ -22,8 +22,12 @@ const els = {
   downstairsAnchorDots: document.getElementById('downstairs-anchor-dots'),
   downstairsAnchorLabels: document.getElementById('downstairs-anchor-labels'),
 
+  resetBtn: document.getElementById('reset-btn'),
   prevBtn: document.getElementById('prev-btn'),
   nextBtn: document.getElementById('next-btn'),
+  playBtn: document.getElementById('play-btn'),
+  rateSlider: document.getElementById('rate-slider'),
+  rateValue: document.getElementById('rate-value'),
   toggleAnchors: document.getElementById('toggle-anchors'),
   toggleLabels: document.getElementById('toggle-labels'),
   toggleFaces: document.getElementById('toggle-faces'),
@@ -53,6 +57,9 @@ const state = {
   showCorrespondence: true,
   showDownstairsLabels: true,
   showGhost: true,
+  isPlaying: false,
+  rate: 2,
+  timer: null,
 };
 
 function svgEl(name, attrs = {}) {
@@ -70,6 +77,38 @@ function currentStep() {
 function previousStep() {
   if (state.index <= 0) return null;
   return TETRA_FOLD_LADDER.steps[state.index - 1];
+}
+
+function stepForward() {
+  state.index = (state.index + 1) % TETRA_FOLD_LADDER.steps.length;
+  render();
+}
+
+function stopPlayback() {
+  state.isPlaying = false;
+  if (state.timer) {
+    clearInterval(state.timer);
+    state.timer = null;
+  }
+  render();
+}
+
+function startPlayback() {
+  stopPlayback();
+  state.isPlaying = true;
+  const ms = Math.max(120, Math.round(1000 / state.rate));
+  state.timer = setInterval(() => {
+    stepForward();
+  }, ms);
+  render();
+}
+
+function togglePlayback() {
+  if (state.isPlaying) {
+    stopPlayback();
+  } else {
+    startPlayback();
+  }
 }
 
 function paletteForStep(step) {
@@ -449,6 +488,8 @@ function updateReadout(step) {
     `downstairs        : ${state.showDownstairs}`,
     `correspondence    : ${state.showCorrespondence}`,
     `ghost_prev        : ${state.showGhost}`,
+    `playing           : ${state.isPlaying}`,
+    `rate              : ${state.rate.toFixed(1)}x`,
   ].join('\n');
 }
 
@@ -462,6 +503,10 @@ function setButtonState() {
   els.toggleCorrespondence.classList.toggle('is-active', state.showCorrespondence);
   els.toggleDownstairsLabels.classList.toggle('is-active', state.showDownstairsLabels);
   els.toggleGhost.classList.toggle('is-active', state.showGhost);
+  els.playBtn.classList.toggle('is-active', state.isPlaying);
+  els.playBtn.textContent = state.isPlaying ? 'Pause' : 'Play';
+  els.rateValue.textContent = `${state.rate.toFixed(1)}x`;
+  els.rateSlider.value = String(state.rate);
 }
 
 function render() {
@@ -475,6 +520,11 @@ function render() {
   setButtonState();
 }
 
+els.resetBtn.addEventListener('click', () => {
+  state.index = 0;
+  render();
+});
+
 els.prevBtn.addEventListener('click', () => {
   state.index = Math.max(0, state.index - 1);
   render();
@@ -483,6 +533,19 @@ els.prevBtn.addEventListener('click', () => {
 els.nextBtn.addEventListener('click', () => {
   state.index = Math.min(TETRA_FOLD_LADDER.steps.length - 1, state.index + 1);
   render();
+});
+
+els.playBtn.addEventListener('click', () => {
+  togglePlayback();
+});
+
+els.rateSlider.addEventListener('input', () => {
+  state.rate = Number(els.rateSlider.value);
+  if (state.isPlaying) {
+    startPlayback();
+  } else {
+    render();
+  }
 });
 
 els.toggleAnchors.addEventListener('click', () => {

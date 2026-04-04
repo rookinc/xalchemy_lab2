@@ -1,33 +1,25 @@
-import { G60_VESSEL } from '/assets/spinor/g60_vessel_seed.js';
-
 const els = {
   gridLayer: document.getElementById('grid-layer'),
-  linkLayer: document.getElementById('link-layer'),
+  faceLayer: document.getElementById('face-layer'),
+  edgeLayer: document.getElementById('edge-layer'),
   nodeLayer: document.getElementById('node-layer'),
   labelLayer: document.getElementById('label-layer'),
-  toggleUpstairs: document.getElementById('toggle-upstairs'),
-  toggleDownstairs: document.getElementById('toggle-downstairs'),
-  toggleLinks: document.getElementById('toggle-links'),
-  toggleLabels: document.getElementById('toggle-labels'),
-  focusAll: document.getElementById('focus-all'),
-  focusPrime: document.getElementById('focus-prime'),
-  focusCycle2: document.getElementById('focus-cycle2'),
-  focusNext: document.getElementById('focus-next'),
+  tickPrev: document.getElementById('tick-prev'),
+  tickNext: document.getElementById('tick-next'),
   statusHost: document.getElementById('status-host'),
-  statusDomains: document.getElementById('status-domains'),
-  statusRegister: document.getElementById('status-register'),
-  statusPrime: document.getElementById('status-prime'),
+  statusTick: document.getElementById('status-tick'),
+  statusNodes: document.getElementById('status-nodes'),
+  statusEdges: document.getElementById('status-edges'),
+  statusFaces: document.getElementById('status-faces'),
+  statusTetra: document.getElementById('status-tetra'),
   readout: document.getElementById('readout'),
 };
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 const state = {
-  showUpstairs: true,
-  showDownstairs: true,
-  showLinks: true,
-  showLabels: true,
-  focus: 'all',
+  tick: 1,
+  payload: null,
 };
 
 function svgEl(name, attrs = {}) {
@@ -36,8 +28,15 @@ function svgEl(name, attrs = {}) {
   return el;
 }
 
-function drawGrid() {
+function clearLayers() {
   els.gridLayer.textContent = '';
+  els.faceLayer.textContent = '';
+  els.edgeLayer.textContent = '';
+  els.nodeLayer.textContent = '';
+  els.labelLayer.textContent = '';
+}
+
+function drawGrid() {
   for (let x = 60; x <= 840; x += 40) {
     els.gridLayer.appendChild(svgEl('line', {
       x1: x, y1: 20, x2: x, y2: 600, class: 'grid-line'
@@ -50,237 +49,220 @@ function drawGrid() {
   }
 }
 
-function ringColor(phase, stateName) {
-  if (phase === 'RGB') {
-    if (stateName === 'closed') return 'rgba(255,90,90,0.95)';
-    if (stateName === 'forming') return 'rgba(255,150,90,0.95)';
-    return 'rgba(90,170,255,0.92)';
-  }
-  if (stateName === 'closed') return 'rgba(255,235,110,0.95)';
-  if (stateName === 'forming') return 'rgba(255,190,120,0.95)';
-  return 'rgba(255,90,220,0.92)';
-}
-
-function nodeRadius(role) {
-  if (role.includes('prime')) return 24;
-  if (role.includes('next orbit')) return 18;
-  return 20;
-}
-
-function occupantIdsForFocus() {
-  const occ = G60_VESSEL.occupants;
-  if (state.focus === 'prime') return ['t0', 'u0'];
-  if (state.focus === 'cycle2') return ['t3', 't4', 't5', 'u1', 'u2', 'u3'];
-  if (state.focus === 'next') return ['t6', 't7', 't8', 'u4', 'u5', 'u6'];
-  return Object.keys(occ);
-}
-
-function layout() {
+function posMap() {
   return {
-    t0: [450, 400],
-    u0: [450, 220],
+    n0: [450, 310],
+    n1: [450, 250],
+    n2: [450, 180],
 
-    t3: [180, 420],
-    t4: [290, 420],
-    t5: [400, 420],
+    "3":  [330, 230],
+    "4":  [250, 135],
+    "5":  [450, 105],
+    "6":  [650, 135],
 
-    t6: [560, 420],
-    t7: [670, 420],
-    t8: [780, 420],
+    "7":  [565, 225],
+    "8":  [360, 385],
+    "9":  [255, 320],
+    "10": [560, 290],
 
-    u1: [180, 200],
-    u2: [290, 200],
-    u3: [400, 200],
-
-    u4: [560, 200],
-    u5: [670, 200],
-    u6: [780, 200],
+    "11": [670, 375],
+    "12": [455, 500],
+    "13": [450, 285],
+    "14": [430, 345],
   };
 }
 
-function drawLinks(pos, ids) {
-  if (!state.showLinks) return;
+function edgePair(edgeKey) {
+  const [a, b] = edgeKey.split('|');
+  return [a, b];
+}
 
-  const downRail = [['t0','t3'],['t3','t4'],['t4','t5'],['t5','t6'],['t6','t7'],['t7','t8']];
-  const upRail = [['u0','u1'],['u1','u2'],['u2','u3'],['u3','u4'],['u4','u5'],['u5','u6']];
-  const cross = [['t0','u0'],['t3','u1'],['t4','u2'],['t5','u3'],['t6','u4'],['t7','u5'],['t8','u6']];
+function faceTriple(faceKey) {
+  return faceKey.split('|');
+}
 
-  const allowed = new Set(ids);
+function projectNode(id) {
+  return posMap()[id] || [450, 310];
+}
 
-  for (const [a,b] of downRail) {
-    if (!allowed.has(a) || !allowed.has(b) || !state.showDownstairs) continue;
-    const [x1,y1] = pos[a];
-    const [x2,y2] = pos[b];
-    els.linkLayer.appendChild(svgEl('path', {
-      d: `M ${x1} ${y1} L ${x2} ${y2}`,
-      class: 'rail-link',
-    }));
-  }
+function polygonPoints(ids) {
+  return ids.map((id) => projectNode(id).join(',')).join(' ');
+}
 
-  for (const [a,b] of upRail) {
-    if (!allowed.has(a) || !allowed.has(b) || !state.showUpstairs) continue;
-    const [x1,y1] = pos[a];
-    const [x2,y2] = pos[b];
-    els.linkLayer.appendChild(svgEl('path', {
-      d: `M ${x1} ${y1} L ${x2} ${y2}`,
-      class: 'rail-link',
-    }));
-  }
+function edgePath(a, b) {
+  const [x1, y1] = projectNode(a);
+  const [x2, y2] = projectNode(b);
+  return `M ${x1} ${y1} L ${x2} ${y2}`;
+}
 
-  for (const [a,b] of cross) {
-    if (!allowed.has(a) || !allowed.has(b)) continue;
-    if ((a.startsWith('t') && !state.showDownstairs) || (b.startsWith('u') && !state.showUpstairs)) continue;
-    const [x1,y1] = pos[a];
-    const [x2,y2] = pos[b];
-    els.linkLayer.appendChild(svgEl('path', {
-      d: `M ${x1} ${y1} L ${x2} ${y2}`,
-      class: 'cross-link',
+function drawFaces(payload) {
+  const occupied = new Set(payload.occupied.faces);
+  const frontier = new Set(payload.frontier.faces);
+
+  for (const faceKey of occupied) {
+    const ids = faceTriple(faceKey);
+    els.faceLayer.appendChild(svgEl('polygon', {
+      points: polygonPoints(ids),
+      fill: frontier.has(faceKey) ? 'rgba(255,211,110,0.28)' : 'rgba(142,166,200,0.12)',
+      class: 'face-poly',
     }));
   }
 }
 
-function drawNodes() {
-  els.nodeLayer.textContent = '';
-  els.labelLayer.textContent = '';
+function drawEdges(payload) {
+  const occupied = new Set(payload.occupied.edges);
+  const frontier = new Set(payload.frontier.edges);
 
-  const pos = layout();
-  const ids = occupantIdsForFocus();
+  for (const edgeKey of occupied) {
+    const [a, b] = edgePair(edgeKey);
+    els.edgeLayer.appendChild(svgEl('path', {
+      d: edgePath(a, b),
+      class: 'edge-line',
+      stroke: frontier.has(edgeKey)
+        ? 'rgba(255,230,110,0.92)'
+        : 'rgba(232,240,248,0.34)',
+    }));
+  }
+}
 
-  drawLinks(pos, ids);
+function drawNodes(payload) {
+  const occupied = new Set(payload.occupied.nodes);
+  const frontier = new Set(payload.frontier.nodes);
+  const latestPrimary = payload.latest_delta.primary_node;
 
-  const upBand = svgEl('text', { x: 450, y: 80, class: 'band-label' });
-  upBand.textContent = 'upstairs';
-  const downBand = svgEl('text', { x: 450, y: 545, class: 'band-label' });
-  downBand.textContent = 'downstairs';
-  if (state.showLabels && state.showUpstairs) els.labelLayer.appendChild(upBand);
-  if (state.showLabels && state.showDownstairs) els.labelLayer.appendChild(downBand);
+  for (const id of occupied) {
+    const [x, y] = projectNode(id);
+    let fill = 'rgba(152,174,205,0.72)';
+    let r = 10;
 
-  ids.forEach((id) => {
-    const occ = G60_VESSEL.occupants[id];
-    const isUp = occ.domain === 'upstairs';
-    if ((isUp && !state.showUpstairs) || (!isUp && !state.showDownstairs)) return;
-
-    const [x,y] = pos[id];
-    const fill = ringColor(occ.phase, occ.state);
+    if (frontier.has(id)) {
+      fill = 'rgba(255,211,110,0.95)';
+      r = 11;
+    }
+    if (id === latestPrimary) {
+      fill = 'rgba(255,110,110,0.96)';
+      r = 13;
+    }
 
     els.nodeLayer.appendChild(svgEl('circle', {
       cx: x,
       cy: y,
-      r: nodeRadius(occ.role),
-      class: 'node',
+      r,
       fill,
+      class: 'ring-node',
     }));
 
-    if (state.showLabels) {
-      const t = svgEl('text', { x, y, class: 'node-label' });
-      t.textContent = occ.id;
-      els.labelLayer.appendChild(t);
-
-      const t2 = svgEl('text', { x, y: y + 28, class: 'node-sub' });
-      t2.textContent = `${occ.slot} · ${occ.phase} · ${occ.state}`;
-      els.labelLayer.appendChild(t2);
-    }
-  });
+    const t = svgEl('text', { x, y: y - 16, class: 'label' });
+    t.textContent = id;
+    els.labelLayer.appendChild(t);
+  }
 }
 
-function updateReadout() {
-  const h = G60_VESSEL.host;
-  const ids = occupantIdsForFocus();
-  const rows = ids.map((id) => {
-    const o = G60_VESSEL.occupants[id];
-    return `  ${o.id}  ${o.domain.padEnd(10)}  ${o.phase.padEnd(3)}  ${o.state.padEnd(7)}  ${o.slot.padEnd(11)}  ${o.role}`;
-  });
+function drawLawfulSummary(payload) {
+  const t1 = svgEl('text', { x: 120, y: 72, class: 'domain-label' });
+  t1.textContent = `lawful faces ${payload.lawful_cells.face_count}`;
+  els.labelLayer.appendChild(t1);
 
-  els.statusHost.textContent = h.name;
-  els.statusDomains.textContent = '7↓ / 7↑';
-  els.statusRegister.textContent = G60_VESSEL.register.join('');
-  els.statusPrime.textContent = 't0 / u0';
+  const t2 = svgEl('text', { x: 120, y: 102, class: 'domain-label' });
+  t2.textContent = `lawful tetra ${payload.lawful_cells.tetra_count}`;
+  els.labelLayer.appendChild(t2);
+}
+
+function render(bundle) {
+  const payload = bundle.occupancy;
+  const chronology = bundle.chronology;
+  clearLayers();
+  drawGrid();
+  drawFaces(payload);
+  drawEdges(payload);
+  drawNodes(payload);
+  drawLawfulSummary(payload);
+
+  els.statusHost.textContent = payload.host.name;
+  els.statusTick.textContent = String(payload.tick);
+  els.statusNodes.textContent = String(payload.counts.occupied_nodes);
+  els.statusEdges.textContent = String(payload.counts.occupied_edges);
+  els.statusFaces.textContent = String(payload.counts.occupied_faces);
+  els.statusTetra.textContent = String(payload.counts.occupied_tetra);
+
+  const latest = payload.latest_delta;
+
+  const tetraBirthRows = chronology.tetra_birth || [];
 
   els.readout.textContent = [
-    `host_name            : ${h.name}`,
-    `graphsym_id          : ${h.graphsym_id}`,
-    `house_of_graphs_id   : ${h.house_of_graphs_id}`,
-    `vertex_count         : ${h.vertex_count}`,
-    `edge_count           : ${h.edge_count}`,
-    `regular_degree       : ${h.regular_degree}`,
-    `automorphism_order   : ${h.automorphism_group_order}`,
-    `diameter             : ${h.diameter}`,
-    `shells               : ${h.shells.join(', ')}`,
-    `role                 : ${h.role}`,
+    `host              : ${payload.host.name}`,
+    `hog               : ${payload.host.house_of_graphs_id}`,
+    `gsym              : ${payload.host.graphsym_id}`,
+    `status            : ${payload.host.status}`,
+    `role              : ${payload.host.role}`,
+    `diameter          : ${payload.host.diameter}`,
+    `shells            : ${payload.host.distance_shells_from_anchor.join(', ')}`,
     ``,
-    `register             : ${G60_VESSEL.register.join('')}`,
-    `focus                : ${state.focus}`,
-    `show_upstairs        : ${state.showUpstairs}`,
-    `show_downstairs      : ${state.showDownstairs}`,
-    `show_links           : ${state.showLinks}`,
-    `show_labels          : ${state.showLabels}`,
+    `tick              : ${payload.tick}`,
+    `ticks_applied     : ${payload.ticks_applied.length}`,
     ``,
-    `occupants`,
-    ...rows,
+    `occupied_nodes    : ${payload.counts.occupied_nodes}`,
+    `occupied_edges    : ${payload.counts.occupied_edges}`,
+    `occupied_faces    : ${payload.counts.occupied_faces}`,
+    `occupied_tetra    : ${payload.counts.occupied_tetra}`,
+    ``,
+    `frontier_nodes    : ${payload.counts.frontier_nodes}`,
+    `frontier_edges    : ${payload.counts.frontier_edges}`,
+    `frontier_faces    : ${payload.counts.frontier_faces}`,
+    `frontier_tetra    : ${payload.counts.frontier_tetra}`,
+    ``,
+    `lawful_faces      : ${payload.lawful_cells.face_count}`,
+    `lawful_tetra      : ${payload.lawful_cells.tetra_count}`,
+    ``,
+    `latest_primary    : ${latest.primary_node}`,
+    `latest_g15        : ${latest.g15_vertex}`,
+    `latest_g60_class  : ${latest.g60_class}`,
+    `delta_nodes       : ${latest.delta_nodes.join(', ') || '-'}`,
+    `delta_edges       : ${latest.delta_edges.join(', ') || '-'}`,
+    ``,
+    `tetra_births`,
+    ...tetraBirthRows.map((row) => `  ${row.name || row.tetra} @ tick ${row.birth_tick ?? '-' } :: ${row.tetra}`),
+    ``,
+    `occupied_face_ids`,
+    ...payload.occupied.faces.map((x) => `  ${x}`),
+    ``,
+    `occupied_tetra_ids`,
+    ...payload.occupied.tetra.map((x) => `  ${x}`),
   ].join('\n');
 }
 
-function setButtons() {
-  els.toggleUpstairs.classList.toggle('is-active', state.showUpstairs);
-  els.toggleDownstairs.classList.toggle('is-active', state.showDownstairs);
-  els.toggleLinks.classList.toggle('is-active', state.showLinks);
-  els.toggleLabels.classList.toggle('is-active', state.showLabels);
-  els.focusAll.classList.toggle('is-active', state.focus === 'all');
-  els.focusPrime.classList.toggle('is-active', state.focus === 'prime');
-  els.focusCycle2.classList.toggle('is-active', state.focus === 'cycle2');
-  els.focusNext.classList.toggle('is-active', state.focus === 'next');
+async function fetchPayload(tick) {
+  const [occRes, chrRes] = await Promise.all([
+    fetch(`/frontier/api/g60-occupancy/${tick}`, { cache: 'no-store' }),
+    fetch(`/frontier/api/g60-chronology/${tick}`, { cache: 'no-store' }),
+  ]);
+  if (!occRes.ok) throw new Error(`occupancy fetch failed: ${occRes.status}`);
+  if (!chrRes.ok) throw new Error(`chronology fetch failed: ${chrRes.status}`);
+  return {
+    occupancy: await occRes.json(),
+    chronology: await chrRes.json(),
+  };
 }
 
-function render() {
-  els.gridLayer.textContent = '';
-  els.linkLayer.textContent = '';
-  els.nodeLayer.textContent = '';
-  els.labelLayer.textContent = '';
-
-  drawGrid();
-  drawNodes();
-  updateReadout();
-  setButtons();
+async function setTick(nextTick) {
+  state.tick = Math.max(1, Math.min(24, nextTick));
+  state.payload = await fetchPayload(state.tick);
+  render(state.payload);
 }
 
-els.toggleUpstairs.addEventListener('click', () => {
-  state.showUpstairs = !state.showUpstairs;
-  render();
+els.tickPrev.addEventListener('click', async () => {
+  try { await setTick(state.tick - 1); } catch (err) { console.error(err); }
 });
 
-els.toggleDownstairs.addEventListener('click', () => {
-  state.showDownstairs = !state.showDownstairs;
-  render();
+els.tickNext.addEventListener('click', async () => {
+  try { await setTick(state.tick + 1); } catch (err) { console.error(err); }
 });
 
-els.toggleLinks.addEventListener('click', () => {
-  state.showLinks = !state.showLinks;
-  render();
-});
-
-els.toggleLabels.addEventListener('click', () => {
-  state.showLabels = !state.showLabels;
-  render();
-});
-
-els.focusAll.addEventListener('click', () => {
-  state.focus = 'all';
-  render();
-});
-
-els.focusPrime.addEventListener('click', () => {
-  state.focus = 'prime';
-  render();
-});
-
-els.focusCycle2.addEventListener('click', () => {
-  state.focus = 'cycle2';
-  render();
-});
-
-els.focusNext.addEventListener('click', () => {
-  state.focus = 'next';
-  render();
-});
-
-render();
+(async function boot() {
+  try {
+    await setTick(1);
+  } catch (err) {
+    console.error(err);
+    els.readout.textContent = String(err);
+  }
+})();

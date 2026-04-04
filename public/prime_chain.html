@@ -31,19 +31,42 @@
         </svg>
       </div>
       <div class="status-strip">
+        <span>Cycle <strong id="status-cycle">1</strong></span>
         <span>Prime <strong id="status-prime">t0</strong></span>
-        <span>Children <strong id="status-children">3</strong></span>
-        <span>Mode <strong id="status-mode">mirror attach</strong></span>
+        <span>Visible <strong id="status-children">0</strong></span>
+        <span>Closure <strong id="status-closure">f4</strong></span>
+        <span>Domains <strong id="status-domains">1↓ / 1↑</strong></span>
         <span>Register <strong id="status-register">WXYZTIW</strong></span>
       </div>
     </section>
 
     <section class="controls-card">
       <div class="button-row button-row-4">
+        <button id="tick-prev" type="button">-</button>
+        <button id="tick-next" type="button">+</button>
+        <button id="view-chain" class="is-active" type="button">Prime chain</button>
+        <button id="view-rings" type="button">Cycle² rings</button>
+      </div>
+
+      <div class="button-row button-row-4">
         <button id="toggle-prime" class="is-active" type="button">Prime</button>
+        <button id="toggle-closure" class="is-active" type="button">Closure f4</button>
+        <button id="toggle-upstairs" class="is-active" type="button">Upstairs</button>
+        <button id="toggle-downstairs" class="is-active" type="button">Downstairs</button>
+      </div>
+
+      <div class="button-row button-row-4">
+        <button id="tick-1" class="is-active" type="button">Tick 1</button>
+        <button id="tick-2" type="button">Tick 2</button>
+        <button id="tick-3" type="button">Tick 3</button>
+        <button id="toggle-history" type="button">History</button>
+      </div>
+
+      <div class="button-row button-row-4">
         <button id="toggle-children" class="is-active" type="button">Children</button>
         <button id="toggle-labels" class="is-active" type="button">Labels</button>
         <button id="toggle-ghosts" class="is-active" type="button">Face ghosts</button>
+        <button type="button" disabled>·</button>
       </div>
 
       <div class="button-row">

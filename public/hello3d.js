@@ -35,6 +35,12 @@ const innerOpacityInput = document.getElementById('inner-opacity');
 const glowOpacityInput = document.getElementById('glow-opacity');
 const wireOpacityInput = document.getElementById('wire-opacity');
 const sectorHud = document.getElementById('sector-hud');
+const liveModeText = document.getElementById('live-mode-text');
+const liveG15Text = document.getElementById('live-g15-text');
+const livePetersenText = document.getElementById('live-petersen-text');
+const livePhaseText = document.getElementById('live-phase-text');
+const liveSheetText = document.getElementById('live-sheet-text');
+const liveSlotsText = document.getElementById('live-slots-text');
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -272,6 +278,51 @@ const tetraEdgeAccentLines = TETRA_EDGE_REGISTER.map(([a, b]) => {
   tetra.add(line);
   return line;
 });
+
+function makeSectorCagePoint(i) {
+  const radius = 1.42;
+  const angle = (-Math.PI / 2) + (i * Math.PI / 3);
+  return new THREE.Vector3(
+    Math.cos(angle) * radius,
+    -1.05 + 0.08 * Math.sin(angle * 2),
+    Math.sin(angle) * radius * 0.72
+  );
+}
+
+const sectorCagePoints = Array.from({ length: 6 }, (_, i) => makeSectorCagePoint(i));
+
+const sectorCageLines = Array.from({ length: 6 }, (_, i) => {
+  const a = sectorCagePoints[i];
+  const b = sectorCagePoints[(i + 1) % 6];
+  const geometry = new THREE.BufferGeometry().setFromPoints([a.clone(), b.clone()]);
+  const line = new THREE.Line(
+    geometry,
+    new THREE.LineBasicMaterial({
+      color: 0x8ab4ff,
+      transparent: true,
+      opacity: 0.08,
+    })
+  );
+  scene.add(line);
+  return line;
+});
+
+const sectorCageNodes = sectorCagePoints.map((point) => {
+  const mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(0.045, 12, 12),
+    new THREE.MeshStandardMaterial({
+      color: 0x8ab4ff,
+      transparent: true,
+      opacity: 0.18,
+      metalness: 0.02,
+      roughness: 0.45,
+    })
+  );
+  mesh.position.copy(point);
+  scene.add(mesh);
+  return mesh;
+});
+
 
 
 const vertexLabelElements = tetraGeometry.userData.vertices.map((v, i) => {
@@ -544,6 +595,9 @@ function setLiveG15Enabled(flag) {
     toggleLiveG15Btn.classList.toggle('is-live', flag);
     toggleLiveG15Btn.textContent = flag ? 'Live G15 on' : 'Live G15 off';
   }
+  if (liveModeText) {
+    liveModeText.textContent = flag ? 'on' : 'off';
+  }
 }
 
 async function fetchLiveG15(frame, phase, sheet) {
@@ -579,6 +633,7 @@ function formatSectorHud(payload, activeFace, normalizedEdgeSlots) {
     `closed_neighborhood: ${sector.closed_neighborhood.join(', ')}`,
     `sector_edges       : ${sector.edge_labels.join(', ')}`,
     `tetra_edge_slots   : ${normalizedEdgeSlots.join(', ') || '(none)'}`,
+    `sector_cage_slots  : ${normalizedEdgeSlots.join(', ') || '(none)'}`,
     `sector_weight      : ${sector.weight}`,
   ].join('\n');
 }
@@ -704,6 +759,23 @@ function applyLiveG15Payload(payload) {
     line.material.color.setHex(isMinus ? basePink : baseBlue);
   }
 
+  // Live sector cage: direct visible image of the current sector edge slots.
+  for (let i = 0; i < sectorCageLines.length; i += 1) {
+    const hitCount = normalizedEdgeSlots.filter((slot) => slot === i).length;
+    const active = hitCount > 0;
+
+    sectorCageLines[i].material.opacity = active ? (0.22 + 0.22 * hitCount) : 0.06;
+    sectorCageLines[i].material.color.setHex(isMinus ? basePink : baseBlue);
+
+    sectorCageNodes[i].material.opacity = active ? 0.80 : 0.16;
+    sectorCageNodes[i].material.color.setHex(
+      phase === 1
+        ? (isMinus ? 0xffd6ea : 0xc7dcff)
+        : (isMinus ? basePink : baseBlue)
+    );
+    sectorCageNodes[i].scale.setScalar(active ? 1.0 + 0.16 * hitCount : 1.0);
+  }
+
   const edgeEnergy = Math.min(1, edgeCount / 6);
   edges.material.opacity = 0.30 + 0.70 * edgeEnergy;
   innerMaterial.opacity = 0.18 + 0.48 * (Math.max(0, closed.length - 1) / 4);
@@ -747,6 +819,22 @@ function applyLiveG15Payload(payload) {
 
   if (sectorHud) {
     sectorHud.textContent = formatSectorHud(payload, activeFace, normalizedEdgeSlots);
+  }
+
+  if (liveG15Text) {
+    liveG15Text.textContent = payload.g15_focus.vertex;
+  }
+  if (livePetersenText) {
+    livePetersenText.textContent = payload.g15_focus.petersen_edge.join('-');
+  }
+  if (livePhaseText) {
+    livePhaseText.textContent = phase === 1 ? 'objective' : 'subjective';
+  }
+  if (liveSheetText) {
+    liveSheetText.textContent = sheet;
+  }
+  if (liveSlotsText) {
+    liveSlotsText.textContent = normalizedEdgeSlots.join(',') || '(none)';
   }
 }
 

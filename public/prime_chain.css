@@ -179,3 +179,41 @@ button.is-active {
   .stage { height: 360px; }
   .button-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+.closure-poly {
+  stroke: rgba(255,214,234,0.95);
+  stroke-width: 2.2;
+  fill: rgba(255,170,210,0.20);
+}
+
+.closure-label {
+  fill: rgba(255,214,234,0.98);
+  font-size: 13px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.ring-node {
+  stroke: rgba(232,240,248,0.82);
+  stroke-width: 1.4;
+}
+
+.ring-node-label {
+  fill: rgba(232,240,248,0.96);
+  font-size: 12px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.ring-link {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-dasharray: 5 4;
+}
+
+.domain-label {
+  fill: rgba(159,176,195,0.92);
+  font-size: 14px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}

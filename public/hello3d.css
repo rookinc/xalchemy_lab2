@@ -339,3 +339,35 @@ button.is-live {
   color: var(--text);
   min-height: 132px;
 }
+
+.live-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.live-pill {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(10, 18, 30, 0.52);
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.live-pill span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.live-pill strong {
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.15;
+}
+
+@media (max-width: 640px) {
+  .live-grid {
+    grid-template-columns: 1fr;
+  }
+}

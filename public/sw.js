@@ -1,4 +1,4 @@
-const CACHE_NAME = "lab2-public-v1";
+const CACHE_NAME = "lab2-public-v2";
 
 const ASSETS = [
   "/",

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Witness · Aletheos</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="stylesheet" href="/public/spring_witness.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="title">Spring Witness</div>
+      <div class="sub">3D spring graph on a transport spine</div>
+      <nav class="links">
+        <a href="/">Home</a>
+        <a href="/chandelier-witness">Chandelier Witness</a>
+        <a href="/spiral-witness">Spiral Witness</a>
+        <a href="/g60-vessel">G60 Vessel</a>
+      </nav>
+    </header>
+
+    <section class="stage-card">
+      <div class="viewport-wrap">
+        <canvas id="stage3d"></canvas>
+      </div>
+      <div class="status-strip">
+        <span>Tick <strong id="status-tick">1</strong></span>
+        <span>Slot <strong id="status-slot">W</strong></span>
+        <span>Next <strong id="status-next-slot">X</strong></span>
+        <span>Join <strong id="status-join">f4</strong></span>
+        <span>Sheet <strong id="status-sheet">+</strong></span>
+      </div>
+    </section>
+
+    <section class="controls-card">
+      <div class="button-row button-row-3">
+        <button id="tick-prev" type="button">-</button>
+        <button id="tick-next" type="button">+</button>
+        <button id="camera-reset" type="button">Reset</button>
+      </div>
+    </section>
+
+    <section class="readout-card">
+      <div class="readout-title">Spring readout</div>
+      <pre id="readout">booting...</pre>
+    </section>
+
+    <section class="readout-card">
+      <div class="readout-title">Bridge readout</div>
+      <pre id="bridge-readout">booting...</pre>
+    </section>
+  </main>
+
+  <script type="module" src="/public/spring_witness.js"></script>
+</body>
+</html>

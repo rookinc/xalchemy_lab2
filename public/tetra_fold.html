@@ -26,6 +26,13 @@
     <section class="stage-card">
       <div class="stage-shell">
         <svg id="fold-stage" class="stage" viewBox="0 0 900 620" preserveAspectRatio="xMidYMid meet">
+          <g id="ghost-upstairs-face-polys"></g>
+          <g id="ghost-upstairs-edge-lines"></g>
+          <g id="ghost-upstairs-mark-layer"></g>
+
+          <g id="ghost-downstairs-face-polys"></g>
+          <g id="ghost-downstairs-edge-lines"></g>
+
           <g id="correspondence-lines"></g>
 
           <g id="upstairs-face-polys"></g>
@@ -51,10 +58,18 @@
     </section>
 
     <section class="controls-card">
-      <div class="button-row">
+      <div class="button-row button-row-4">
+        <button id="reset-btn" type="button">Reset</button>
         <button id="prev-btn" type="button">Prev</button>
         <button id="next-btn" type="button">Next</button>
+        <button id="play-btn" type="button">Play</button>
       </div>
+
+      <div class="slider-row">
+        <label for="rate-slider">Rate</label>
+        <span id="rate-value">2.0x</span>
+      </div>
+      <input id="rate-slider" type="range" min="0.5" max="6" step="0.5" value="2" />
 
       <div class="button-row button-row-4">
         <button id="toggle-anchors" class="is-active" type="button">Anchors</button>
@@ -68,6 +83,13 @@
         <button id="toggle-downstairs" class="is-active" type="button">Downstairs</button>
         <button id="toggle-correspondence" class="is-active" type="button">Links</button>
         <button id="toggle-downstairs-labels" class="is-active" type="button">Down labels</button>
+      </div>
+
+      <div class="button-row button-row-4">
+        <button id="toggle-ghost" class="is-active" type="button">Prev ghost</button>
+        <button type="button" disabled>·</button>
+        <button type="button" disabled>·</button>
+        <button type="button" disabled>·</button>
       </div>
     </section>
 
