@@ -2,11 +2,11 @@ import { getModeRecord, getPhaseRecord } from '/assets/pump_console_frames.js';
 
 let graphCache = null;
 
-async function loadGraphSeed() {
+async function loadGraphState() {
   if (graphCache) return graphCache;
-  const res = await fetch('/assets/data/pump_graph_seed.json');
+  const res = await fetch('/assets/data/pump_graph_state.json');
   if (!res.ok) {
-    throw new Error(`failed to load graph seed: ${res.status}`);
+    throw new Error(`failed to load graph state: ${res.status}`);
   }
   graphCache = await res.json();
   return graphCache;
@@ -14,7 +14,7 @@ async function loadGraphSeed() {
 
 function rotate(list, shift) {
   const n = list.length;
-  return list.map((_, i) => list[(i - shift + n) % n]);
+  return list.map((_, i) => list[(i + shift) % n]);
 }
 
 function slotMetaFor(activeSlot) {
@@ -26,12 +26,88 @@ function slotMetaFor(activeSlot) {
   return rotate(base, activeSlot);
 }
 
-export async function getGraphState(state) {
-  const seed = await loadGraphSeed();
+function neighborsOf(snapshot, vertex) {
+  const adjacency = snapshot?.adjacency ?? {};
+  return adjacency[vertex] ?? [];
+}
+
+function deriveShell(snapshot, coupler, hostMode) {
+  const couplerNeighbors = new Set(neighborsOf(snapshot, coupler));
+  const shellBase = (snapshot.shellCandidates ?? []).filter(v => couplerNeighbors.has(v));
+
+  if (shellBase.length !== 4) {
+    return {
+      shell: shellBase,
+      shellSource: 'adjacency-filter/incomplete'
+    };
+  }
+
   return {
-    graphKey: seed.graphKey,
-    source: 'graph-seed-json',
-    seed,
+    shell: rotate(shellBase, hostMode),
+    shellSource: 'adjacency-filter/rotated'
+  };
+}
+
+function deriveRawDiads(snapshot, coupler) {
+  const couplerNeighbors = neighborsOf(snapshot, coupler);
+  const shellSet = new Set(snapshot.shellCandidates ?? []);
+  const nonShell = couplerNeighbors
+    .filter(v => !shellSet.has(v))
+    .slice()
+    .sort((a, b) => {
+      const na = Number(a.slice(1));
+      const nb = Number(b.slice(1));
+      return na - nb;
+    });
+
+  if (nonShell.length !== 6) {
+    return {
+      rawDiads: [],
+      diadSource: 'adjacency-nonshell/incomplete'
+    };
+  }
+
+  const rawDiads = [
+    [nonShell[0], nonShell[1]],
+    [nonShell[2], nonShell[3]],
+    [nonShell[4], nonShell[5]]
+  ];
+
+  return {
+    rawDiads,
+    diadSource: 'adjacency-nonshell/canonical-pairing'
+  };
+}
+
+function deriveDiads(snapshot, coupler, activeSlot) {
+  const raw = deriveRawDiads(snapshot, coupler);
+  return {
+    diads: rotate(raw.rawDiads, activeSlot),
+    diadSource: raw.diadSource,
+    rawDiads: raw.rawDiads
+  };
+}
+
+function validateLocalCluster(snapshot, coupler, shell, diads) {
+  const couplerNeighbors = new Set(neighborsOf(snapshot, coupler));
+
+  const shellTouchesCoupler = shell.every(v => couplerNeighbors.has(v));
+  const diadsTouchCoupler = diads.flat().every(v => couplerNeighbors.has(v));
+  const hasThreeDiads = diads.length === 3 && diads.every(pair => Array.isArray(pair) && pair.length === 2);
+
+  return {
+    shellTouchesCoupler,
+    diadsTouchCoupler,
+    hasThreeDiads
+  };
+}
+
+export async function getGraphState(state) {
+  const snapshot = await loadGraphState();
+  return {
+    graphKey: snapshot.graphKey,
+    source: 'pump_graph_state.json',
+    snapshot,
     state: {
       hostMode: state.hostMode,
       activeSlot: state.activeSlot,
@@ -44,32 +120,47 @@ export async function anchorFromGraph(graphState) {
   const { hostMode, activeSlot, phaseSign } = graphState.state;
   const mode = getModeRecord(hostMode);
   const phase = getPhaseRecord(phaseSign);
-  const coupler = graphState.seed.roles.coupler;
+  const anchorVertex = graphState.snapshot.anchorVertex;
 
   return {
     graphKey: graphState.graphKey,
     source: graphState.source,
-    anchorVertex: coupler,
+    anchorVertex,
     chamberKey: `${mode.modeKey}-D${activeSlot}-${phase.phaseKey}`,
-    coupler,
     mode,
     phase,
-    graphState
+    graphState,
+    debug: {
+      neighborCount: neighborsOf(graphState.snapshot, anchorVertex).length
+    }
   };
 }
 
 export async function clusterFromGraph(anchor) {
   const { hostMode, activeSlot } = anchor.graphState.state;
-  const roles = anchor.graphState.seed.roles;
+  const snapshot = anchor.graphState.snapshot;
+
+  const coupler = anchor.anchorVertex;
+  const shellDerived = deriveShell(snapshot, coupler, hostMode);
+  const diadDerived = deriveDiads(snapshot, coupler, activeSlot);
+  const slotMeta = slotMetaFor(activeSlot);
+  const validation = validateLocalCluster(snapshot, coupler, shellDerived.shell, diadDerived.diads);
 
   return {
-    coupler: anchor.coupler,
-    shell: roles.shellModes[hostMode % 4],
-    diads: rotate(roles.slotBase, activeSlot),
-    slotMeta: slotMetaFor(activeSlot),
+    coupler,
+    shell: shellDerived.shell,
+    diads: diadDerived.diads,
+    slotMeta,
     mode: anchor.mode,
     phase: anchor.phase,
-    graphState: anchor.graphState
+    graphState: anchor.graphState,
+    debug: {
+      neighbors: neighborsOf(snapshot, coupler),
+      shellSource: shellDerived.shellSource,
+      diadSource: diadDerived.diadSource,
+      rawDiads: diadDerived.rawDiads,
+      validation
+    }
   };
 }
 
@@ -87,6 +178,10 @@ export async function orderFromGraph(cluster) {
     shell: cluster.shell,
     diads: cluster.diads,
     slotMeta: cluster.slotMeta,
+    validation: cluster.debug.validation,
+    shellSource: cluster.debug.shellSource,
+    diadSource: cluster.debug.diadSource,
+    rawDiads: cluster.debug.rawDiads,
     graphState: cluster.graphState
   };
 }
@@ -108,6 +203,10 @@ export async function readoutFromGraph(order) {
     shell: order.shell,
     diads: order.diads,
     slotMeta: order.slotMeta,
+    validation: order.validation,
+    shellSource: order.shellSource,
+    diadSource: order.diadSource,
+    rawDiads: order.rawDiads,
     graphKey: order.graphState.graphKey,
     source: order.graphState.source
   };

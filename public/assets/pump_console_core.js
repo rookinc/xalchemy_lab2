@@ -63,13 +63,16 @@ export async function tracePipeline(state) {
       note: `x=${pipe.anchor.anchorVertex} -> chamber selected for ${signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign)} in ${r.portKey}`,
     },
     cluster: {
-      note: `port=${r.portKey} shell={${r.shell.join(', ')}} coupler=${r.coupler} diads=[(${r.diads[0].join(',')}), (${r.diads[1].join(',')}), (${r.diads[2].join(',')})] phase=${r.phaseKey}`,
+      note: `port=${r.portKey} shell={${r.shell.join(', ')}} coupler=${r.coupler} diads=[(${r.diads[0].join(',')}), (${r.diads[1].join(',')}), (${r.diads[2].join(',')})] phase=${r.phaseKey} shellSource=${r.shellSource} diadSource=${r.diadSource}`,
     },
     order: {
       note: `port=${r.portKey} (${r.portName}) slot=${r.slotKey} (${r.slotName}) phase=${r.phaseKey} (${r.phaseName})`,
     },
     readout: {
       note: `R(F)=(${r.eta}, ${r.rho}, ${r.phaseKey}) => ${signedLabelFor(r.eta, r.rho, r.phaseSign)}`,
+    },
+    validation: {
+      note: `shellTouchesCoupler=${r.validation.shellTouchesCoupler} diadsTouchCoupler=${r.validation.diadsTouchCoupler}`,
     },
     pump: p,
   };

@@ -196,7 +196,7 @@
           </div>
         </div>
         <div id="console" class="console" aria-live="polite"></div>
-        <div class="footer">Next layer: bind anchor / cluster / order / readout to actual graph-derived data.</div>
+        <div class="footer">Local adjacency bound. Next layer: derive shell/diads/order from richer graph neighborhoods.</div>
       </section>
     </section>
   </main>
@@ -208,7 +208,7 @@
       previousState,
       getFrame,
       tracePipeline,
-    } from '/assets/pump_console_core.js';
+    } from '/assets/pump_console_core.js?v=3';
 
     const state = {
       hostMode: 0,
@@ -293,65 +293,84 @@
     }
 
     async function boot() {
-      const frame = await getFrame(state);
-      state.lastAction = 'boot';
-      await render();
-      writeLine('BOOT', `graph=${frame.graphKey}`);
-      writeLine('BOOT', `port=${frame.portKey} (${frame.portName})`);
-      writeLine('BOOT', `phase=${frame.phaseKey} (${frame.phaseName})`);
-      writeLine('BOOT', `seed shell={${frame.shell.join(', ')}} coupler=${frame.coupler}`);
-      writeLine('BOOT', `seed diads ${frame.slotMeta[0].slotKey}=${frame.diads[0].join('/')} ${frame.slotMeta[1].slotKey}=${frame.diads[1].join('/')} ${frame.slotMeta[2].slotKey}=${frame.diads[2].join('/')}`);
-      writeLine('READY', `coarse state ${signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign)} with R(F)=(${state.hostMode}, ${state.activeSlot}, ${frame.phaseKey})`);
+      try {
+        state.lastAction = 'boot';
+        const frame = await getFrame(state);
+        await render();
+        writeLine('BOOT', `graph=${frame.graphKey}`);
+        writeLine('BOOT', `port=${frame.portKey} (${frame.portName})`);
+        writeLine('BOOT', `phase=${frame.phaseKey} (${frame.phaseName})`);
+        writeLine('BOOT', `seed shell={${frame.shell.join(', ')}} coupler=${frame.coupler}`);
+        const diadSummary = frame.diads
+          .map((pair, i) => `${frame.slotMeta[i]?.slotKey ?? 'D?'}=${Array.isArray(pair) ? pair.join('/') : '?'}`)
+          .join(' ');
+        writeLine('BOOT', `seed diads ${diadSummary}`);
+        writeLine('READY', `coarse state ${signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign)} with R(F)=(${state.hostMode}, ${state.activeSlot}, ${frame.phaseKey})`);
+      } catch (err) {
+        console.error(err);
+        writeLine('ERROR', String(err), 'warn');
+      }
     }
 
     async function stepPump(log = true) {
-      const prevFrame = await getFrame(state);
-      const prevLabel = signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign);
+      try {
+        const prevFrame = await getFrame(state);
+        const prevLabel = signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign);
 
-      const next = nextState(state.hostMode, state.activeSlot, state.phaseSign);
-      state.hostMode = next.hostMode;
-      state.activeSlot = next.activeSlot;
-      state.phaseSign = next.phaseSign;
-      state.stepCount += 1;
-      state.lastAction = 'step';
-      await render();
+        const next = nextState(state.hostMode, state.activeSlot, state.phaseSign);
+        state.hostMode = next.hostMode;
+        state.activeSlot = next.activeSlot;
+        state.phaseSign = next.phaseSign;
+        state.stepCount += 1;
+        state.lastAction = 'step';
+        await render();
 
-      const nextFrame = await getFrame(state);
-      const nextLabel = signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign);
+        const nextFrame = await getFrame(state);
+        const nextLabel = signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign);
 
-      if (log) {
-        writeLine('STEP', `${prevLabel} -> ${nextLabel} via Π(k,i,σ)`);
-        writeFlow(prevFrame, nextFrame);
-        if (state.stepCount % 12 === 0) {
-          writeLine('CLOSE', `12-step coarse closure reached at ${nextLabel}`);
+        if (log) {
+          writeLine('STEP', `${prevLabel} -> ${nextLabel} via Π(k,i,σ)`);
+          writeFlow(prevFrame, nextFrame);
+          if (state.stepCount % 12 === 0) {
+            writeLine('CLOSE', `12-step coarse closure reached at ${nextLabel}`);
+          }
         }
+      } catch (err) {
+        console.error(err);
+        writeLine('ERROR', String(err), 'warn');
       }
     }
 
     async function traceStep() {
-      state.lastAction = 'trace';
-      await render();
+      try {
+        state.lastAction = 'trace';
+        await render();
 
-      const trace = await tracePipeline(state);
+        const trace = await tracePipeline(state);
 
-      writeLine('ANCHOR', trace.anchor.note);
-      writeLine('CLUSTER', trace.cluster.note);
-      writeLine('ORDER', trace.order.note);
-      writeLine('READOUT', trace.readout.note);
+        writeLine('ANCHOR', trace.anchor.note);
+        writeLine('CLUSTER', trace.cluster.note);
+        writeLine('ORDER', trace.order.note);
+        writeLine('READOUT', trace.readout.note);
+        writeLine('CHECK', trace.validation.note);
 
-      state.hostMode = trace.pump.hostMode;
-      state.activeSlot = trace.pump.activeSlot;
-      state.phaseSign = trace.pump.phaseSign;
-      state.stepCount += 1;
-      state.lastAction = 'trace-step';
-      await render();
+        state.hostMode = trace.pump.hostMode;
+        state.activeSlot = trace.pump.activeSlot;
+        state.phaseSign = trace.pump.phaseSign;
+        state.stepCount += 1;
+        state.lastAction = 'trace-step';
+        await render();
 
-      const nextFrame = await getFrame(state);
-      writeLine('PUMP', trace.pump.note);
-      writeFlow(trace.frame, nextFrame);
+        const nextFrame = await getFrame(state);
+        writeLine('PUMP', trace.pump.note);
+        writeFlow(trace.frame, nextFrame);
 
-      if (state.stepCount % 12 === 0) {
-        writeLine('CLOSE', `12-step coarse closure reached at ${signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign)}`);
+        if (state.stepCount % 12 === 0) {
+          writeLine('CLOSE', `12-step coarse closure reached at ${signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign)}`);
+        }
+      } catch (err) {
+        console.error(err);
+        writeLine('ERROR', String(err), 'warn');
       }
     }
 
@@ -366,39 +385,45 @@
     }
 
     async function dumpState() {
-      const frame = await getFrame(state);
-      state.lastAction = 'dump';
-      await render();
+      try {
+        state.lastAction = 'dump';
+        const frame = await getFrame(state);
+        await render();
 
-      const prev = previousState(state.hostMode, state.activeSlot, state.phaseSign);
-      const next = nextState(state.hostMode, state.activeSlot, state.phaseSign);
+        const prev = previousState(state.hostMode, state.activeSlot, state.phaseSign);
+        const next = nextState(state.hostMode, state.activeSlot, state.phaseSign);
 
-      const payload = {
-        graph: frame.graphKey,
-        adapterSource: frame.source,
-        portKey: frame.portKey,
-        portName: frame.portName,
-        hostPort: state.hostMode,
-        activeSlot: state.activeSlot,
-        slotKey: frame.slotKey,
-        slotName: frame.slotName,
-        phaseKey: frame.phaseKey,
-        phaseName: frame.phaseName,
-        coarseState: signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign),
-        previousState: signedLabelFor(prev.hostMode, prev.activeSlot, prev.phaseSign),
-        nextState: signedLabelFor(next.hostMode, next.activeSlot, next.phaseSign),
-        cyclePos: state.stepCount % 12,
-        coupler: frame.coupler,
-        shell: frame.shell,
-        diads: frame.diads,
-        slotMeta: frame.slotMeta,
-        stepCount: state.stepCount,
-        portNext: [1, 2, 3, 0],
-        slotNext: [1, 2, 0],
-        phaseRule: '+ -> -, - -> +',
-      };
+        const payload = {
+          graph: frame.graphKey,
+          adapterSource: frame.source,
+          portKey: frame.portKey,
+          portName: frame.portName,
+          hostPort: state.hostMode,
+          activeSlot: state.activeSlot,
+          slotKey: frame.slotKey,
+          slotName: frame.slotName,
+          phaseKey: frame.phaseKey,
+          phaseName: frame.phaseName,
+          coarseState: signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign),
+          previousState: signedLabelFor(prev.hostMode, prev.activeSlot, prev.phaseSign),
+          nextState: signedLabelFor(next.hostMode, next.activeSlot, next.phaseSign),
+          cyclePos: state.stepCount % 12,
+          coupler: frame.coupler,
+          shell: frame.shell,
+          diads: frame.diads,
+          slotMeta: frame.slotMeta,
+          validation: frame.validation,
+          stepCount: state.stepCount,
+          portNext: [1, 2, 3, 0],
+          slotNext: [1, 2, 0],
+          phaseRule: '+ -> -, - -> +',
+        };
 
-      writeLine('DUMP', JSON.stringify(payload, null, 2));
+        writeLine('DUMP', JSON.stringify(payload, null, 2));
+      } catch (err) {
+        console.error(err);
+        writeLine('ERROR', String(err), 'warn');
+      }
     }
 
     async function clearConsole() {
@@ -409,16 +434,21 @@
     }
 
     async function runCycle() {
-      state.lastAction = 'cycle';
-      await render();
-      writeLine('RUN', 'starting 12-step coarse cycle');
+      try {
+        state.lastAction = 'cycle';
+        await render();
+        writeLine('RUN', 'starting 12-step coarse cycle');
 
-      for (let i = 0; i < 12; i += 1) {
-        await stepPump(true);
-        await new Promise(resolve => setTimeout(resolve, 80));
+        for (let i = 0; i < 12; i += 1) {
+          await stepPump(true);
+          await new Promise(resolve => setTimeout(resolve, 80));
+        }
+
+        writeLine('RUN', 'cycle complete');
+      } catch (err) {
+        console.error(err);
+        writeLine('ERROR', String(err), 'warn');
       }
-
-      writeLine('RUN', 'cycle complete');
     }
 
     els.bootBtn.addEventListener('click', () => { void boot(); });
