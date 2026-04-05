@@ -50,6 +50,11 @@ export function pump(state) {
   };
 }
 
+function diadsNote(diads) {
+  if (!Array.isArray(diads) || diads.length === 0) return '[]';
+  return `[${diads.map(pair => `(${(pair || []).join(',')})`).join(', ')}]`;
+}
+
 export async function tracePipeline(state) {
   const pipe = await pipelineFromGraph(state);
   const r = pipe.readout;
@@ -60,19 +65,19 @@ export async function tracePipeline(state) {
     frame: r,
     anchor: {
       x: pipe.anchor.anchorVertex,
-      note: `x=${pipe.anchor.anchorVertex} -> chamber selected for ${signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign)} in ${r.portKey}`,
+      note: `x=${pipe.anchor.anchorVertex ?? '(none)'} -> chamber selected for ${signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign)} in ${r.portKey ?? '(none)'}`,
     },
     cluster: {
-      note: `port=${r.portKey} shell={${r.shell.join(', ')}} coupler=${r.coupler} diads=[(${r.diads[0].join(',')}), (${r.diads[1].join(',')}), (${r.diads[2].join(',')})] phase=${r.phaseKey} shellSource=${r.shellSource} diadSource=${r.diadSource} score=${r.matchingScore}`,
+      note: `port=${r.portKey ?? '(none)'} shell={${(r.shell || []).join(', ')}} coupler=${r.coupler ?? '(none)'} diads=${diadsNote(r.diads)} phase=${r.phaseKey ?? '(none)'} shellSource=${r.shellSource ?? 'none'} diadSource=${r.diadSource ?? 'none'} orderingSource=${r.orderingSource ?? 'none'} score=${r.matchingScore ?? 'n/a'}`,
     },
     order: {
-      note: `port=${r.portKey} (${r.portName}) slot=${r.slotKey} (${r.slotName}) phase=${r.phaseKey} (${r.phaseName})`,
+      note: `port=${r.portKey ?? '(none)'} (${r.portName ?? '(none)'}) slot=${r.slotKey ?? '(none)'} (${r.slotName ?? '(none)'}) phase=${r.phaseKey ?? '(none)'} (${r.phaseName ?? '(none)'})`,
     },
     readout: {
-      note: `R(F)=(${r.eta}, ${r.rho}, ${r.phaseKey}) => ${signedLabelFor(r.eta, r.rho, r.phaseSign)}`,
+      note: `R(F)=(${r.eta}, ${r.rho}, ${r.phaseKey ?? '(none)'}) => ${signedLabelFor(r.eta, r.rho, r.phaseSign)}`,
     },
     validation: {
-      note: `shellTouchesCoupler=${r.validation.shellTouchesCoupler} diadsTouchCoupler=${r.validation.diadsTouchCoupler} hasThreeDiads=${r.validation.hasThreeDiads}`,
+      note: `shellTouchesCoupler=${r.validation?.shellTouchesCoupler} diadsTouchCoupler=${r.validation?.diadsTouchCoupler} hasThreeDiads=${r.validation?.hasThreeDiads}`,
     },
     pump: p,
   };

@@ -72,6 +72,10 @@
     }
     button:hover { border-color: var(--accent); }
     button.primary { background: #13263c; border-color: #275b7a; }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
     .grid {
       display: grid;
       grid-template-columns: 320px 1fr;
@@ -196,6 +200,9 @@
         <div class="kv"><div class="k">channels</div><div id="channels"></div></div>
         <div class="kv"><div class="k">slots</div><div id="diads"></div></div>
         <div class="kv"><div class="k">candidates</div><div id="candidates"></div></div>
+        <div class="kv"><div class="k">dataset scope</div><div id="datasetScope">local-patch</div></div>
+        <div class="kv"><div class="k">structure</div><div id="structureState">loaded</div></div>
+        <div class="kv"><div class="k">motion</div><div id="motionState">enabled</div></div>
         <div class="kv"><div class="k">last action</div><div id="lastAction">boot</div></div>
 
         <h2 style="margin-top:16px;">Machine Rule</h2>
@@ -259,6 +266,9 @@
       channels: document.getElementById('channels'),
       diads: document.getElementById('diads'),
       candidates: document.getElementById('candidates'),
+      datasetScope: document.getElementById('datasetScope'),
+      structureState: document.getElementById('structureState'),
+      motionState: document.getElementById('motionState'),
       lastAction: document.getElementById('lastAction'),
       datasetSelect: document.getElementById('datasetSelect'),
       modeSelect: document.getElementById('modeSelect'),
@@ -289,13 +299,13 @@
     }
 
     function writeFlow(fromFrame, toFrame) {
-      const fromPort = `${fromFrame.portKey} (${fromFrame.portName})`;
-      const fromSlot = `${fromFrame.slotKey} (${fromFrame.slotName})`;
-      const toPort = `${toFrame.portKey} (${toFrame.portName})`;
-      const toSlot = `${toFrame.slotKey} (${toFrame.slotName})`;
+      const fromPort = `${fromFrame.portKey ?? '(none)'} (${fromFrame.portName ?? '(none)'})`;
+      const fromSlot = `${fromFrame.slotKey ?? '(none)'} (${fromFrame.slotName ?? '(none)'})`;
+      const toPort = `${toFrame.portKey ?? '(none)'} (${toFrame.portName ?? '(none)'})`;
+      const toSlot = `${toFrame.slotKey ?? '(none)'} (${toFrame.slotName ?? '(none)'})`;
 
-      writeLine('FLOW', `from ${fromPort} / ${fromSlot} / ${fromFrame.phaseKey}`);
-      writeLine('FLOW', `to   ${toPort} / ${toSlot} / ${toFrame.phaseKey}`);
+      writeLine('FLOW', `from ${fromPort} / ${fromSlot} / ${fromFrame.phaseKey ?? '(none)'}`);
+      writeLine('FLOW', `to   ${toPort} / ${toSlot} / ${toFrame.phaseKey ?? '(none)'}`);
     }
 
     function footerTextFor(frame) {
@@ -313,25 +323,32 @@
       return `Structure first, operation second. Current data source is ${datasetId}; dataset kind=${kind}.`;
     }
 
+    function scopeLabelFor(frame) {
+      const kind = frame.datasetMeta?.kind ?? 'unknown';
+      if (kind === 'seeded-local-patch') return 'local-patch';
+      if (kind === 'full-graph-placeholder') return 'placeholder';
+      return kind;
+    }
     async function render() {
       const frame = await getFrame(state);
       const prev = previousState(state.hostMode, state.activeSlot, state.phaseSign);
       const next = nextState(state.hostMode, state.activeSlot, state.phaseSign);
+      const hasStructure = Boolean(frame.coupler) && (frame.shell || []).length > 0;
 
       els.hostMode.textContent = String(state.hostMode);
-      els.modeKey.textContent = frame.portKey;
-      els.modeName.textContent = frame.portName;
+      els.modeKey.textContent = frame.portKey ?? '(none)';
+      els.modeName.textContent = frame.portName ?? '(none)';
       els.activeSlot.textContent = String(state.activeSlot);
-      els.slotKey.textContent = frame.slotKey;
-      els.slotName.textContent = frame.slotName;
-      els.phaseKey.textContent = frame.phaseKey;
-      els.phaseName.textContent = frame.phaseName;
+      els.slotKey.textContent = frame.slotKey ?? '(none)';
+      els.slotName.textContent = frame.slotName ?? '(none)';
+      els.phaseKey.textContent = frame.phaseKey ?? '(none)';
+      els.phaseName.textContent = frame.phaseName ?? '(none)';
       els.coarseState.textContent = signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign);
       els.previousState.textContent = signedLabelFor(prev.hostMode, prev.activeSlot, prev.phaseSign);
       els.nextState.textContent = signedLabelFor(next.hostMode, next.activeSlot, next.phaseSign);
       els.cyclePos.textContent = `${state.stepCount % 12} / 12`;
       els.coupler.textContent = frame.coupler ?? '(none)';
-      els.shell.textContent = (frame.shell || []).length ? frame.shell.join(', ') : '(no structure loaded)';
+      els.shell.textContent = hasStructure ? frame.shell.join(', ') : '(no structure loaded)';
       els.channels.innerHTML = (frame.channelMeta || []).length
         ? (frame.channelMeta || [])
             .map(item => `${item.channelKey}=(${item.pair[0]},${item.pair[1]})`)
@@ -352,9 +369,23 @@
             )
             .join('<br><br>')
         : '(none)';
+
+      els.datasetScope.textContent = scopeLabelFor(frame);
+      els.structureState.textContent = hasStructure ? 'loaded' : 'empty';
+      els.motionState.textContent = hasStructure ? 'enabled' : 'blocked';
+
       els.datasetSelect.value = state.datasetId;
       els.modeSelect.value = state.discoveryMode;
       els.lastAction.textContent = `${state.lastAction} [${state.datasetId} | ${state.discoveryMode}]`;
+
+      els.stepBtn.disabled = !hasStructure;
+      els.traceBtn.disabled = !hasStructure;
+      els.cycleBtn.disabled = !hasStructure;
+
+      els.stepBtn.title = hasStructure ? '' : 'No chamber structure loaded for current dataset';
+      els.traceBtn.title = hasStructure ? '' : 'No chamber structure loaded for current dataset';
+      els.cycleBtn.title = hasStructure ? '' : 'No chamber structure loaded for current dataset';
+
       els.footerNote.textContent = footerTextFor(frame);
     }
 
@@ -363,13 +394,14 @@
         state.lastAction = 'boot';
         const frame = await getFrame(state);
         await render();
-        writeLine('BOOT', `graph=${frame.graphKey} (dataset=${frame.datasetId ?? state.datasetId}; kind=${frame.datasetMeta?.kind ?? 'unknown'}; mode=${state.discoveryMode})`);
-        writeLine('BOOT', `port=${frame.portKey} (${frame.portName})`);
-        writeLine('BOOT', `phase=${frame.phaseKey} (${frame.phaseName})`);
 
-        if ((frame.shell || []).length === 0) {
+        writeLine('BOOT', `graph=${frame.graphKey} (dataset=${frame.datasetId ?? state.datasetId}; kind=${frame.datasetMeta?.kind ?? 'unknown'}; mode=${state.discoveryMode})`);
+        writeLine('BOOT', `port=${frame.portKey ?? '(none)'} (${frame.portName ?? '(none)'})`);
+        writeLine('BOOT', `phase=${frame.phaseKey ?? '(none)'} (${frame.phaseName ?? '(none)'})`);
+
+        if (!(frame.shell || []).length) {
           writeLine('BOOT', `no chamber structure loaded for coupler=${frame.coupler ?? '(none)'}`, 'warn');
-          writeLine('READY', `dataset loaded but no local chamber is available in this mode`, 'warn');
+          writeLine('READY', 'dataset loaded but no local chamber is available in this mode', 'warn');
         } else {
           writeLine('BOOT', `shell={${frame.shell.join(', ')}} coupler=${frame.coupler}`);
           writeLine('BOOT', `channels ${(frame.channelMeta || []).map(x => `${x.channelKey}=${x.pair.join('/')}`).join(' ')}`);
@@ -386,6 +418,11 @@
     async function stepPump(log = true) {
       try {
         const prevFrame = await getFrame(state);
+        if (!(prevFrame.coupler) || !(prevFrame.shell || []).length) {
+          writeLine('STEP', 'blocked: no chamber structure loaded for current dataset', 'warn');
+          return;
+        }
+
         const prevLabel = signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign);
 
         const next = nextState(state.hostMode, state.activeSlot, state.phaseSign);
@@ -418,6 +455,12 @@
         state.lastAction = 'trace';
         await render();
 
+        const frame = await getFrame(state);
+        if (!(frame.coupler) || !(frame.shell || []).length) {
+          writeLine('TRACE', 'blocked: no chamber structure loaded for current dataset', 'warn');
+          return;
+        }
+
         const trace = await tracePipeline(state);
 
         writeLine('ANCHOR', trace.anchor.note);
@@ -447,9 +490,6 @@
       }
     }
 
-
-
-
     async function orbitSweep() {
       try {
         state.lastAction = 'signature-sweep';
@@ -463,23 +503,31 @@
           anchorVertexOverride: state.anchorVertexOverride || null
         };
 
-        const res = await fetch('/assets/data/pump_graph_state.json');
-        if (!res.ok) {
-          throw new Error(`failed to load graph state: ${res.status}`);
+        const baseFrame = await getFrame(state);
+
+        if (!(baseFrame.shell || []).length) {
+          writeLine('ORBIT', `starting signature sweep on dataset=${state.datasetId} at port=P${state.hostMode} slot=${state.activeSlot} phase=${state.phaseSign > 0 ? '+' : '-'}`);
+          writeLine('ORBIT', 'dataset contains no local chamber structure; signature sweep deferred', 'warn');
+          writeLine('ORBIT', 'canonical anchors 0');
+          writeLine('ORBIT', 'signature classes 0');
+          writeLine('ORBIT', 'signature sweep complete');
+          return;
         }
-        const snapshot = await res.json();
+
+        const snapshot = baseFrame.snapshot || {};
         const vertices = Object.keys(snapshot.adjacency || {}).sort();
         const buckets = new Map();
         let canonicalCount = 0;
 
-        writeLine('ORBIT', `starting signature sweep on current local patch at port=P${state.hostMode} slot=${state.activeSlot} phase=${state.phaseSign > 0 ? '+' : '-'}`);
+        writeLine('ORBIT', `starting signature sweep on dataset=${state.datasetId} at port=P${state.hostMode} slot=${state.activeSlot} phase=${state.phaseSign > 0 ? '+' : '-'}`);
         writeLine('ORBIT', `vertex count ${vertices.length}`);
-
         for (const anchorVertexOverride of vertices) {
           const frame = await getFrame({
             hostMode: original.hostMode,
             activeSlot: original.activeSlot,
             phaseSign: original.phaseSign,
+            datasetId: state.datasetId,
+            discoveryMode: state.discoveryMode,
             anchorVertexOverride
           });
 
@@ -558,6 +606,15 @@
           anchorVertexOverride: state.anchorVertexOverride || null
         };
 
+        const baseFrame = await getFrame(state);
+
+        if (!(baseFrame.shell || []).length) {
+          writeLine('ASWEEP', `starting anchor sweep at port=P${state.hostMode} slot=${state.activeSlot} phase=${state.phaseSign > 0 ? '+' : '-'}`);
+          writeLine('ASWEEP', 'dataset contains no local chamber structure; anchor sweep not applicable', 'warn');
+          writeLine('ASWEEP', 'anchor sweep complete');
+          return;
+        }
+
         const anchors = ['v0', 'v2', 'v3', 'v4', 'v5', 'v1', 'v6', 'v8', 'v14', 'v7', 'v9'];
 
         writeLine('ASWEEP', `starting anchor sweep at port=P${state.hostMode} slot=${state.activeSlot} phase=${state.phaseSign > 0 ? '+' : '-'}`);
@@ -567,6 +624,8 @@
             hostMode: original.hostMode,
             activeSlot: original.activeSlot,
             phaseSign: original.phaseSign,
+            datasetId: state.datasetId,
+            discoveryMode: state.discoveryMode,
             anchorVertexOverride
           };
 
@@ -622,7 +681,9 @@
           const probe = {
             hostMode,
             activeSlot: original.activeSlot,
-            phaseSign: original.phaseSign
+            phaseSign: original.phaseSign,
+            datasetId: state.datasetId,
+            discoveryMode: state.discoveryMode
           };
 
           const frame = await getFrame(probe);
@@ -634,6 +695,15 @@
           const operational = (frame.operationalChannels || [])
             .map(item => `${item.slotKey}=(${item.pair[0]},${item.pair[1]})[${item.channelKey}]`)
             .join(' ');
+
+          if (!(frame.shell || []).length) {
+            writeLine('SWEEP', `P${hostMode} no local chamber structure`);
+            writeLine('SWEEP', `P${hostMode} raw=[] ordered=[]`);
+            writeLine('SWEEP', `P${hostMode} channels (none)`);
+            writeLine('SWEEP', `P${hostMode} slots (none)`);
+            writeLine('SWEEP', `P${hostMode} scores m=n/a t=n/a total=n/a`);
+            continue;
+          }
 
           writeLine('SWEEP', `P${hostMode} shellBase={${(frame.shellBase || []).join(', ')}} displayed={${(frame.shell || []).join(', ')}}`);
           writeLine('SWEEP', `P${hostMode} raw=${JSON.stringify(frame.rawDiads || [])} ordered=${JSON.stringify(frame.orderedRawDiads || [])}`);
@@ -667,6 +737,21 @@
 
         writeLine('DERIVE', `compare seeded shellBase={${(compareSeeded.shellBase || []).join(', ')}} channels=${JSON.stringify(compareSeeded.channelMeta || [])}`);
         writeLine('DERIVE', `compare structure shellBase={${(compareStructure.shellBase || []).join(', ')}} channels=${JSON.stringify(compareStructure.channelMeta || [])}`);
+
+        if (!(frame.shell || []).length) {
+          writeLine('DERIVE', `dataset=${frame.datasetId ?? state.datasetId} kind=${frame.datasetMeta?.kind ?? 'unknown'} contains no local chamber structure`, 'warn');
+          writeLine('DERIVE', `ring1=[${(frame.neighborhood?.ring1 || []).join(', ')}] count=${frame.neighborhood?.ring1Count ?? 0}`);
+          writeLine('DERIVE', `ring2=[${(frame.neighborhood?.ring2 || []).join(', ')}] count=${frame.neighborhood?.ring2Count ?? 0}`);
+          writeLine('DERIVE', `shellBase={} shellSource=${frame.shellSource ?? 'none'}`, 'warn');
+          writeLine('DERIVE', 'rawDiads=[]');
+          writeLine('DERIVE', 'orderedRawDiads=[]');
+          writeLine('DERIVE', 'channels=[]');
+          writeLine('DERIVE', 'operational=[]');
+          writeLine('DERIVE', `matchingScore=n/a diadSource=${frame.diadSource ?? 'none'}`);
+          writeLine('DERIVE', `orderingSource=${frame.orderingSource ?? 'none'}`);
+          return;
+        }
+
         writeLine('DERIVE', `ring1=[${(frame.neighborhood?.ring1 || []).join(', ')}] count=${frame.neighborhood?.ring1Count ?? 0}`);
         writeLine('DERIVE', `ring2=[${(frame.neighborhood?.ring2 || []).join(', ')}] count=${frame.neighborhood?.ring2Count ?? 0}`);
         writeLine('DERIVE', `shellBase={${(frame.shellBase || []).join(', ')}} shellSource=${frame.shellSource}`);
@@ -771,6 +856,13 @@
       try {
         state.lastAction = 'cycle';
         await render();
+
+        const frame = await getFrame(state);
+        if (!(frame.coupler) || !(frame.shell || []).length) {
+          writeLine('RUN', 'blocked: no chamber structure loaded for current dataset', 'warn');
+          return;
+        }
+
         writeLine('RUN', 'starting 12-step coarse cycle');
 
         for (let i = 0; i < 12; i += 1) {
