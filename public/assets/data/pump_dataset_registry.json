@@ -1,0 +1,19 @@
+{
+  "defaultDataset": "local_patch_v0",
+  "datasets": {
+    "local_patch_v0": {
+      "label": "Local patch around v0",
+      "kind": "seeded-local-patch",
+      "path": "/assets/data/pump_graph_state.json",
+      "graphKey": "AT4val[60,6]",
+      "notes": "15-vertex local neighborhood patch centered at v0."
+    },
+    "full_graph_placeholder": {
+      "label": "Full graph placeholder",
+      "kind": "full-graph-placeholder",
+      "path": "/assets/data/at4val_60_full_adjacency.json",
+      "graphKey": "AT4val[60,6]",
+      "notes": "Reserved slot for full 60-vertex adjacency import."
+    }
+  }
+}

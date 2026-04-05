@@ -148,6 +148,13 @@
       </div>
 
       <div class="controls">
+        <label for="datasetSelect" style="display:flex;align-items:center;gap:8px;color:var(--muted);padding-right:4px;">
+          dataset
+          <select id="datasetSelect" style="background:#16213a;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font:inherit;">
+            <option value="local_patch_v0">local patch around v0</option>
+            <option value="full_graph_placeholder">full graph placeholder</option>
+          </select>
+        </label>
         <label for="modeSelect" style="display:flex;align-items:center;gap:8px;color:var(--muted);padding-right:4px;">
           mode
           <select id="modeSelect" style="background:#16213a;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font:inherit;">
@@ -209,7 +216,7 @@
           </div>
         </div>
         <div id="console" class="console" aria-live="polite"></div>
-        <div class="footer">Structure first, operation second. Current data source is a seeded local chamber patch of AT4val[60,6]; global orbit claims remain deferred until full 60-vertex adjacency is loaded.</div>
+        <div id="footerNote" class="footer">Structure first, operation second.</div>
       </section>
     </section>
   </main>
@@ -227,6 +234,7 @@
       hostMode: 0,
       activeSlot: 0,
       phaseSign: 1,
+      datasetId: 'local_patch_v0',
       discoveryMode: 'seeded',
       stepCount: 0,
       lastAction: 'boot',
@@ -252,6 +260,7 @@
       diads: document.getElementById('diads'),
       candidates: document.getElementById('candidates'),
       lastAction: document.getElementById('lastAction'),
+      datasetSelect: document.getElementById('datasetSelect'),
       modeSelect: document.getElementById('modeSelect'),
       bootBtn: document.getElementById('bootBtn'),
       stepBtn: document.getElementById('stepBtn'),
@@ -264,6 +273,7 @@
       resetBtn: document.getElementById('resetBtn'),
       dumpBtn: document.getElementById('dumpBtn'),
       clearBtn: document.getElementById('clearBtn'),
+      footerNote: document.getElementById('footerNote'),
     };
 
     function timestamp() {
@@ -288,6 +298,21 @@
       writeLine('FLOW', `to   ${toPort} / ${toSlot} / ${toFrame.phaseKey}`);
     }
 
+    function footerTextFor(frame) {
+      const datasetId = frame.datasetId ?? state.datasetId;
+      const kind = frame.datasetMeta?.kind ?? 'unknown';
+
+      if (datasetId === 'local_patch_v0') {
+        return 'Structure first, operation second. Current data source is a seeded local chamber patch of AT4val[60,6]; global orbit claims remain deferred until full 60-vertex adjacency is loaded.';
+      }
+
+      if (datasetId === 'full_graph_placeholder') {
+        return 'Structure first, operation second. Current data source is a full-graph placeholder for AT4val[60,6]; no chamber claims are active until full adjacency is loaded.';
+      }
+
+      return `Structure first, operation second. Current data source is ${datasetId}; dataset kind=${kind}.`;
+    }
+
     async function render() {
       const frame = await getFrame(state);
       const prev = previousState(state.hostMode, state.activeSlot, state.phaseSign);
@@ -305,24 +330,32 @@
       els.previousState.textContent = signedLabelFor(prev.hostMode, prev.activeSlot, prev.phaseSign);
       els.nextState.textContent = signedLabelFor(next.hostMode, next.activeSlot, next.phaseSign);
       els.cyclePos.textContent = `${state.stepCount % 12} / 12`;
-      els.coupler.textContent = frame.coupler;
-      els.shell.textContent = frame.shell.join(', ');
-      els.channels.innerHTML = (frame.channelMeta || [])
-        .map(item => `${item.channelKey}=(${item.pair[0]},${item.pair[1]})`)
-        .join('<br>');
-      els.diads.innerHTML = (frame.operationalChannels || [])
-        .map(item => `${item.slotKey}=(${item.pair[0]},${item.pair[1]}) — ${item.slotName} [${item.channelKey}]`)
-        .join('<br>');
-      els.candidates.innerHTML = (frame.shellDebug || []).slice(0, 3)
-        .map((item, idx) =>
-          `#${idx} shell={${(item.shellBase || []).join(',')}}<br>` +
-          `match=${JSON.stringify(item.matching || [])}<br>` +
-          `r2=${JSON.stringify(item.shellRing2Degrees || [])}<br>` +
-          `m=${item.matchingScore} t=${item.transportScore} score=${item.totalScore}`
-        )
-        .join('<br><br>');
+      els.coupler.textContent = frame.coupler ?? '(none)';
+      els.shell.textContent = (frame.shell || []).length ? frame.shell.join(', ') : '(no structure loaded)';
+      els.channels.innerHTML = (frame.channelMeta || []).length
+        ? (frame.channelMeta || [])
+            .map(item => `${item.channelKey}=(${item.pair[0]},${item.pair[1]})`)
+            .join('<br>')
+        : '(none)';
+      els.diads.innerHTML = (frame.operationalChannels || []).length
+        ? (frame.operationalChannels || [])
+            .map(item => `${item.slotKey}=(${item.pair[0]},${item.pair[1]}) — ${item.slotName} [${item.channelKey}]`)
+            .join('<br>')
+        : '(none)';
+      els.candidates.innerHTML = (frame.shellDebug || []).length
+        ? (frame.shellDebug || []).slice(0, 3)
+            .map((item, idx) =>
+              `#${idx} shell={${(item.shellBase || []).join(',')}}<br>` +
+              `match=${JSON.stringify(item.matching || [])}<br>` +
+              `r2=${JSON.stringify(item.shellRing2Degrees || [])}<br>` +
+              `m=${item.matchingScore} t=${item.transportScore} score=${item.totalScore}`
+            )
+            .join('<br><br>')
+        : '(none)';
+      els.datasetSelect.value = state.datasetId;
       els.modeSelect.value = state.discoveryMode;
-      els.lastAction.textContent = `${state.lastAction} [${state.discoveryMode}]`;
+      els.lastAction.textContent = `${state.lastAction} [${state.datasetId} | ${state.discoveryMode}]`;
+      els.footerNote.textContent = footerTextFor(frame);
     }
 
     async function boot() {
@@ -330,13 +363,19 @@
         state.lastAction = 'boot';
         const frame = await getFrame(state);
         await render();
-        writeLine('BOOT', `graph=${frame.graphKey} (local patch; mode=${state.discoveryMode})`);
+        writeLine('BOOT', `graph=${frame.graphKey} (dataset=${frame.datasetId ?? state.datasetId}; kind=${frame.datasetMeta?.kind ?? 'unknown'}; mode=${state.discoveryMode})`);
         writeLine('BOOT', `port=${frame.portKey} (${frame.portName})`);
         writeLine('BOOT', `phase=${frame.phaseKey} (${frame.phaseName})`);
-        writeLine('BOOT', `shell={${frame.shell.join(', ')}} coupler=${frame.coupler}`);
-        writeLine('BOOT', `channels ${(frame.channelMeta || []).map(x => `${x.channelKey}=${x.pair.join('/')}`).join(' ')}`);
-        writeLine('BOOT', `slots ${(frame.operationalChannels || []).map(x => `${x.slotKey}=${x.pair.join('/')}[${x.channelKey}]`).join(' ')}`);
-        writeLine('READY', `local coarse state ${signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign)} with R(F)=(${state.hostMode}, ${state.activeSlot}, ${frame.phaseKey})`);
+
+        if ((frame.shell || []).length === 0) {
+          writeLine('BOOT', `no chamber structure loaded for coupler=${frame.coupler ?? '(none)'}`, 'warn');
+          writeLine('READY', `dataset loaded but no local chamber is available in this mode`, 'warn');
+        } else {
+          writeLine('BOOT', `shell={${frame.shell.join(', ')}} coupler=${frame.coupler}`);
+          writeLine('BOOT', `channels ${(frame.channelMeta || []).map(x => `${x.channelKey}=${x.pair.join('/')}`).join(' ')}`);
+          writeLine('BOOT', `slots ${(frame.operationalChannels || []).map(x => `${x.slotKey}=${x.pair.join('/')}[${x.channelKey}]`).join(' ')}`);
+          writeLine('READY', `local coarse state ${signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign)} with R(F)=(${state.hostMode}, ${state.activeSlot}, ${frame.phaseKey})`);
+        }
       } catch (err) {
         console.error(err);
         writeLine('ERROR', `${err.name}: ${err.message}`, 'warn');
@@ -677,7 +716,9 @@
         const payload = {
           graph: frame.graphKey,
           adapterSource: frame.source,
-          datasetKind: 'seeded-local-patch',
+          datasetId: frame.datasetId ?? state.datasetId,
+          datasetKind: frame.datasetMeta?.kind ?? 'unknown',
+          datasetNotes: frame.datasetMeta?.notes ?? null,
           discoveryMode: state.discoveryMode,
           portKey: frame.portKey,
           portName: frame.portName,
@@ -744,6 +785,13 @@
         writeLine('ERROR', err.stack || 'no stack', 'warn');
       }
     }
+
+    els.datasetSelect.addEventListener('change', (e) => {
+      state.datasetId = e.target.value;
+      state.lastAction = 'dataset-change';
+      void render();
+      writeLine('DATASET', `dataset -> ${state.datasetId}`);
+    });
 
     els.modeSelect.addEventListener('change', (e) => {
       state.discoveryMode = e.target.value;

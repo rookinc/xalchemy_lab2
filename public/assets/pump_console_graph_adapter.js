@@ -1,19 +1,44 @@
 import { getModeRecord, getPhaseRecord } from '/assets/pump_console_frames.js';
 
-let graphCache = null;
+let datasetRegistryCache = null;
+const datasetCache = new Map();
 
-async function loadGraphState() {
-  if (graphCache) return graphCache;
-  const res = await fetch('/assets/data/pump_graph_state.json');
+async function loadDatasetRegistry() {
+  if (datasetRegistryCache) return datasetRegistryCache;
+  const res = await fetch('/assets/data/pump_dataset_registry.json');
   if (!res.ok) {
-    throw new Error(`failed to load graph state: ${res.status}`);
+    throw new Error(`failed to load dataset registry: ${res.status}`);
   }
-  graphCache = await res.json();
-  return graphCache;
+  datasetRegistryCache = await res.json();
+  return datasetRegistryCache;
+}
+
+async function loadGraphState(datasetId = null) {
+  const registry = await loadDatasetRegistry();
+  const selectedId = datasetId || registry.defaultDataset;
+  const meta = registry.datasets?.[selectedId];
+
+  if (!meta) {
+    throw new Error(`unknown dataset: ${selectedId}`);
+  }
+
+  if (datasetCache.has(selectedId)) {
+    return { meta, snapshot: datasetCache.get(selectedId) };
+  }
+
+  const res = await fetch(meta.path);
+  if (!res.ok) {
+    throw new Error(`failed to load dataset ${selectedId}: ${res.status}`);
+  }
+
+  const snapshot = await res.json();
+  datasetCache.set(selectedId, snapshot);
+  return { meta, snapshot };
 }
 
 function rotate(list, shift) {
   const n = list.length;
+  if (n === 0) return [];
   return list.map((_, i) => list[(i + shift) % n]);
 }
 
@@ -40,6 +65,10 @@ function baseChannelMeta() {
 function neighborsOf(snapshot, vertex) {
   const adjacency = snapshot?.adjacency ?? {};
   return adjacency[vertex] ?? [];
+}
+
+function isEmptyDataset(snapshot) {
+  return Object.keys(snapshot?.adjacency ?? {}).length === 0;
 }
 
 function edgeExists(snapshot, a, b) {
@@ -560,15 +589,19 @@ function validateLocalCluster(snapshot, coupler, shell, diads) {
 }
 
 export async function getGraphState(state) {
-  const snapshot = await loadGraphState();
+  const datasetId = state.datasetId || null;
+  const { meta, snapshot } = await loadGraphState(datasetId);
   return {
-    graphKey: snapshot.graphKey,
-    source: 'pump_graph_state.json',
+    graphKey: snapshot.graphKey || meta.graphKey,
+    datasetId: datasetId || (await loadDatasetRegistry()).defaultDataset,
+    datasetMeta: meta,
+    source: meta.path.split('/').slice(-1)[0],
     snapshot,
     state: {
       hostMode: state.hostMode,
       activeSlot: state.activeSlot,
       phaseSign: state.phaseSign,
+      datasetId: datasetId || (await loadDatasetRegistry()).defaultDataset,
       discoveryMode: state.discoveryMode || 'seeded',
       anchorVertexOverride: state.anchorVertexOverride || null
     }
@@ -579,10 +612,13 @@ export async function anchorFromGraph(graphState) {
   const { hostMode, activeSlot, phaseSign } = graphState.state;
   const mode = getModeRecord(hostMode);
   const phase = getPhaseRecord(phaseSign);
-  const anchorVertex = graphState.state.anchorVertexOverride || graphState.snapshot.anchorVertex;
+  const requestedAnchor = graphState.state.anchorVertexOverride || graphState.snapshot.anchorVertex || null;
+  const anchorVertex = requestedAnchor && (graphState.snapshot.adjacency?.[requestedAnchor] ? requestedAnchor : requestedAnchor);
 
   return {
     graphKey: graphState.graphKey,
+    datasetId: graphState.datasetId,
+    datasetMeta: graphState.datasetMeta,
     source: graphState.source,
     anchorVertex,
     chamberKey: `${mode.modeKey}-D${activeSlot}-${phase.phaseKey}`,
@@ -598,6 +634,43 @@ export async function anchorFromGraph(graphState) {
 export async function clusterFromGraph(anchor) {
   const { hostMode, activeSlot } = anchor.graphState.state;
   const snapshot = anchor.graphState.snapshot;
+
+  if (isEmptyDataset(snapshot)) {
+    return {
+      coupler: anchor.anchorVertex,
+      shell: [],
+      diads: [],
+      mode: anchor.mode,
+      phase: anchor.phase,
+      graphState: anchor.graphState,
+      debug: {
+        neighbors: [],
+        shellSource: 'dataset-empty',
+        shellBase: [],
+        shellDebug: [],
+        shellRing2Degrees: [],
+        boundaryVariance: null,
+        boundaryUniformityScore: null,
+        matchingScore: null,
+        transportScore: null,
+        transportDebug: null,
+        diadSource: 'dataset-empty',
+        nonShell: [],
+        rawDiads: [],
+        orderedRawDiads: [],
+        channelMeta: [],
+        operationalChannels: [],
+        orderingSource: 'dataset-empty',
+        orderingDebug: [],
+        neighborhood: { ring1: [], ring2: [], ring1Count: 0, ring2Count: 0 },
+        validation: {
+          shellTouchesCoupler: false,
+          diadsTouchCoupler: false,
+          hasThreeDiads: false
+        }
+      }
+    };
+  }
 
   const coupler = anchor.anchorVertex;
   const shellDerived = deriveShell(snapshot, coupler, hostMode, anchor.graphState.state.discoveryMode);
@@ -682,8 +755,8 @@ export async function orderFromGraph(cluster) {
 }
 
 export async function readoutFromGraph(order) {
-  const { hostMode, activeSlot, phaseSign } = order.graphState.state;
-  const slotMeta = order.operationalChannels.map(x => ({
+  const { hostMode, activeSlot, phaseSign, datasetId } = order.graphState.state;
+  const slotMeta = (order.operationalChannels || []).map(x => ({
     slotKey: x.slotKey,
     slotName: x.slotName
   }));
@@ -722,7 +795,11 @@ export async function readoutFromGraph(order) {
     orderingDebug: order.orderingDebug,
     neighborhood: order.neighborhood,
     graphKey: order.graphState.graphKey,
-    source: order.graphState.source
+    datasetId,
+    datasetMeta: order.graphState.datasetMeta,
+    source: order.graphState.source,
+    snapshot: order.graphState.snapshot,
+    isCanonicalLocalMachine: order.isCanonicalLocalMachine
   };
 }
 
