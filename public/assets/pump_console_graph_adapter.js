@@ -379,7 +379,58 @@ function discoverShellBundle(snapshot, coupler) {
   };
 }
 
-function deriveShell(snapshot, coupler, hostMode) {
+function deriveSeededShell(snapshot, coupler, hostMode) {
+  const seeded = ['v2', 'v3', 'v4', 'v5'];
+  const shellSet = new Set(seeded);
+  const couplerNeighbors = neighborsOf(snapshot, coupler);
+  const neighborSet = new Set(couplerNeighbors);
+
+  const shellBase = seeded.filter(v => neighborSet.has(v));
+  const nonShell = couplerNeighbors
+    .filter(v => !shellSet.has(v))
+    .slice()
+    .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+
+  const seededRawDiads = [['v1','v8'], ['v6','v14'], ['v7','v9']]
+    .map(pair => pair.slice().sort((a, b) => Number(a.slice(1)) - Number(b.slice(1))))
+    .filter(pair => nonShell.includes(pair[0]) && nonShell.includes(pair[1]));
+
+  const shellRing2Degrees = shellBase.map(v => ring2Degree(snapshot, v, coupler));
+  const boundaryVariance = varianceLike(shellRing2Degrees);
+  const boundaryUniformityScore = 20 - boundaryVariance;
+
+  return {
+    shell: rotate(shellBase, hostMode),
+    shellBase,
+    shellSource: 'seeded-witness/rotated',
+    shellDebug: [{
+      shellBase,
+      nonShell,
+      matching: seededRawDiads,
+      matchingScore: null,
+      transportScore: null,
+      transportDebug: null,
+      shellRing2Degrees,
+      boundaryVariance,
+      boundaryUniformityScore,
+      totalScore: null
+    }],
+    nonShell,
+    rawDiads: seededRawDiads,
+    matchingScore: null,
+    transportScore: null,
+    transportDebug: null,
+    shellRing2Degrees,
+    boundaryVariance,
+    boundaryUniformityScore
+  };
+}
+
+function deriveShell(snapshot, coupler, hostMode, discoveryMode = 'seeded') {
+  if (discoveryMode === 'seeded' && coupler === 'v0') {
+    return deriveSeededShell(snapshot, coupler, hostMode);
+  }
+
   const discovered = discoverShellBundle(snapshot, coupler);
 
   if (discovered.shellBase.length !== 4) {
@@ -518,6 +569,7 @@ export async function getGraphState(state) {
       hostMode: state.hostMode,
       activeSlot: state.activeSlot,
       phaseSign: state.phaseSign,
+      discoveryMode: state.discoveryMode || 'seeded',
       anchorVertexOverride: state.anchorVertexOverride || null
     }
   };
@@ -548,7 +600,7 @@ export async function clusterFromGraph(anchor) {
   const snapshot = anchor.graphState.snapshot;
 
   const coupler = anchor.anchorVertex;
-  const shellDerived = deriveShell(snapshot, coupler, hostMode);
+  const shellDerived = deriveShell(snapshot, coupler, hostMode, anchor.graphState.state.discoveryMode);
   const diadDerived = deriveDiads(
     snapshot,
     coupler,

@@ -148,6 +148,13 @@
       </div>
 
       <div class="controls">
+        <label for="modeSelect" style="display:flex;align-items:center;gap:8px;color:var(--muted);padding-right:4px;">
+          mode
+          <select id="modeSelect" style="background:#16213a;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font:inherit;">
+            <option value="seeded">seeded local witness</option>
+            <option value="structure">structure-only discovery</option>
+          </select>
+        </label>
         <button id="bootBtn" class="primary">boot</button>
         <button id="stepBtn">step</button>
         <button id="traceBtn">trace step</button>
@@ -220,6 +227,7 @@
       hostMode: 0,
       activeSlot: 0,
       phaseSign: 1,
+      discoveryMode: 'seeded',
       stepCount: 0,
       lastAction: 'boot',
     };
@@ -244,6 +252,7 @@
       diads: document.getElementById('diads'),
       candidates: document.getElementById('candidates'),
       lastAction: document.getElementById('lastAction'),
+      modeSelect: document.getElementById('modeSelect'),
       bootBtn: document.getElementById('bootBtn'),
       stepBtn: document.getElementById('stepBtn'),
       traceBtn: document.getElementById('traceBtn'),
@@ -312,7 +321,8 @@
           `m=${item.matchingScore} t=${item.transportScore} score=${item.totalScore}`
         )
         .join('<br><br>');
-      els.lastAction.textContent = state.lastAction;
+      els.modeSelect.value = state.discoveryMode;
+      els.lastAction.textContent = `${state.lastAction} [${state.discoveryMode}]`;
     }
 
     async function boot() {
@@ -320,7 +330,7 @@
         state.lastAction = 'boot';
         const frame = await getFrame(state);
         await render();
-        writeLine('BOOT', `graph=${frame.graphKey} (local seeded patch)`);
+        writeLine('BOOT', `graph=${frame.graphKey} (local patch; mode=${state.discoveryMode})`);
         writeLine('BOOT', `port=${frame.portKey} (${frame.portName})`);
         writeLine('BOOT', `phase=${frame.phaseKey} (${frame.phaseName})`);
         writeLine('BOOT', `shell={${frame.shell.join(', ')}} coupler=${frame.coupler}`);
@@ -613,7 +623,11 @@
         state.lastAction = 'derive';
         await render();
         const frame = await getFrame(state);
+        const compareSeeded = await getFrame({ ...state, discoveryMode: 'seeded' });
+        const compareStructure = await getFrame({ ...state, discoveryMode: 'structure' });
 
+        writeLine('DERIVE', `compare seeded shellBase={${(compareSeeded.shellBase || []).join(', ')}} channels=${JSON.stringify(compareSeeded.channelMeta || [])}`);
+        writeLine('DERIVE', `compare structure shellBase={${(compareStructure.shellBase || []).join(', ')}} channels=${JSON.stringify(compareStructure.channelMeta || [])}`);
         writeLine('DERIVE', `ring1=[${(frame.neighborhood?.ring1 || []).join(', ')}] count=${frame.neighborhood?.ring1Count ?? 0}`);
         writeLine('DERIVE', `ring2=[${(frame.neighborhood?.ring2 || []).join(', ')}] count=${frame.neighborhood?.ring2Count ?? 0}`);
         writeLine('DERIVE', `shellBase={${(frame.shellBase || []).join(', ')}} shellSource=${frame.shellSource}`);
@@ -664,6 +678,7 @@
           graph: frame.graphKey,
           adapterSource: frame.source,
           datasetKind: 'seeded-local-patch',
+          discoveryMode: state.discoveryMode,
           portKey: frame.portKey,
           portName: frame.portName,
           hostPort: state.hostMode,
@@ -729,6 +744,13 @@
         writeLine('ERROR', err.stack || 'no stack', 'warn');
       }
     }
+
+    els.modeSelect.addEventListener('change', (e) => {
+      state.discoveryMode = e.target.value;
+      state.lastAction = 'mode-change';
+      void render();
+      writeLine('MODE', `discovery mode -> ${state.discoveryMode}`);
+    });
 
     els.bootBtn.addEventListener('click', () => { void boot(); });
     els.stepBtn.addEventListener('click', () => { void stepPump(true); });
