@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AT4val[60,6] Pump Console</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #11182b;
+      --panel-2: #0e1525;
+      --text: #e7ecf5;
+      --muted: #a8b3c7;
+      --border: #22304d;
+      --accent: #7dd3fc;
+      --accent-2: #a78bfa;
+      --good: #86efac;
+      --warn: #fbbf24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 14px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: linear-gradient(180deg, var(--bg), #090d18 65%);
+      color: var(--text);
+    }
+    .shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px;
+      display: grid;
+      gap: 16px;
+    }
+    .panel {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .header {
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 16px;
+    }
+    .title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+    .subtitle {
+      color: var(--muted);
+      margin: 0;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 16px 16px;
+    }
+    button {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: #16213a;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font: inherit;
+    }
+    button:hover { border-color: var(--accent); }
+    button.primary { background: #13263c; border-color: #275b7a; }
+    .grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+    }
+    .card { padding: 14px; }
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .kv {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .kv .k { color: var(--muted); }
+    .tagrow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .tag {
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #10192d;
+      color: var(--muted);
+    }
+    .console {
+      min-height: 520px;
+      max-height: 70vh;
+      overflow: auto;
+      padding: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #08101d;
+      border-top: 1px solid var(--border);
+      border-radius: 0 0 16px 16px;
+    }
+    .line { margin: 0 0 10px; }
+    .line .ts { color: var(--accent); }
+    .line .kind { color: var(--accent-2); }
+    .line .ok { color: var(--good); }
+    .line .warn { color: var(--warn); }
+    .footer {
+      color: var(--muted);
+      padding: 12px 16px 16px;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="panel">
+      <div class="header">
+        <div>
+          <h1 class="title">AT4val[60,6] Pump Console</h1>
+          <p class="subtitle">Console-first lens sandbox for shell / coupler / triad-of-diads / coarse pump state.</p>
+        </div>
+        <div class="tagrow" aria-label="status tags">
+          <span class="tag">graph: AT4val[60,6]</span>
+          <span class="tag">lens: tetra</span>
+          <span class="tag">port: Z4</span>
+          <span class="tag">slot: Z3</span>
+          <span class="tag">phase: Z2</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="bootBtn" class="primary">boot</button>
+        <button id="stepBtn">step</button>
+        <button id="traceBtn">trace step</button>
+        <button id="cycleBtn">run 12-step cycle</button>
+        <button id="resetBtn">reset</button>
+        <button id="dumpBtn">dump state</button>
+        <button id="clearBtn">clear console</button>
+      </div>
+    </section>
+
+    <section class="grid">
+      <aside class="panel card">
+        <h2>State</h2>
+        <div class="kv"><div class="k">host port</div><div id="hostMode">0</div></div>
+        <div class="kv"><div class="k">port key</div><div id="modeKey">P0</div></div>
+        <div class="kv"><div class="k">port name</div><div id="modeName">Right In</div></div>
+        <div class="kv"><div class="k">active slot</div><div id="activeSlot">0</div></div>
+        <div class="kv"><div class="k">slot key</div><div id="slotKey">D0</div></div>
+        <div class="kv"><div class="k">slot name</div><div id="slotName">Upstream</div></div>
+        <div class="kv"><div class="k">phase</div><div id="phaseKey">+</div></div>
+        <div class="kv"><div class="k">phase name</div><div id="phaseName">Positive</div></div>
+        <div class="kv"><div class="k">coarse state</div><div id="coarseState">Q00+</div></div>
+        <div class="kv"><div class="k">previous</div><div id="previousState">Q32-</div></div>
+        <div class="kv"><div class="k">next</div><div id="nextState">Q11-</div></div>
+        <div class="kv"><div class="k">cycle pos</div><div id="cyclePos">0 / 12</div></div>
+        <div class="kv"><div class="k">coupler</div><div id="coupler">v0</div></div>
+        <div class="kv"><div class="k">shell</div><div id="shell">v2, v3, v4, v5</div></div>
+        <div class="kv"><div class="k">diads</div><div id="diads"></div></div>
+        <div class="kv"><div class="k">last action</div><div id="lastAction">boot</div></div>
+
+        <h2 style="margin-top:16px;">Machine Rule</h2>
+        <div class="kv"><div class="k">update</div><div>Π(k,i,σ) = (nextPort(k), nextSlot(i), -σ)</div></div>
+        <div class="kv"><div class="k">port next</div><div>[1, 2, 3, 0]</div></div>
+        <div class="kv"><div class="k">slot next</div><div>[1, 2, 0]</div></div>
+        <div class="kv"><div class="k">phase flip</div><div>+ ↔ -</div></div>
+        <div class="kv"><div class="k">closure</div><div>12 coarse steps</div></div>
+      </aside>
+
+      <section class="panel">
+        <div class="card">
+          <h2>Console</h2>
+          <div class="tagrow">
+            <span class="tag">console-first</span>
+            <span class="tag">3D deferred</span>
+            <span class="tag">machine rule complete</span>
+          </div>
+        </div>
+        <div id="console" class="console" aria-live="polite"></div>
+        <div class="footer">Next layer: bind anchor / cluster / order / readout to actual graph-derived data.</div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module">
+    import {
+      signedLabelFor,
+      nextState,
+      previousState,
+      getFrame,
+      tracePipeline,
+    } from '/assets/pump_console_core.js';
+
+    const state = {
+      hostMode: 0,
+      activeSlot: 0,
+      phaseSign: 1,
+      stepCount: 0,
+      lastAction: 'boot',
+    };
+
+    const els = {
+      console: document.getElementById('console'),
+      hostMode: document.getElementById('hostMode'),
+      modeKey: document.getElementById('modeKey'),
+      modeName: document.getElementById('modeName'),
+      activeSlot: document.getElementById('activeSlot'),
+      slotKey: document.getElementById('slotKey'),
+      slotName: document.getElementById('slotName'),
+      phaseKey: document.getElementById('phaseKey'),
+      phaseName: document.getElementById('phaseName'),
+      coarseState: document.getElementById('coarseState'),
+      previousState: document.getElementById('previousState'),
+      nextState: document.getElementById('nextState'),
+      cyclePos: document.getElementById('cyclePos'),
+      coupler: document.getElementById('coupler'),
+      shell: document.getElementById('shell'),
+      diads: document.getElementById('diads'),
+      lastAction: document.getElementById('lastAction'),
+      bootBtn: document.getElementById('bootBtn'),
+      stepBtn: document.getElementById('stepBtn'),
+      traceBtn: document.getElementById('traceBtn'),
+      cycleBtn: document.getElementById('cycleBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      dumpBtn: document.getElementById('dumpBtn'),
+      clearBtn: document.getElementById('clearBtn'),
+    };
+
+    function timestamp() {
+      return new Date().toLocaleTimeString();
+    }
+
+    function writeLine(kind, message, tone = 'ok') {
+      const p = document.createElement('p');
+      p.className = 'line';
+      p.innerHTML = `<span class="ts">[${timestamp()}]</span> <span class="kind">${kind}</span> <span class="${tone}">${message}</span>`;
+      els.console.appendChild(p);
+      els.console.scrollTop = els.console.scrollHeight;
+    }
+
+    function writeFlow(fromFrame, toFrame) {
+      const fromPort = `${fromFrame.portKey} (${fromFrame.portName})`;
+      const fromSlot = `${fromFrame.slotKey} (${fromFrame.slotName})`;
+      const toPort = `${toFrame.portKey} (${toFrame.portName})`;
+      const toSlot = `${toFrame.slotKey} (${toFrame.slotName})`;
+
+      writeLine('FLOW', `from ${fromPort} / ${fromSlot} / ${fromFrame.phaseKey}`);
+      writeLine('FLOW', `to   ${toPort} / ${toSlot} / ${toFrame.phaseKey}`);
+    }
+
+    async function render() {
+      const frame = await getFrame(state);
+      const prev = previousState(state.hostMode, state.activeSlot, state.phaseSign);
+      const next = nextState(state.hostMode, state.activeSlot, state.phaseSign);
+
+      els.hostMode.textContent = String(state.hostMode);
+      els.modeKey.textContent = frame.portKey;
+      els.modeName.textContent = frame.portName;
+      els.activeSlot.textContent = String(state.activeSlot);
+      els.slotKey.textContent = frame.slotKey;
+      els.slotName.textContent = frame.slotName;
+      els.phaseKey.textContent = frame.phaseKey;
+      els.phaseName.textContent = frame.phaseName;
+      els.coarseState.textContent = signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign);
+      els.previousState.textContent = signedLabelFor(prev.hostMode, prev.activeSlot, prev.phaseSign);
+      els.nextState.textContent = signedLabelFor(next.hostMode, next.activeSlot, next.phaseSign);
+      els.cyclePos.textContent = `${state.stepCount % 12} / 12`;
+      els.coupler.textContent = frame.coupler;
+      els.shell.textContent = frame.shell.join(', ');
+      els.diads.innerHTML = frame.diads
+        .map((pair, i) => `${frame.slotMeta[i].slotKey}=(${pair[0]},${pair[1]}) — ${frame.slotMeta[i].slotName}`)
+        .join('<br>');
+      els.lastAction.textContent = state.lastAction;
+    }
+
+    async function boot() {
+      const frame = await getFrame(state);
+      state.lastAction = 'boot';
+      await render();
+      writeLine('BOOT', `graph=${frame.graphKey}`);
+      writeLine('BOOT', `port=${frame.portKey} (${frame.portName})`);
+      writeLine('BOOT', `phase=${frame.phaseKey} (${frame.phaseName})`);
+      writeLine('BOOT', `seed shell={${frame.shell.join(', ')}} coupler=${frame.coupler}`);
+      writeLine('BOOT', `seed diads ${frame.slotMeta[0].slotKey}=${frame.diads[0].join('/')} ${frame.slotMeta[1].slotKey}=${frame.diads[1].join('/')} ${frame.slotMeta[2].slotKey}=${frame.diads[2].join('/')}`);
+      writeLine('READY', `coarse state ${signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign)} with R(F)=(${state.hostMode}, ${state.activeSlot}, ${frame.phaseKey})`);
+    }
+
+    async function stepPump(log = true) {
+      const prevFrame = await getFrame(state);
+      const prevLabel = signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign);
+
+      const next = nextState(state.hostMode, state.activeSlot, state.phaseSign);
+      state.hostMode = next.hostMode;
+      state.activeSlot = next.activeSlot;
+      state.phaseSign = next.phaseSign;
+      state.stepCount += 1;
+      state.lastAction = 'step';
+      await render();
+
+      const nextFrame = await getFrame(state);
+      const nextLabel = signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign);
+
+      if (log) {
+        writeLine('STEP', `${prevLabel} -> ${nextLabel} via Π(k,i,σ)`);
+        writeFlow(prevFrame, nextFrame);
+        if (state.stepCount % 12 === 0) {
+          writeLine('CLOSE', `12-step coarse closure reached at ${nextLabel}`);
+        }
+      }
+    }
+
+    async function traceStep() {
+      state.lastAction = 'trace';
+      await render();
+
+      const trace = await tracePipeline(state);
+
+      writeLine('ANCHOR', trace.anchor.note);
+      writeLine('CLUSTER', trace.cluster.note);
+      writeLine('ORDER', trace.order.note);
+      writeLine('READOUT', trace.readout.note);
+
+      state.hostMode = trace.pump.hostMode;
+      state.activeSlot = trace.pump.activeSlot;
+      state.phaseSign = trace.pump.phaseSign;
+      state.stepCount += 1;
+      state.lastAction = 'trace-step';
+      await render();
+
+      const nextFrame = await getFrame(state);
+      writeLine('PUMP', trace.pump.note);
+      writeFlow(trace.frame, nextFrame);
+
+      if (state.stepCount % 12 === 0) {
+        writeLine('CLOSE', `12-step coarse closure reached at ${signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign)}`);
+      }
+    }
+
+    async function resetState() {
+      state.hostMode = 0;
+      state.activeSlot = 0;
+      state.phaseSign = 1;
+      state.stepCount = 0;
+      state.lastAction = 'reset';
+      await render();
+      writeLine('RESET', 'returned to seed state Q00+');
+    }
+
+    async function dumpState() {
+      const frame = await getFrame(state);
+      state.lastAction = 'dump';
+      await render();
+
+      const prev = previousState(state.hostMode, state.activeSlot, state.phaseSign);
+      const next = nextState(state.hostMode, state.activeSlot, state.phaseSign);
+
+      const payload = {
+        graph: frame.graphKey,
+        adapterSource: frame.source,
+        portKey: frame.portKey,
+        portName: frame.portName,
+        hostPort: state.hostMode,
+        activeSlot: state.activeSlot,
+        slotKey: frame.slotKey,
+        slotName: frame.slotName,
+        phaseKey: frame.phaseKey,
+        phaseName: frame.phaseName,
+        coarseState: signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign),
+        previousState: signedLabelFor(prev.hostMode, prev.activeSlot, prev.phaseSign),
+        nextState: signedLabelFor(next.hostMode, next.activeSlot, next.phaseSign),
+        cyclePos: state.stepCount % 12,
+        coupler: frame.coupler,
+        shell: frame.shell,
+        diads: frame.diads,
+        slotMeta: frame.slotMeta,
+        stepCount: state.stepCount,
+        portNext: [1, 2, 3, 0],
+        slotNext: [1, 2, 0],
+        phaseRule: '+ -> -, - -> +',
+      };
+
+      writeLine('DUMP', JSON.stringify(payload, null, 2));
+    }
+
+    async function clearConsole() {
+      els.console.innerHTML = '';
+      state.lastAction = 'clear';
+      await render();
+      writeLine('CLEAR', 'console cleared; scaffold remains active', 'warn');
+    }
+
+    async function runCycle() {
+      state.lastAction = 'cycle';
+      await render();
+      writeLine('RUN', 'starting 12-step coarse cycle');
+
+      for (let i = 0; i < 12; i += 1) {
+        await stepPump(true);
+        await new Promise(resolve => setTimeout(resolve, 80));
+      }
+
+      writeLine('RUN', 'cycle complete');
+    }
+
+    els.bootBtn.addEventListener('click', () => { void boot(); });
+    els.stepBtn.addEventListener('click', () => { void stepPump(true); });
+    els.traceBtn.addEventListener('click', () => { void traceStep(); });
+    els.cycleBtn.addEventListener('click', () => { void runCycle(); });
+    els.resetBtn.addEventListener('click', () => { void resetState(); });
+    els.dumpBtn.addEventListener('click', () => { void dumpState(); });
+    els.clearBtn.addEventListener('click', () => { void clearConsole(); });
+
+    void boot();
+  </script>
+</body>
+</html>

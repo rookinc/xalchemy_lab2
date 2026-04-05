@@ -32,6 +32,16 @@
         </div>
 
         <div class="control-group">
+          <label for="view-select">Camera</label>
+          <select id="view-select">
+            <option value="front" selected>Front face</option>
+            <option value="oblique">Oblique</option>
+            <option value="top">Top</option>
+            <option value="core">Core</option>
+          </select>
+        </div>
+
+        <div class="control-group">
           <label>Host cycle</label>
           <div class="state-readout">
             <span id="state-step">step: 0</span>
@@ -41,6 +51,17 @@
             <button id="play-toggle" type="button">Play</button>
             <button id="step-back" type="button">-1</button>
             <button id="step-forward" type="button">+1</button>
+          </div>
+          <div class="control-group">
+            <label for="step-slider">Step scrubber</label>
+            <input id="step-slider" type="range" min="0" max="59" step="1" value="0" />
+          </div>
+          <div class="state-readout">
+            <button class="jump-step" type="button" data-step="0">0</button>
+            <button class="jump-step" type="button" data-step="15">15</button>
+            <button class="jump-step" type="button" data-step="30">30</button>
+            <button class="jump-step" type="button" data-step="45">45</button>
+            <button class="jump-step" type="button" data-step="59">59</button>
           </div>
         </div>
 

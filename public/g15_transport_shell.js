@@ -3,6 +3,7 @@ import { OrbitControls } from "/public/vendor/three/OrbitControls.js";
 
 const stage = document.getElementById("stage");
 const lensSelect = document.getElementById("lens-select");
+const viewSelect = document.getElementById("view-select");
 const lensNote = document.getElementById("lens-note");
 
 const stateStepEl = document.getElementById("state-step");
@@ -16,6 +17,8 @@ const stateRegionEl = document.getElementById("state-region");
 const playToggleBtn = document.getElementById("play-toggle");
 const stepBackBtn = document.getElementById("step-back");
 const stepForwardBtn = document.getElementById("step-forward");
+const stepSlider = document.getElementById("step-slider");
+const jumpButtons = Array.from(document.querySelectorAll(".jump-step"));
 
 const REGION_COLORS = {
   upstairs: 0x96d95d,
@@ -430,6 +433,9 @@ function updateStateReadout(state) {
   stateSheetEl.textContent = `sheet: ${state.sheet}`;
   stateHostPassEl.textContent = `host_pass: ${state.host_pass}`;
   stateRegionEl.textContent = `region: ${region}`;
+  if (stepSlider) {
+    stepSlider.value = String(state.step);
+  }
 }
 
 function applyNodeRegionColors() {
@@ -542,6 +548,32 @@ function setPositions(source, nowMs = 0) {
   }
 }
 
+function applyTetraViewPreset() {
+  const view = viewSelect?.value || "front";
+
+  if (view === "top") {
+    camera.position.copy(new THREE.Vector3(0.0, 9.5, 0.001));
+    controls.target.copy(new THREE.Vector3(0, 0, 0));
+    camera.up.set(0, 0, -1);
+  } else if (view === "core") {
+    camera.position.copy(new THREE.Vector3(0.0, 0.35, 3.6));
+    controls.target.copy(new THREE.Vector3(0, -0.15, 0));
+    camera.up.set(0, 1, 0);
+  } else if (view === "oblique") {
+    camera.position.copy(new THREE.Vector3(4.8, 3.0, 7.8));
+    controls.target.copy(new THREE.Vector3(0, -0.15, 0));
+    camera.up.set(0, 1, 0);
+  } else {
+    camera.position.copy(new THREE.Vector3(0.0, 1.8, 8.8));
+    controls.target.copy(new THREE.Vector3(0, -0.15, 0));
+    camera.up.set(0, 1, 0);
+  }
+
+  controls.update();
+  camera.lookAt(controls.target);
+  camera.updateProjectionMatrix();
+}
+
 function applyLens(lens, nowMs = 0) {
   applySpecsToUI();
 
@@ -569,8 +601,7 @@ function applyLens(lens, nowMs = 0) {
     cube.visible = false;
     stairsLine.visible = false;
     arrows.forEach((a) => { a.visible = false; });
-    camera.position.set(0.0, 2.8, 8.6);
-    controls.target.set(0, -0.2, 0);
+    applyTetraViewPreset();
   } else {
     setPositions(SHEET_POSITIONS, nowMs);
     upstairsPlane.mesh.visible = true;
@@ -653,6 +684,14 @@ if (lensSelect) {
   lensSelect.addEventListener("change", (e) => applyLens(e.target.value));
 }
 
+if (viewSelect) {
+  viewSelect.addEventListener("change", () => {
+    if ((lensSelect?.value || "tetra") === "tetra") {
+      applyLens("tetra", performance.now());
+    }
+  });
+}
+
 if (playToggleBtn) {
   playToggleBtn.addEventListener("click", togglePlay);
 }
@@ -661,6 +700,18 @@ if (stepBackBtn) {
 }
 if (stepForwardBtn) {
   stepForwardBtn.addEventListener("click", () => setStep(currentStep + 1));
+}
+if (stepSlider) {
+  stepSlider.addEventListener("input", (e) => {
+    const next = Number(e.target.value);
+    setStep(next);
+  });
+}
+for (const btn of jumpButtons) {
+  btn.addEventListener("click", () => {
+    const target = Number(btn.dataset.step || "0");
+    setStep(target);
+  });
 }
 
 await loadSpecs();

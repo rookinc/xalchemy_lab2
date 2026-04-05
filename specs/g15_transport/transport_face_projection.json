@@ -1,0 +1,88 @@
+{
+  "name": "g15_transport_face_projection",
+  "status": "draft_canonical",
+  "purpose": "Record the intrinsic projection law by which the transport object exhibits a stable tetrahedral 3-plus-1 face decomposition across admissible lenses.",
+  "core_claim": "Faces belong to the projection, not to the camera.",
+  "context": {
+    "transport_origin": "local transport on dodecahedral flags",
+    "quotient_tower": ["G60", "G30", "G15"],
+    "core_graph": "G15 ≅ L(Petersen)",
+    "separation_of_layers": {
+      "quadratic_geometry": "sector overlap geometry on G15 via M and Q = MM^T",
+      "signed_memory": "companion signed 2-lift / cocycle on G30 -> G15"
+    }
+  },
+  "projection_law": {
+    "name": "tetra_3_plus_1_projection",
+    "statement": "Under admissible projections, the transport object exhibits three assembling faces and one closure face.",
+    "decomposition": {
+      "manifest_faces": ["F0", "F1", "F2"],
+      "closure_face": "F3"
+    },
+    "interpretation": {
+      "F0": "manifest face",
+      "F1": "manifest face",
+      "F2": "manifest face",
+      "F3": "closure face folded in to complete tetrahedral closure"
+    }
+  },
+  "invariance_claim": {
+    "statement": "The 3-plus-1 face decomposition is a projection invariant of the transport object and is not created by viewer orientation.",
+    "stable_across": [
+      "tetra lens",
+      "cube lens",
+      "sheet lens",
+      "signed-lift lens"
+    ],
+    "not_defined_by": [
+      "camera position",
+      "camera target",
+      "viewer orientation",
+      "UI preset naming"
+    ]
+  },
+  "camera_rule": {
+    "statement": "A camera reveals a chosen orientation of an already-defined projected object. It does not assign primitive face roles.",
+    "allowed_effects": [
+      "foreground/background emphasis",
+      "which manifest face appears left/right/top",
+      "how closure is visually approached"
+    ],
+    "forbidden_effects": [
+      "creating face identity",
+      "creating closure role",
+      "changing the underlying 3-plus-1 decomposition"
+    ]
+  },
+  "layer_order": [
+    "local dodecahedral transport",
+    "G60 chamber graph",
+    "G30 lifted transport memory",
+    "G15 quotient core",
+    "projection into face structure",
+    "lens rendering",
+    "camera orientation"
+  ],
+  "relation_to_existing_specs": {
+    "transport_emergence_stack": "Places face emergence at projection and chirality emergence at transport.",
+    "transport_face_assignment": "Provides tetra-native face labels F0..F3 with F3 as closure face.",
+    "transport_shell_grammar": "Provides shell-region projections of the same transport object.",
+    "transport_state_machine": "Provides the lifted state carrying sheet memory.",
+    "transport_host_state_machine": "Provides host chronology through G60."
+  },
+  "chirality_note": {
+    "statement": "This file does not define chirality. Chirality belongs to oriented transport retained by the lift, not to camera and not to raw face naming."
+  },
+  "tests_for_renderer": [
+    "Changing camera must not change which face is designated closure face.",
+    "Changing lens must preserve the 3-plus-1 decomposition up to projection distortion.",
+    "A face label may move on screen, but its projection role must remain stable.",
+    "The closure face may become more or less visually obvious, but it must not be reassigned by viewpoint alone."
+  ],
+  "short_forms": [
+    "the camera reveals; the projection defines",
+    "three assemble, one closes",
+    "faces are projection properties",
+    "camera is orientation only"
+  ]
+}

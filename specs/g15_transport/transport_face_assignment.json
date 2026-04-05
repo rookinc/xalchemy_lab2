@@ -1,0 +1,96 @@
+{
+  "name": "g15_transport_face_assignment",
+  "status": "draft_canonical",
+  "purpose": "Assign tetra-native faces for the transport system in a way that preserves the observed 3-plus-1 closure reading.",
+  "core_claim": "Faces are tetra-native; chirality is transported; the shell is a projection.",
+  "face_model": {
+    "primitive_face_count": 4,
+    "primitive_faces": ["F0", "F1", "F2", "F3"],
+    "reading_mode": "three_manifest_plus_one_closure",
+    "statement": "The tetrahedron is read as three manifest faces coming together and one closure face folded in."
+  },
+  "face_assignment": {
+    "F0": {
+      "name": "left_manifest_face",
+      "role": "manifest",
+      "description": "Left visible face in the front-face tetra reading."
+    },
+    "F1": {
+      "name": "right_manifest_face",
+      "role": "manifest",
+      "description": "Right visible face in the front-face tetra reading."
+    },
+    "F2": {
+      "name": "base_manifest_face",
+      "role": "manifest",
+      "description": "Lower/front visible face in the front-face tetra reading."
+    },
+    "F3": {
+      "name": "closure_face",
+      "role": "closure",
+      "description": "The fourth face that folds in to complete tetrahedral closure."
+    }
+  },
+  "emergent_reading": {
+    "manifest_faces": ["F0", "F1", "F2"],
+    "closure_face": "F3",
+    "statement": "The transport lens first presents an open trihedral shell. The tetrahedron is completed when F3 folds in."
+  },
+  "face_adjacency": {
+    "statement": "Tetra adjacency is primitive: every tetra face meets the other three along fold edges.",
+    "adjacency": {
+      "F0": ["F1", "F2", "F3"],
+      "F1": ["F0", "F2", "F3"],
+      "F2": ["F0", "F1", "F3"],
+      "F3": ["F0", "F1", "F2"]
+    }
+  },
+  "witness_reading": {
+    "camera_mode": "tetra_front_face",
+    "interpretation": "The observer stands outside the tetra and sees the manifest shell first. Closure is completed by folding in the fourth face."
+  },
+  "oriented_face_states": {
+    "carrier": "sheet",
+    "state_shape": "(face_id, sheet)",
+    "states": [
+      "F0+", "F0-",
+      "F1+", "F1-",
+      "F2+", "F2-",
+      "F3+", "F3-"
+    ],
+    "statement": "Face identity and transported orientation are distinct. The raw face label is tetra-native; the sign is carried by lifted transport."
+  },
+  "chirality_assignment": {
+    "statement": "Chirality is not a primitive face label. Chirality emerges from the oriented folding of the closure face and from transport that retains sheet memory.",
+    "first_lawful_layer": "G30_lift",
+    "closure_rule": "The same face may appear in opposite transported orientation as Fi+ or Fi-."
+  },
+  "projection_to_shell": {
+    "statement": "Upstairs, downstairs, and stairs are not primitive tetra faces. They are shell projections of oriented face transport.",
+    "projection_roles": {
+      "upstairs": "projected region of oriented transport",
+      "downstairs": "projected region of oriented transport",
+      "stairs": "projected crossing / coupling region"
+    }
+  },
+  "interpretive_rules": [
+    "Do not treat cube faces as primitive ontology.",
+    "Do not assign chirality before sheet-aware transport is retained.",
+    "Do not flatten the closure face into a mere visual artifact.",
+    "Treat the manifest triad as presentation and the fourth face as completion.",
+    "Use tetra faces as primitive and shell regions as projected."
+  ],
+  "bridge_to_existing_specs": {
+    "transport_emergence_stack": "Places face emergence at projection and chirality emergence at transport.",
+    "transport_shell_grammar": "Provides the shell reading used for projection.",
+    "transport_state_machine": "Provides the sheet-aware lifted state needed for oriented face states.",
+    "transport_host_state_machine": "Orders oriented face states through host chronology."
+  },
+  "short_forms": [
+    "three manifest faces plus one closure face",
+    "F3 folds in",
+    "faces are tetra-native",
+    "oriented faces live at the lift layer",
+    "shell regions are projected, not primitive"
+  ]
+}
