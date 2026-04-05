@@ -17,13 +17,24 @@ function rotate(list, shift) {
   return list.map((_, i) => list[(i + shift) % n]);
 }
 
-function slotMetaFor(activeSlot) {
-  const base = [
+function baseSlotMeta() {
+  return [
     { slotKey: 'D0', slotName: 'Upstream' },
     { slotKey: 'D1', slotName: 'Crossflow' },
     { slotKey: 'D2', slotName: 'Downstream' }
   ];
-  return rotate(base, activeSlot);
+}
+
+function slotMetaFor(activeSlot) {
+  return rotate(baseSlotMeta(), activeSlot);
+}
+
+function baseChannelMeta() {
+  return [
+    { channelKey: 'C0', channelName: 'Channel 0' },
+    { channelKey: 'C1', channelName: 'Channel 1' },
+    { channelKey: 'C2', channelName: 'Channel 2' }
+  ];
 }
 
 function neighborsOf(snapshot, vertex) {
@@ -32,8 +43,7 @@ function neighborsOf(snapshot, vertex) {
 }
 
 function edgeExists(snapshot, a, b) {
-  const nbrs = new Set(neighborsOf(snapshot, a));
-  return nbrs.has(b);
+  return new Set(neighborsOf(snapshot, a)).has(b);
 }
 
 function pairKey(a, b) {
@@ -79,7 +89,6 @@ function cycleOrderForQuad(snapshot, quad) {
     deg[a] += 1;
     deg[b] += 1;
   }
-
   if (!quad.every(v => deg[v] === 2)) return null;
 
   const start = quad.slice().sort((x, y) => Number(x.slice(1)) - Number(y.slice(1)))[0];
@@ -88,7 +97,7 @@ function cycleOrderForQuad(snapshot, quad) {
   let curr = start;
 
   for (let step = 0; step < quad.length - 1; step += 1) {
-    const nextCandidates = quad.filter(v => v !== curr && edgeExists(snapshot, curr, v) && v !== prev);
+    const nextCandidates = quad.filter(v => v !== curr && v !== prev && edgeExists(snapshot, curr, v));
     if (nextCandidates.length === 0) return null;
     nextCandidates.sort((x, y) => Number(x.slice(1)) - Number(y.slice(1)));
     const next = nextCandidates[0];
@@ -103,57 +112,9 @@ function cycleOrderForQuad(snapshot, quad) {
   return ordered;
 }
 
-function deriveShellCandidates(snapshot, coupler) {
-  const couplerNeighbors = neighborsOf(snapshot, coupler);
-  const quads = allQuads(couplerNeighbors);
-
-  const scored = quads.map(quad => {
-    const cycle = cycleOrderForQuad(snapshot, quad);
-    const internalEdges = allPairs(quad).filter(([a, b]) => edgeExists(snapshot, a, b)).length;
-    return {
-      quad,
-      cycle,
-      score: cycle ? 100 + internalEdges : internalEdges
-    };
-  });
-
-  scored.sort((x, y) => y.score - x.score);
-
-  const best = scored[0];
-  if (!best || !best.cycle) {
-    return {
-      shellBase: [],
-      shellSource: 'adjacency-cycle/not-found'
-    };
-  }
-
-  return {
-    shellBase: best.cycle,
-    shellSource: 'adjacency-cycle/discovered'
-  };
-}
-
-function deriveShell(snapshot, coupler, hostMode) {
-  const shellCandidates = deriveShellCandidates(snapshot, coupler);
-  if (shellCandidates.shellBase.length !== 4) {
-    return {
-      shell: shellCandidates.shellBase,
-      shellBase: shellCandidates.shellBase,
-      shellSource: shellCandidates.shellSource
-    };
-  }
-
-  return {
-    shell: rotate(shellCandidates.shellBase, hostMode),
-    shellBase: shellCandidates.shellBase,
-    shellSource: `${shellCandidates.shellSource}/rotated`
-  };
-}
-
 function shellTouchSignature(snapshot, vertex, shellBase) {
-  const shellSet = new Set(shellBase);
   const nbrs = new Set(neighborsOf(snapshot, vertex));
-  return shellBase.filter(v => shellSet.has(v) && nbrs.has(v));
+  return shellBase.filter(v => nbrs.has(v));
 }
 
 function signatureDistance(a, b) {
@@ -161,12 +122,11 @@ function signatureDistance(a, b) {
   const B = new Set(b);
   let shared = 0;
   for (const x of A) if (B.has(x)) shared += 1;
-  return (a.length + b.length - 2 * shared);
+  return a.length + b.length - 2 * shared;
 }
 
 function generatePerfectMatchings(vertices) {
   if (vertices.length === 0) return [[]];
-
   const [first, ...rest] = vertices;
   const out = [];
 
@@ -175,12 +135,10 @@ function generatePerfectMatchings(vertices) {
     const remaining = rest.filter((_, idx) => idx !== i);
     const pair = [first, partner].slice().sort((x, y) => Number(x.slice(1)) - Number(y.slice(1)));
     const tails = generatePerfectMatchings(remaining);
-
     for (const tail of tails) {
       out.push([pair, ...tail]);
     }
   }
-
   return out;
 }
 
@@ -192,27 +150,128 @@ function normalizeMatching(matching) {
 
 function scorePair(snapshot, pair, shellBase) {
   const [a, b] = pair;
-  const edgePenalty = edgeExists(snapshot, a, b) ? -5 : 5;
-
   const sigA = shellTouchSignature(snapshot, a, shellBase);
   const sigB = shellTouchSignature(snapshot, b, shellBase);
 
+  const edgePenalty = edgeExists(snapshot, a, b) ? -5 : 5;
   const balanceReward = (sigA.length === 2 && sigB.length === 2) ? 2 : 0;
   const complementReward = signatureDistance(sigA, sigB);
-  const distinctReward = pair[0] !== pair[1] ? 1 : -100;
 
-  return edgePenalty + balanceReward + complementReward + distinctReward;
+  return edgePenalty + balanceReward + complementReward + 1;
 }
 
 function scoreMatching(snapshot, matching, shellBase) {
-  let total = 0;
-  for (const pair of matching) {
-    total += scorePair(snapshot, pair, shellBase);
-  }
-  return total;
+  return matching.reduce((sum, pair) => sum + scorePair(snapshot, pair, shellBase), 0);
 }
 
-function deriveRawDiads(snapshot, coupler, shellBase) {
+function neighborhoodSummary(snapshot, coupler) {
+  const ring1 = neighborsOf(snapshot, coupler)
+    .slice()
+    .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+
+  const ring1set = new Set(ring1);
+  const ring2set = new Set();
+
+  for (const v of ring1) {
+    for (const u of neighborsOf(snapshot, v)) {
+      if (u !== coupler && !ring1set.has(u)) ring2set.add(u);
+    }
+  }
+
+  const ring2 = [...ring2set].sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+  return { ring1, ring2, ring1Count: ring1.length, ring2Count: ring2.length };
+}
+
+function ring2Degree(snapshot, vertex, coupler) {
+  const hood = neighborhoodSummary(snapshot, coupler);
+  const ring2set = new Set(hood.ring2);
+  let count = 0;
+  for (const u of neighborsOf(snapshot, vertex)) {
+    if (ring2set.has(u)) count += 1;
+  }
+  return count;
+}
+
+function varianceLike(values) {
+  if (values.length === 0) return 0;
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  return values.reduce((acc, x) => acc + (x - mean) * (x - mean), 0);
+}
+
+function transportGeometryScore(snapshot, matching, shellBase) {
+  const shellSize = shellBase.length;
+
+  const details = matching.map(pair => {
+    const [a, b] = pair;
+    const sigA = shellTouchSignature(snapshot, a, shellBase);
+    const sigB = shellTouchSignature(snapshot, b, shellBase);
+    const union = [...new Set([...sigA, ...sigB])];
+    union.sort((x, y) => shellBase.indexOf(x) - shellBase.indexOf(y));
+
+    const idx = union.map(v => shellBase.indexOf(v)).sort((m, n) => m - n);
+    let spread = 0;
+    if (idx.length >= 2) {
+      let minArc = shellSize;
+      for (let i = 0; i < idx.length; i += 1) {
+        const p = idx[i];
+        const q = idx[(i + 1) % idx.length];
+        const diff = (q - p + shellSize) % shellSize;
+        if (diff !== 0) minArc = Math.min(minArc, diff);
+      }
+      spread = minArc === shellSize ? 0 : minArc;
+    }
+
+    return {
+      pair,
+      sigA,
+      sigB,
+      union,
+      spread,
+      twoTwo: sigA.length === 2 && sigB.length === 2
+    };
+  });
+
+  const coverageCount = new Map(shellBase.map(v => [v, 0]));
+  for (const item of details) {
+    for (const v of item.union) {
+      coverageCount.set(v, (coverageCount.get(v) ?? 0) + 1);
+    }
+  }
+
+  const coverageValues = shellBase.map(v => coverageCount.get(v) ?? 0);
+  const coverageVariance = varianceLike(coverageValues);
+
+  const spreadValues = details.map(d => d.spread);
+  const spreadVariance = varianceLike(spreadValues);
+  const spreadMean = spreadValues.reduce((a, b) => a + b, 0) / (spreadValues.length || 1);
+
+  const twoTwoCount = details.filter(d => d.twoTwo).length;
+
+  const score =
+    8 * twoTwoCount +
+    6 * (3 - coverageVariance) +
+    4 * (3 - spreadVariance) +
+    2 * spreadMean;
+
+  return {
+    score,
+    coverageValues,
+    coverageVariance,
+    spreadValues,
+    spreadVariance,
+    twoTwoCount,
+    details: details.map(d => ({
+      pair: d.pair,
+      sigA: d.sigA,
+      sigB: d.sigB,
+      union: d.union,
+      spread: d.spread,
+      twoTwo: d.twoTwo
+    }))
+  };
+}
+
+function scoreShellAndMatching(snapshot, coupler, shellBase) {
   const couplerNeighbors = neighborsOf(snapshot, coupler);
   const shellSet = new Set(shellBase);
   const nonShell = couplerNeighbors
@@ -220,52 +279,232 @@ function deriveRawDiads(snapshot, coupler, shellBase) {
     .slice()
     .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
 
-  if (nonShell.length !== 6) {
-    return {
-      rawDiads: [],
-      diadSource: 'adjacency-matching/incomplete',
-      matchingScore: null
-    };
-  }
+  if (shellBase.length !== 4 || nonShell.length !== 6) return null;
 
+  const internalShellEdges = allPairs(shellBase).filter(([a, b]) => edgeExists(snapshot, a, b)).length;
   const matchings = generatePerfectMatchings(nonShell).map(normalizeMatching);
 
-  let best = null;
+  let bestMatching = null;
   for (const matching of matchings) {
     const score = scoreMatching(snapshot, matching, shellBase);
-    if (!best || score > best.score) {
-      best = { matching, score };
+    const transport = transportGeometryScore(snapshot, matching, shellBase);
+    const combined = score + transport.score;
+    if (!bestMatching || combined > bestMatching.combinedScore) {
+      bestMatching = {
+        matching,
+        matchingScore: score,
+        transport,
+        combinedScore: combined
+      };
     }
   }
 
+  const shellRing2Degrees = shellBase.map(v => ring2Degree(snapshot, v, coupler));
+  const boundaryVariance = varianceLike(shellRing2Degrees);
+  const boundaryUniformityScore = 20 - boundaryVariance;
+
   return {
-    rawDiads: best ? best.matching : [],
-    diadSource: 'adjacency-matching/best-score',
-    matchingScore: best ? best.score : null
+    shellBase,
+    nonShell,
+    matching: bestMatching ? bestMatching.matching : [],
+    matchingScore: bestMatching ? bestMatching.matchingScore : -999,
+    transportScore: bestMatching ? bestMatching.transport.score : -999,
+    transportDebug: bestMatching ? bestMatching.transport : null,
+    shellRing2Degrees,
+    boundaryVariance,
+    boundaryUniformityScore,
+    totalScore:
+      100 +
+      internalShellEdges +
+      (bestMatching ? bestMatching.matchingScore : -999) +
+      (bestMatching ? bestMatching.transport.score : -999) +
+      boundaryUniformityScore
   };
 }
 
-function deriveDiads(snapshot, coupler, shellBase, activeSlot) {
-  const raw = deriveRawDiads(snapshot, coupler, shellBase);
+function discoverShellBundle(snapshot, coupler) {
+  const quads = allQuads(neighborsOf(snapshot, coupler));
+  const candidates = [];
+
+  for (const quad of quads) {
+    const cycle = cycleOrderForQuad(snapshot, quad);
+    if (!cycle) continue;
+    const bundle = scoreShellAndMatching(snapshot, coupler, cycle);
+    if (!bundle) continue;
+    candidates.push(bundle);
+  }
+
+  candidates.sort((a, b) => b.totalScore - a.totalScore);
+
+  const best = candidates[0];
+  if (!best) {
+    return {
+      shellBase: [],
+      shellSource: 'joint-shell-diad/not-found',
+      nonShell: [],
+      rawDiads: [],
+      matchingScore: null,
+      transportScore: null,
+      transportDebug: null,
+      shellRing2Degrees: [],
+      boundaryVariance: null,
+      boundaryUniformityScore: null,
+      shellDebug: []
+    };
+  }
+
   return {
-    diads: rotate(raw.rawDiads, activeSlot),
-    diadSource: raw.diadSource,
-    rawDiads: raw.rawDiads,
-    matchingScore: raw.matchingScore
+    shellBase: best.shellBase,
+    shellSource: 'joint-shell-diad/discovered',
+    nonShell: best.nonShell,
+    rawDiads: best.matching,
+    matchingScore: best.matchingScore,
+    transportScore: best.transportScore,
+    transportDebug: best.transportDebug,
+    shellRing2Degrees: best.shellRing2Degrees,
+    boundaryVariance: best.boundaryVariance,
+    boundaryUniformityScore: best.boundaryUniformityScore,
+    shellDebug: candidates.slice(0, 8).map(c => ({
+      shellBase: c.shellBase,
+      nonShell: c.nonShell,
+      matching: c.matching,
+      matchingScore: c.matchingScore,
+      transportScore: c.transportScore,
+      transportDebug: c.transportDebug,
+      shellRing2Degrees: c.shellRing2Degrees,
+      boundaryVariance: c.boundaryVariance,
+      boundaryUniformityScore: c.boundaryUniformityScore,
+      totalScore: c.totalScore
+    }))
+  };
+}
+
+function deriveShell(snapshot, coupler, hostMode) {
+  const discovered = discoverShellBundle(snapshot, coupler);
+
+  if (discovered.shellBase.length !== 4) {
+    return {
+      shell: discovered.shellBase,
+      shellBase: discovered.shellBase,
+      shellSource: discovered.shellSource,
+      shellDebug: discovered.shellDebug,
+      nonShell: discovered.nonShell,
+      rawDiads: discovered.rawDiads,
+      matchingScore: discovered.matchingScore,
+      transportScore: discovered.transportScore,
+      transportDebug: discovered.transportDebug,
+      shellRing2Degrees: discovered.shellRing2Degrees,
+      boundaryVariance: discovered.boundaryVariance,
+      boundaryUniformityScore: discovered.boundaryUniformityScore
+    };
+  }
+
+  return {
+    shell: rotate(discovered.shellBase, hostMode),
+    shellBase: discovered.shellBase,
+    shellSource: `${discovered.shellSource}/rotated`,
+    shellDebug: discovered.shellDebug,
+    nonShell: discovered.nonShell,
+    rawDiads: discovered.rawDiads,
+    matchingScore: discovered.matchingScore,
+    transportScore: discovered.transportScore,
+    transportDebug: discovered.transportDebug,
+    shellRing2Degrees: discovered.shellRing2Degrees,
+    boundaryVariance: discovered.boundaryVariance,
+    boundaryUniformityScore: discovered.boundaryUniformityScore
+  };
+}
+
+function diadShellSignature(snapshot, pair, shellBase) {
+  const sigA = shellTouchSignature(snapshot, pair[0], shellBase);
+  const sigB = shellTouchSignature(snapshot, pair[1], shellBase);
+  const union = [...new Set([...sigA, ...sigB])];
+  union.sort((a, b) => shellBase.indexOf(a) - shellBase.indexOf(b));
+  return union;
+}
+
+function cyclicSpread(signature, shellBase) {
+  if (signature.length < 2) return 0;
+  const idx = signature.map(v => shellBase.indexOf(v)).filter(i => i >= 0).sort((a, b) => a - b);
+  if (idx.length < 2) return 0;
+
+  let minArc = shellBase.length;
+  for (let i = 0; i < idx.length; i += 1) {
+    const a = idx[i];
+    const b = idx[(i + 1) % idx.length];
+    const diff = (b - a + shellBase.length) % shellBase.length;
+    if (diff !== 0) minArc = Math.min(minArc, diff);
+  }
+  return minArc === shellBase.length ? 0 : minArc;
+}
+
+function inferOrderedRawDiads(snapshot, rawDiads, shellBase) {
+  const enriched = rawDiads.map(pair => {
+    const sig = diadShellSignature(snapshot, pair, shellBase);
+    return {
+      pair,
+      signature: sig,
+      spread: cyclicSpread(sig, shellBase),
+      sigLen: sig.length,
+      minVertex: Math.min(Number(pair[0].slice(1)), Number(pair[1].slice(1)))
+    };
+  });
+
+  enriched.sort((a, b) => {
+    if (a.spread !== b.spread) return a.spread - b.spread;
+    if (a.sigLen !== b.sigLen) return a.sigLen - b.sigLen;
+    return a.minVertex - b.minVertex;
+  });
+
+  const orderedRawDiads = enriched.map(x => x.pair);
+  const channelMeta = baseChannelMeta();
+
+  return {
+    orderedRawDiads,
+    orderedChannels: orderedRawDiads.map((pair, idx) => ({
+      channelKey: channelMeta[idx].channelKey,
+      channelName: channelMeta[idx].channelName,
+      pair
+    })),
+    orderingSource: 'shell-signature/spread-rank',
+    orderingDebug: enriched.map((x, idx) => ({
+      channelKey: channelMeta[idx].channelKey,
+      pair: x.pair,
+      signature: x.signature,
+      spread: x.spread,
+      sigLen: x.sigLen
+    }))
+  };
+}
+
+function deriveDiads(snapshot, coupler, shellBase, rawDiads, nonShell, activeSlot) {
+  const ordered = inferOrderedRawDiads(snapshot, rawDiads, shellBase);
+  const slotMeta = slotMetaFor(activeSlot);
+  const operationalChannels = rotate(ordered.orderedChannels, activeSlot).map((item, idx) => ({
+    ...item,
+    slotKey: slotMeta[idx].slotKey,
+    slotName: slotMeta[idx].slotName
+  }));
+
+  return {
+    diads: operationalChannels.map(x => x.pair),
+    channelMeta: ordered.orderedChannels,
+    operationalChannels,
+    diadSource: 'joint-shell-diad/matching',
+    nonShell,
+    rawDiads,
+    orderedRawDiads: ordered.orderedRawDiads,
+    orderingSource: ordered.orderingSource,
+    orderingDebug: ordered.orderingDebug
   };
 }
 
 function validateLocalCluster(snapshot, coupler, shell, diads) {
   const couplerNeighbors = new Set(neighborsOf(snapshot, coupler));
-
-  const shellTouchesCoupler = shell.every(v => couplerNeighbors.has(v));
-  const diadsTouchCoupler = diads.flat().every(v => couplerNeighbors.has(v));
-  const hasThreeDiads = diads.length === 3 && diads.every(pair => Array.isArray(pair) && pair.length === 2);
-
   return {
-    shellTouchesCoupler,
-    diadsTouchCoupler,
-    hasThreeDiads
+    shellTouchesCoupler: shell.every(v => couplerNeighbors.has(v)),
+    diadsTouchCoupler: diads.flat().every(v => couplerNeighbors.has(v)),
+    hasThreeDiads: diads.length === 3 && diads.every(pair => Array.isArray(pair) && pair.length === 2)
   };
 }
 
@@ -278,7 +517,8 @@ export async function getGraphState(state) {
     state: {
       hostMode: state.hostMode,
       activeSlot: state.activeSlot,
-      phaseSign: state.phaseSign
+      phaseSign: state.phaseSign,
+      anchorVertexOverride: state.anchorVertexOverride || null
     }
   };
 }
@@ -287,7 +527,7 @@ export async function anchorFromGraph(graphState) {
   const { hostMode, activeSlot, phaseSign } = graphState.state;
   const mode = getModeRecord(hostMode);
   const phase = getPhaseRecord(phaseSign);
-  const anchorVertex = graphState.snapshot.anchorVertex;
+  const anchorVertex = graphState.state.anchorVertexOverride || graphState.snapshot.anchorVertex;
 
   return {
     graphKey: graphState.graphKey,
@@ -309,15 +549,21 @@ export async function clusterFromGraph(anchor) {
 
   const coupler = anchor.anchorVertex;
   const shellDerived = deriveShell(snapshot, coupler, hostMode);
-  const diadDerived = deriveDiads(snapshot, coupler, shellDerived.shellBase, activeSlot);
-  const slotMeta = slotMetaFor(activeSlot);
+  const diadDerived = deriveDiads(
+    snapshot,
+    coupler,
+    shellDerived.shellBase,
+    shellDerived.rawDiads,
+    shellDerived.nonShell,
+    activeSlot
+  );
   const validation = validateLocalCluster(snapshot, coupler, shellDerived.shell, diadDerived.diads);
+  const neighborhood = neighborhoodSummary(snapshot, coupler);
 
   return {
     coupler,
     shell: shellDerived.shell,
     diads: diadDerived.diads,
-    slotMeta,
     mode: anchor.mode,
     phase: anchor.phase,
     graphState: anchor.graphState,
@@ -325,40 +571,70 @@ export async function clusterFromGraph(anchor) {
       neighbors: neighborsOf(snapshot, coupler),
       shellSource: shellDerived.shellSource,
       shellBase: shellDerived.shellBase,
+      shellDebug: shellDerived.shellDebug,
+      shellRing2Degrees: shellDerived.shellRing2Degrees,
+      boundaryVariance: shellDerived.boundaryVariance,
+      boundaryUniformityScore: shellDerived.boundaryUniformityScore,
+      matchingScore: shellDerived.matchingScore,
+      transportScore: shellDerived.transportScore,
+      transportDebug: shellDerived.transportDebug,
       diadSource: diadDerived.diadSource,
+      nonShell: diadDerived.nonShell,
       rawDiads: diadDerived.rawDiads,
-      matchingScore: diadDerived.matchingScore,
+      orderedRawDiads: diadDerived.orderedRawDiads,
+      channelMeta: diadDerived.channelMeta,
+      operationalChannels: diadDerived.operationalChannels,
+      orderingSource: diadDerived.orderingSource,
+      orderingDebug: diadDerived.orderingDebug,
+      neighborhood,
       validation
     }
   };
 }
 
 export async function orderFromGraph(cluster) {
-  const active = cluster.slotMeta[0];
+  const active = cluster.debug.operationalChannels?.[0] ?? null;
 
   return {
     portKey: cluster.mode.modeKey,
     portName: cluster.mode.modeName,
-    slotKey: active.slotKey,
-    slotName: active.slotName,
+    slotKey: active?.slotKey ?? null,
+    slotName: active?.slotName ?? null,
     phaseKey: cluster.phase.phaseKey,
     phaseName: cluster.phase.phaseName,
     coupler: cluster.coupler,
     shell: cluster.shell,
     diads: cluster.diads,
-    slotMeta: cluster.slotMeta,
     validation: cluster.debug.validation,
     shellSource: cluster.debug.shellSource,
     shellBase: cluster.debug.shellBase,
-    diadSource: cluster.debug.diadSource,
-    rawDiads: cluster.debug.rawDiads,
+    shellDebug: cluster.debug.shellDebug,
+    shellRing2Degrees: cluster.debug.shellRing2Degrees,
+    boundaryVariance: cluster.debug.boundaryVariance,
+    boundaryUniformityScore: cluster.debug.boundaryUniformityScore,
     matchingScore: cluster.debug.matchingScore,
-    graphState: cluster.graphState
+    transportScore: cluster.debug.transportScore,
+    transportDebug: cluster.debug.transportDebug,
+    diadSource: cluster.debug.diadSource,
+    nonShell: cluster.debug.nonShell,
+    rawDiads: cluster.debug.rawDiads,
+    orderedRawDiads: cluster.debug.orderedRawDiads,
+    channelMeta: cluster.debug.channelMeta,
+    operationalChannels: cluster.debug.operationalChannels,
+    orderingSource: cluster.debug.orderingSource,
+    orderingDebug: cluster.debug.orderingDebug,
+    neighborhood: cluster.debug.neighborhood,
+    graphState: cluster.graphState,
+    isCanonicalLocalMachine: Boolean(active)
   };
 }
 
 export async function readoutFromGraph(order) {
   const { hostMode, activeSlot, phaseSign } = order.graphState.state;
+  const slotMeta = order.operationalChannels.map(x => ({
+    slotKey: x.slotKey,
+    slotName: x.slotName
+  }));
 
   return {
     eta: hostMode,
@@ -373,13 +649,26 @@ export async function readoutFromGraph(order) {
     coupler: order.coupler,
     shell: order.shell,
     diads: order.diads,
-    slotMeta: order.slotMeta,
+    slotMeta,
     validation: order.validation,
     shellSource: order.shellSource,
     shellBase: order.shellBase,
-    diadSource: order.diadSource,
-    rawDiads: order.rawDiads,
+    shellDebug: order.shellDebug,
+    shellRing2Degrees: order.shellRing2Degrees,
+    boundaryVariance: order.boundaryVariance,
+    boundaryUniformityScore: order.boundaryUniformityScore,
     matchingScore: order.matchingScore,
+    transportScore: order.transportScore,
+    transportDebug: order.transportDebug,
+    diadSource: order.diadSource,
+    nonShell: order.nonShell,
+    rawDiads: order.rawDiads,
+    orderedRawDiads: order.orderedRawDiads,
+    channelMeta: order.channelMeta,
+    operationalChannels: order.operationalChannels,
+    orderingSource: order.orderingSource,
+    orderingDebug: order.orderingDebug,
+    neighborhood: order.neighborhood,
     graphKey: order.graphState.graphKey,
     source: order.graphState.source
   };
@@ -392,11 +681,5 @@ export async function pipelineFromGraph(state) {
   const order = await orderFromGraph(cluster);
   const readout = await readoutFromGraph(order);
 
-  return {
-    graphState,
-    anchor,
-    cluster,
-    order,
-    readout
-  };
+  return { graphState, anchor, cluster, order, readout };
 }

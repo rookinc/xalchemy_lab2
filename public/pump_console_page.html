@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AT4val[60,6] Pump Console</title>
+  <title>AT4val[60,6] Local Chamber Console</title>
   <style>
     :root {
       color-scheme: dark;
@@ -135,8 +135,8 @@
     <section class="panel">
       <div class="header">
         <div>
-          <h1 class="title">AT4val[60,6] Pump Console</h1>
-          <p class="subtitle">Console-first lens sandbox for shell / coupler / triad-of-diads / coarse pump state.</p>
+          <h1 class="title">AT4val[60,6] Local Chamber Console</h1>
+          <p class="subtitle">Console-first local chamber sandbox for shell / coupler / triad-of-diads / coarse pump state on a seeded neighborhood patch.</p>
         </div>
         <div class="tagrow" aria-label="status tags">
           <span class="tag">graph: AT4val[60,6]</span>
@@ -151,6 +151,10 @@
         <button id="bootBtn" class="primary">boot</button>
         <button id="stepBtn">step</button>
         <button id="traceBtn">trace step</button>
+        <button id="deriveBtn">derive trace</button>
+        <button id="sweepBtn">frame sweep</button>
+        <button id="anchorSweepBtn">anchor sweep</button>
+        <button id="orbitSweepBtn">signature sweep</button>
         <button id="cycleBtn">run 12-step cycle</button>
         <button id="resetBtn">reset</button>
         <button id="dumpBtn">dump state</button>
@@ -175,7 +179,9 @@
         <div class="kv"><div class="k">cycle pos</div><div id="cyclePos">0 / 12</div></div>
         <div class="kv"><div class="k">coupler</div><div id="coupler">v0</div></div>
         <div class="kv"><div class="k">shell</div><div id="shell">v2, v3, v4, v5</div></div>
-        <div class="kv"><div class="k">diads</div><div id="diads"></div></div>
+        <div class="kv"><div class="k">channels</div><div id="channels"></div></div>
+        <div class="kv"><div class="k">slots</div><div id="diads"></div></div>
+        <div class="kv"><div class="k">candidates</div><div id="candidates"></div></div>
         <div class="kv"><div class="k">last action</div><div id="lastAction">boot</div></div>
 
         <h2 style="margin-top:16px;">Machine Rule</h2>
@@ -196,7 +202,7 @@
           </div>
         </div>
         <div id="console" class="console" aria-live="polite"></div>
-        <div class="footer">Shell and diads derived from adjacency. Next layer: improve order inference from richer graph neighborhoods.</div>
+        <div class="footer">Structure first, operation second. Current data source is a seeded local chamber patch of AT4val[60,6]; global orbit claims remain deferred until full 60-vertex adjacency is loaded.</div>
       </section>
     </section>
   </main>
@@ -208,7 +214,7 @@
       previousState,
       getFrame,
       tracePipeline,
-    } from '/assets/pump_console_core.js?v=3';
+    } from '/assets/pump_console_core.js';
 
     const state = {
       hostMode: 0,
@@ -234,11 +240,17 @@
       cyclePos: document.getElementById('cyclePos'),
       coupler: document.getElementById('coupler'),
       shell: document.getElementById('shell'),
+      channels: document.getElementById('channels'),
       diads: document.getElementById('diads'),
+      candidates: document.getElementById('candidates'),
       lastAction: document.getElementById('lastAction'),
       bootBtn: document.getElementById('bootBtn'),
       stepBtn: document.getElementById('stepBtn'),
       traceBtn: document.getElementById('traceBtn'),
+      deriveBtn: document.getElementById('deriveBtn'),
+      sweepBtn: document.getElementById('sweepBtn'),
+      anchorSweepBtn: document.getElementById('anchorSweepBtn'),
+      orbitSweepBtn: document.getElementById('orbitSweepBtn'),
       cycleBtn: document.getElementById('cycleBtn'),
       resetBtn: document.getElementById('resetBtn'),
       dumpBtn: document.getElementById('dumpBtn'),
@@ -286,9 +298,20 @@
       els.cyclePos.textContent = `${state.stepCount % 12} / 12`;
       els.coupler.textContent = frame.coupler;
       els.shell.textContent = frame.shell.join(', ');
-      els.diads.innerHTML = frame.diads
-        .map((pair, i) => `${frame.slotMeta[i].slotKey}=(${pair[0]},${pair[1]}) — ${frame.slotMeta[i].slotName}`)
+      els.channels.innerHTML = (frame.channelMeta || [])
+        .map(item => `${item.channelKey}=(${item.pair[0]},${item.pair[1]})`)
         .join('<br>');
+      els.diads.innerHTML = (frame.operationalChannels || [])
+        .map(item => `${item.slotKey}=(${item.pair[0]},${item.pair[1]}) — ${item.slotName} [${item.channelKey}]`)
+        .join('<br>');
+      els.candidates.innerHTML = (frame.shellDebug || []).slice(0, 3)
+        .map((item, idx) =>
+          `#${idx} shell={${(item.shellBase || []).join(',')}}<br>` +
+          `match=${JSON.stringify(item.matching || [])}<br>` +
+          `r2=${JSON.stringify(item.shellRing2Degrees || [])}<br>` +
+          `m=${item.matchingScore} t=${item.transportScore} score=${item.totalScore}`
+        )
+        .join('<br><br>');
       els.lastAction.textContent = state.lastAction;
     }
 
@@ -297,18 +320,17 @@
         state.lastAction = 'boot';
         const frame = await getFrame(state);
         await render();
-        writeLine('BOOT', `graph=${frame.graphKey}`);
+        writeLine('BOOT', `graph=${frame.graphKey} (local seeded patch)`);
         writeLine('BOOT', `port=${frame.portKey} (${frame.portName})`);
         writeLine('BOOT', `phase=${frame.phaseKey} (${frame.phaseName})`);
-        writeLine('BOOT', `seed shell={${frame.shell.join(', ')}} coupler=${frame.coupler}`);
-        const diadSummary = frame.diads
-          .map((pair, i) => `${frame.slotMeta[i]?.slotKey ?? 'D?'}=${Array.isArray(pair) ? pair.join('/') : '?'}`)
-          .join(' ');
-        writeLine('BOOT', `seed diads ${diadSummary}`);
-        writeLine('READY', `coarse state ${signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign)} with R(F)=(${state.hostMode}, ${state.activeSlot}, ${frame.phaseKey})`);
+        writeLine('BOOT', `shell={${frame.shell.join(', ')}} coupler=${frame.coupler}`);
+        writeLine('BOOT', `channels ${(frame.channelMeta || []).map(x => `${x.channelKey}=${x.pair.join('/')}`).join(' ')}`);
+        writeLine('BOOT', `slots ${(frame.operationalChannels || []).map(x => `${x.slotKey}=${x.pair.join('/')}[${x.channelKey}]`).join(' ')}`);
+        writeLine('READY', `local coarse state ${signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign)} with R(F)=(${state.hostMode}, ${state.activeSlot}, ${frame.phaseKey})`);
       } catch (err) {
         console.error(err);
-        writeLine('ERROR', String(err), 'warn');
+        writeLine('ERROR', `${err.name}: ${err.message}`, 'warn');
+        writeLine('ERROR', err.stack || 'no stack', 'warn');
       }
     }
 
@@ -337,7 +359,8 @@
         }
       } catch (err) {
         console.error(err);
-        writeLine('ERROR', String(err), 'warn');
+        writeLine('ERROR', `${err.name}: ${err.message}`, 'warn');
+        writeLine('ERROR', err.stack || 'no stack', 'warn');
       }
     }
 
@@ -370,7 +393,251 @@
         }
       } catch (err) {
         console.error(err);
-        writeLine('ERROR', String(err), 'warn');
+        writeLine('ERROR', `${err.name}: ${err.message}`, 'warn');
+        writeLine('ERROR', err.stack || 'no stack', 'warn');
+      }
+    }
+
+
+
+
+    async function orbitSweep() {
+      try {
+        state.lastAction = 'signature-sweep';
+        await render();
+
+        const original = {
+          hostMode: state.hostMode,
+          activeSlot: state.activeSlot,
+          phaseSign: state.phaseSign,
+          stepCount: state.stepCount,
+          anchorVertexOverride: state.anchorVertexOverride || null
+        };
+
+        const res = await fetch('/assets/data/pump_graph_state.json');
+        if (!res.ok) {
+          throw new Error(`failed to load graph state: ${res.status}`);
+        }
+        const snapshot = await res.json();
+        const vertices = Object.keys(snapshot.adjacency || {}).sort();
+        const buckets = new Map();
+        let canonicalCount = 0;
+
+        writeLine('ORBIT', `starting signature sweep on current local patch at port=P${state.hostMode} slot=${state.activeSlot} phase=${state.phaseSign > 0 ? '+' : '-'}`);
+        writeLine('ORBIT', `vertex count ${vertices.length}`);
+
+        for (const anchorVertexOverride of vertices) {
+          const frame = await getFrame({
+            hostMode: original.hostMode,
+            activeSlot: original.activeSlot,
+            phaseSign: original.phaseSign,
+            anchorVertexOverride
+          });
+
+          const canonical = Boolean(frame.isCanonicalLocalMachine);
+          if (!canonical) continue;
+
+          canonicalCount += 1;
+
+          const shellBase = [...(frame.shellBase || [])].sort();
+          const ordered = (frame.orderedRawDiads || [])
+            .map(pair => [...pair].sort())
+            .sort((a, b) => (a[0] + a[1]).localeCompare(b[0] + b[1]));
+          const signature = JSON.stringify({ shellBase, ordered });
+
+          if (!buckets.has(signature)) {
+            buckets.set(signature, {
+              shellBase,
+              ordered,
+              anchors: [],
+              bestScore: null
+            });
+          }
+
+          const bucket = buckets.get(signature);
+          bucket.anchors.push(anchorVertexOverride);
+
+          const total = (frame.shellDebug || [])[0]?.totalScore ?? null;
+          if (bucket.bestScore === null || (total !== null && total > bucket.bestScore)) {
+            bucket.bestScore = total;
+          }
+
+          writeLine(
+            'ORBIT',
+            `${anchorVertexOverride} canonical=yes shellBase={${shellBase.join(', ')}} ordered=${JSON.stringify(ordered)} score=${total ?? 'n/a'}`
+          );
+        }
+
+        writeLine('ORBIT', `canonical anchors ${canonicalCount}`);
+        writeLine('ORBIT', `signature classes ${buckets.size}`);
+
+        let idx = 0;
+        for (const bucket of buckets.values()) {
+          writeLine(
+            'ORBIT',
+            `class #${idx} shellBase={${bucket.shellBase.join(', ')}} ordered=${JSON.stringify(bucket.ordered)} anchors=[${bucket.anchors.join(', ')}] best=${bucket.bestScore ?? 'n/a'}`
+          );
+          idx += 1;
+        }
+
+        state.hostMode = original.hostMode;
+        state.activeSlot = original.activeSlot;
+        state.phaseSign = original.phaseSign;
+        state.stepCount = original.stepCount;
+        state.anchorVertexOverride = original.anchorVertexOverride;
+        state.lastAction = 'signature-sweep';
+        await render();
+
+        writeLine('ORBIT', 'signature sweep complete');
+      } catch (err) {
+        console.error(err);
+        writeLine('ERROR', `${err.name}: ${err.message}`, 'warn');
+        writeLine('ERROR', err.stack || 'no stack', 'warn');
+      }
+    }
+
+    async function anchorSweep() {
+      try {
+        state.lastAction = 'anchor-sweep';
+        await render();
+
+        const original = {
+          hostMode: state.hostMode,
+          activeSlot: state.activeSlot,
+          phaseSign: state.phaseSign,
+          stepCount: state.stepCount,
+          anchorVertexOverride: state.anchorVertexOverride || null
+        };
+
+        const anchors = ['v0', 'v2', 'v3', 'v4', 'v5', 'v1', 'v6', 'v8', 'v14', 'v7', 'v9'];
+
+        writeLine('ASWEEP', `starting anchor sweep at port=P${state.hostMode} slot=${state.activeSlot} phase=${state.phaseSign > 0 ? '+' : '-'}`);
+
+        for (const anchorVertexOverride of anchors) {
+          const probe = {
+            hostMode: original.hostMode,
+            activeSlot: original.activeSlot,
+            phaseSign: original.phaseSign,
+            anchorVertexOverride
+          };
+
+          const frame = await getFrame(probe);
+
+          const rawChannels = (frame.channelMeta || [])
+            .map(item => `${item.channelKey}=(${item.pair[0]},${item.pair[1]})`)
+            .join(' ');
+
+          const operational = (frame.operationalChannels || [])
+            .map(item => `${item.slotKey}=(${item.pair[0]},${item.pair[1]})[${item.channelKey}]`)
+            .join(' ');
+
+          writeLine('ASWEEP', `${anchorVertexOverride} shellBase={${(frame.shellBase || []).join(', ')}} displayed={${(frame.shell || []).join(', ')}}`);
+          writeLine('ASWEEP', `${anchorVertexOverride} raw=${JSON.stringify(frame.rawDiads || [])}`);
+          writeLine('ASWEEP', `${anchorVertexOverride} channels ${rawChannels || '(none)'}`);
+          writeLine('ASWEEP', `${anchorVertexOverride} slots ${operational || '(none)'}`);
+          writeLine('ASWEEP', `${anchorVertexOverride} scores m=${frame.matchingScore} t=${frame.transportScore} total=${(frame.shellDebug || [])[0]?.totalScore ?? 'n/a'}`);
+          writeLine('ASWEEP', `${anchorVertexOverride} ring1=${frame.neighborhood?.ring1Count ?? 'n/a'} ring2=${frame.neighborhood?.ring2Count ?? 'n/a'} shellSource=${frame.shellSource} canonical=${frame.isCanonicalLocalMachine ? 'yes' : 'no'}`);
+        }
+
+        state.hostMode = original.hostMode;
+        state.activeSlot = original.activeSlot;
+        state.phaseSign = original.phaseSign;
+        state.stepCount = original.stepCount;
+        state.anchorVertexOverride = original.anchorVertexOverride;
+        state.lastAction = 'anchor-sweep';
+        await render();
+
+        writeLine('ASWEEP', 'anchor sweep complete');
+      } catch (err) {
+        console.error(err);
+        writeLine('ERROR', `${err.name}: ${err.message}`, 'warn');
+        writeLine('ERROR', err.stack || 'no stack', 'warn');
+      }
+    }
+
+    async function frameSweep() {
+      try {
+        state.lastAction = 'frame-sweep';
+        await render();
+
+        const original = {
+          hostMode: state.hostMode,
+          activeSlot: state.activeSlot,
+          phaseSign: state.phaseSign,
+          stepCount: state.stepCount
+        };
+
+        writeLine('SWEEP', `starting frame sweep at slot=${state.activeSlot} phase=${state.phaseSign > 0 ? '+' : '-'}`);
+
+        for (let hostMode = 0; hostMode < 4; hostMode += 1) {
+          const probe = {
+            hostMode,
+            activeSlot: original.activeSlot,
+            phaseSign: original.phaseSign
+          };
+
+          const frame = await getFrame(probe);
+
+          const rawChannels = (frame.channelMeta || [])
+            .map(item => `${item.channelKey}=(${item.pair[0]},${item.pair[1]})`)
+            .join(' ');
+
+          const operational = (frame.operationalChannels || [])
+            .map(item => `${item.slotKey}=(${item.pair[0]},${item.pair[1]})[${item.channelKey}]`)
+            .join(' ');
+
+          writeLine('SWEEP', `P${hostMode} shellBase={${(frame.shellBase || []).join(', ')}} displayed={${(frame.shell || []).join(', ')}}`);
+          writeLine('SWEEP', `P${hostMode} raw=${JSON.stringify(frame.rawDiads || [])} ordered=${JSON.stringify(frame.orderedRawDiads || [])}`);
+          writeLine('SWEEP', `P${hostMode} channels ${rawChannels}`);
+          writeLine('SWEEP', `P${hostMode} slots ${operational}`);
+          writeLine('SWEEP', `P${hostMode} scores m=${frame.matchingScore} t=${frame.transportScore} total=${(frame.shellDebug || [])[0]?.totalScore ?? 'n/a'}`);
+        }
+
+        state.hostMode = original.hostMode;
+        state.activeSlot = original.activeSlot;
+        state.phaseSign = original.phaseSign;
+        state.stepCount = original.stepCount;
+        state.lastAction = 'frame-sweep';
+        await render();
+
+        writeLine('SWEEP', 'frame sweep complete');
+      } catch (err) {
+        console.error(err);
+        writeLine('ERROR', `${err.name}: ${err.message}`, 'warn');
+        writeLine('ERROR', err.stack || 'no stack', 'warn');
+      }
+    }
+
+    async function deriveTrace() {
+      try {
+        state.lastAction = 'derive';
+        await render();
+        const frame = await getFrame(state);
+
+        writeLine('DERIVE', `ring1=[${(frame.neighborhood?.ring1 || []).join(', ')}] count=${frame.neighborhood?.ring1Count ?? 0}`);
+        writeLine('DERIVE', `ring2=[${(frame.neighborhood?.ring2 || []).join(', ')}] count=${frame.neighborhood?.ring2Count ?? 0}`);
+        writeLine('DERIVE', `shellBase={${(frame.shellBase || []).join(', ')}} shellSource=${frame.shellSource}`);
+        writeLine('DERIVE', `shellRing2Degrees=[${(frame.shellRing2Degrees || []).join(', ')}] boundaryVariance=${frame.boundaryVariance} boundaryUniformityScore=${frame.boundaryUniformityScore}`);
+        writeLine('DERIVE', `nonShell=[${(frame.nonShell || []).join(', ')}]`);
+        writeLine('DERIVE', `rawDiads=${JSON.stringify(frame.rawDiads || [])}`);
+        writeLine('DERIVE', `orderedRawDiads=${JSON.stringify(frame.orderedRawDiads || [])}`);
+        writeLine('DERIVE', `channels=${JSON.stringify(frame.channelMeta || [])}`);
+        writeLine('DERIVE', `operational=${JSON.stringify(frame.operationalChannels || [])}`);
+        writeLine('DERIVE', `matchingScore=${frame.matchingScore} diadSource=${frame.diadSource}`);
+        writeLine('DERIVE', `orderingSource=${frame.orderingSource}`);
+
+        (frame.orderingDebug || []).forEach((item, idx) => {
+          writeLine('ORDERDBG', `rank=${idx} channel=${item.channelKey} pair=${JSON.stringify(item.pair)} signature=${JSON.stringify(item.signature)} spread=${item.spread} sigLen=${item.sigLen}`);
+        });
+
+        (frame.shellDebug || []).forEach((item, idx) => {
+          writeLine('SHELLDBG', `rank=${idx} shell=${JSON.stringify(item.shellBase)} nonShell=${JSON.stringify(item.nonShell)} matching=${JSON.stringify(item.matching)}`);
+          writeLine('SHELLDBG', `rank=${idx} ring2deg=${JSON.stringify(item.shellRing2Degrees)} var=${item.boundaryVariance} bonus=${item.boundaryUniformityScore} matchingScore=${item.matchingScore} totalScore=${item.totalScore}`);
+        });
+      } catch (err) {
+        console.error(err);
+        writeLine('ERROR', `${err.name}: ${err.message}`, 'warn');
+        writeLine('ERROR', err.stack || 'no stack', 'warn');
       }
     }
 
@@ -396,6 +663,7 @@
         const payload = {
           graph: frame.graphKey,
           adapterSource: frame.source,
+          datasetKind: 'seeded-local-patch',
           portKey: frame.portKey,
           portName: frame.portName,
           hostPort: state.hostMode,
@@ -410,8 +678,17 @@
           cyclePos: state.stepCount % 12,
           coupler: frame.coupler,
           shell: frame.shell,
+          shellBase: frame.shellBase,
+          shellSource: frame.shellSource,
           diads: frame.diads,
-          slotMeta: frame.slotMeta,
+          rawDiads: frame.rawDiads,
+          orderedRawDiads: frame.orderedRawDiads,
+          channelMeta: frame.channelMeta,
+          operationalChannels: frame.operationalChannels,
+          diadSource: frame.diadSource,
+          orderingSource: frame.orderingSource,
+          orderingDebug: frame.orderingDebug,
+          matchingScore: frame.matchingScore,
           validation: frame.validation,
           stepCount: state.stepCount,
           portNext: [1, 2, 3, 0],
@@ -422,7 +699,8 @@
         writeLine('DUMP', JSON.stringify(payload, null, 2));
       } catch (err) {
         console.error(err);
-        writeLine('ERROR', String(err), 'warn');
+        writeLine('ERROR', `${err.name}: ${err.message}`, 'warn');
+        writeLine('ERROR', err.stack || 'no stack', 'warn');
       }
     }
 
@@ -447,13 +725,18 @@
         writeLine('RUN', 'cycle complete');
       } catch (err) {
         console.error(err);
-        writeLine('ERROR', String(err), 'warn');
+        writeLine('ERROR', `${err.name}: ${err.message}`, 'warn');
+        writeLine('ERROR', err.stack || 'no stack', 'warn');
       }
     }
 
     els.bootBtn.addEventListener('click', () => { void boot(); });
     els.stepBtn.addEventListener('click', () => { void stepPump(true); });
     els.traceBtn.addEventListener('click', () => { void traceStep(); });
+    els.deriveBtn.addEventListener('click', () => { void deriveTrace(); });
+    els.sweepBtn.addEventListener('click', () => { void frameSweep(); });
+    els.anchorSweepBtn.addEventListener('click', () => { void anchorSweep(); });
+    els.orbitSweepBtn.addEventListener('click', () => { void orbitSweep(); });
     els.cycleBtn.addEventListener('click', () => { void runCycle(); });
     els.resetBtn.addEventListener('click', () => { void resetState(); });
     els.dumpBtn.addEventListener('click', () => { void dumpState(); });
