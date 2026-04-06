@@ -606,6 +606,94 @@ function validateLocalCluster(snapshot, coupler, shell, diads) {
     hasThreeDiads: diads.length === 3 && diads.every(pair => Array.isArray(pair) && pair.length === 2)
   };
 }
+
+function buildOuterPairsFromRemainder(snapshot, remainder) {
+  const remainderSet = new Set(remainder || []);
+  const seen = new Set();
+  const pairs = [];
+
+  for (const u of remainder || []) {
+    const nbrs = neighborsOf(snapshot, u)
+      .filter(v => remainderSet.has(v))
+      .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+
+    for (const v of nbrs) {
+      const key = pairKey(u, v);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      pairs.push([u, v].slice().sort((a, b) => Number(a.slice(1)) - Number(b.slice(1))));
+    }
+  }
+
+  return pairs.sort((p, q) => {
+    const a0 = Number(p[0].slice(1));
+    const b0 = Number(q[0].slice(1));
+    if (a0 != b0) return a0 - b0;
+    return Number(p[1].slice(1)) - Number(q[1].slice(1));
+  });
+}
+
+function buildFullGraphPlaceholderCluster(anchor, snapshot, coupler, hostMode, neighborhood) {
+  const shellBase = neighborhood.ring1 || [];
+  const shell = rotate(shellBase, hostMode);
+  const remainder = neighborhood.ring2 || [];
+  const outerPairs = buildOuterPairsFromRemainder(snapshot, remainder);
+  const shellRing2Degrees = shellBase.map(v => ring2Degree(snapshot, v, coupler));
+  const quotientShell = normalizeQuotientShell(snapshot, shellBase);
+  const remainder = neighborhood.ring2 || [];
+  const outerPairs = buildOuterPairsFromRemainder(snapshot, remainder);
+
+  return {
+    coupler,
+    shell,
+    diads: [],
+    outerPairs,
+    mode: anchor.mode,
+    phase: anchor.phase,
+    graphState: anchor.graphState,
+    debug: {
+      neighbors: neighborsOf(snapshot, coupler),
+      shellSource: 'full-graph/ring1',
+      shellBase,
+      quotientShell,
+      outerPairs,
+      shellDebug: [{
+        shellBase,
+        quotientShell,
+        nonShell: remainder,
+        outerPairs,
+        matching: [],
+        matchingScore: null,
+        transportScore: null,
+        transportDebug: null,
+        shellRing2Degrees,
+        boundaryVariance: null,
+        boundaryUniformityScore: null,
+        totalScore: null
+      }],
+      shellRing2Degrees,
+      boundaryVariance: null,
+      boundaryUniformityScore: null,
+      matchingScore: null,
+      transportScore: null,
+      transportDebug: null,
+      diadSource: 'full-graph/outer-pairs-derived',
+      nonShell: remainder,
+      rawDiads: [],
+      orderedRawDiads: [],
+      channelMeta: [],
+      operationalChannels: [],
+      orderingSource: 'full-graph/quotient-shell-with-outer-pairs',
+      orderingDebug: [],
+      neighborhood,
+      validation: {
+        shellTouchesCoupler: shellBase.every(v => neighborsOf(snapshot, coupler).includes(v)),
+        diadsTouchCoupler: false,
+        hasThreeDiads: false
+      }
+    }
+  };
+}
 export async function getGraphState(state) {
   const datasetId = state.datasetId || null;
   const { meta, snapshot } = await loadGraphState(datasetId);
@@ -708,56 +796,64 @@ export async function clusterFromGraph(anchor) {
   const neighborhood = neighborhoodSummary(snapshot, coupler);
 
   if (datasetKind === 'full-graph') {
-    const shellBase = neighborhood.ring1 || [];
-    const shell = rotate(shellBase, hostMode);
-    const shellRing2Degrees = shellBase.map(v => ring2Degree(snapshot, v, coupler));
-    const quotientShell = normalizeQuotientShell(snapshot, shellBase);
+    const shellDerived = deriveShell(
+      snapshot,
+      coupler,
+      hostMode,
+      anchor.graphState.state.discoveryMode,
+      datasetKind
+    );
+
+    const canChamberize =
+      shellDerived.shellBase.length === 4 &&
+      Array.isArray(shellDerived.nonShell) &&
+      shellDerived.nonShell.length === 6 &&
+      Array.isArray(shellDerived.rawDiads) &&
+      shellDerived.rawDiads.length === 3;
+
+    if (!canChamberize) {
+      return buildFullGraphPlaceholderCluster(anchor, snapshot, coupler, hostMode, neighborhood);
+    }
+
+    const diadDerived = deriveDiads(
+      snapshot,
+      coupler,
+      shellDerived.shellBase,
+      shellDerived.rawDiads,
+      shellDerived.nonShell,
+      activeSlot
+    );
+    const validation = validateLocalCluster(snapshot, coupler, shellDerived.shell, diadDerived.diads);
 
     return {
       coupler,
-      shell,
-      diads: [],
+      shell: shellDerived.shell,
+      diads: diadDerived.diads,
       mode: anchor.mode,
       phase: anchor.phase,
       graphState: anchor.graphState,
       debug: {
         neighbors: neighborsOf(snapshot, coupler),
-        shellSource: 'full-graph/ring1',
-        shellBase,
-        quotientShell,
-        shellDebug: [{
-          shellBase,
-          quotientShell,
-          nonShell: neighborhood.ring2 || [],
-          matching: [],
-          matchingScore: null,
-          transportScore: null,
-          transportDebug: null,
-          shellRing2Degrees,
-          boundaryVariance: null,
-          boundaryUniformityScore: null,
-          totalScore: null
-        }],
-        shellRing2Degrees,
-        boundaryVariance: null,
-        boundaryUniformityScore: null,
-        matchingScore: null,
-        transportScore: null,
-        transportDebug: null,
-        diadSource: 'full-graph/not-yet-chamberized',
-        nonShell: neighborhood.ring2 || [],
-        rawDiads: [],
-        orderedRawDiads: [],
-        channelMeta: [],
-        operationalChannels: [],
-        orderingSource: 'full-graph/not-yet-chamberized',
-        orderingDebug: [],
+        shellSource: `${shellDerived.shellSource}/full-graph`,
+        shellBase: shellDerived.shellBase,
+        quotientShell: normalizeQuotientShell(snapshot, shellDerived.shellBase),
+        shellDebug: shellDerived.shellDebug,
+        shellRing2Degrees: shellDerived.shellRing2Degrees,
+        boundaryVariance: shellDerived.boundaryVariance,
+        boundaryUniformityScore: shellDerived.boundaryUniformityScore,
+        matchingScore: shellDerived.matchingScore,
+        transportScore: shellDerived.transportScore,
+        transportDebug: shellDerived.transportDebug,
+        diadSource: `${diadDerived.diadSource}/full-graph`,
+        nonShell: diadDerived.nonShell,
+        rawDiads: diadDerived.rawDiads,
+        orderedRawDiads: diadDerived.orderedRawDiads,
+        channelMeta: diadDerived.channelMeta,
+        operationalChannels: diadDerived.operationalChannels,
+        orderingSource: `${diadDerived.orderingSource}/full-graph`,
+        orderingDebug: diadDerived.orderingDebug,
         neighborhood,
-        validation: {
-          shellTouchesCoupler: shellBase.every(v => neighborsOf(snapshot, coupler).includes(v)),
-          diadsTouchCoupler: false,
-          hasThreeDiads: false
-        }
+        validation
       }
     };
   }
@@ -815,7 +911,13 @@ export async function orderFromGraph(cluster) {
   const active = cluster.debug.operationalChannels?.[0] ?? null;
   const isFullGraph = cluster.graphState.datasetMeta?.kind === 'full-graph';
   const hasNeighborhoodShell = (cluster.debug.shellBase || []).length === 4;
-  const isCanonicalLocalMachine = isFullGraph ? hasNeighborhoodShell : Boolean(active);
+  const hasOperationalDiads =
+    Array.isArray(cluster.debug.operationalChannels) &&
+    cluster.debug.operationalChannels.length === 3;
+
+  const isCanonicalLocalMachine = isFullGraph
+    ? hasNeighborhoodShell && hasOperationalDiads
+    : Boolean(active);
 
   return {
     portKey: cluster.mode.modeKey,
@@ -831,6 +933,7 @@ export async function orderFromGraph(cluster) {
     shellSource: cluster.debug.shellSource,
     shellBase: cluster.debug.shellBase,
     quotientShell: cluster.debug.quotientShell || [],
+    outerPairs: cluster.debug.outerPairs || [],
     shellDebug: cluster.debug.shellDebug,
     shellRing2Degrees: cluster.debug.shellRing2Degrees,
     boundaryVariance: cluster.debug.boundaryVariance,
@@ -877,6 +980,7 @@ export async function readoutFromGraph(order) {
     shellSource: order.shellSource,
     shellBase: order.shellBase,
     shellDebug: order.shellDebug,
+    outerPairs: order.outerPairs || [],
     shellRing2Degrees: order.shellRing2Degrees,
     boundaryVariance: order.boundaryVariance,
     boundaryUniformityScore: order.boundaryUniformityScore,

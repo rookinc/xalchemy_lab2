@@ -3,9 +3,15 @@ import {
   pcRunWitnessSmokeFromState,
   pcRunWitnessSurveySmokeFromStates
 } from '/assets/pump_console_witness_smoke.js';
+import { pipelineFromGraph } from '/assets/pump_console_graph_adapter.js';
+import { pcExtractWitnessDataFromPipeline } from '/assets/pump_console_witness_extract.js';
 import {
-  pcBuildWitnessCensus
-} from '/assets/pump_console_witness_report.js';
+  pcCanonW0,
+  pcCanonW1Sharp,
+  pcCanonW2,
+  pcCanonW2Sharp
+} from '/assets/pump_console_witness_canon.js';
+import { pcBuildWitnessCensus } from '/assets/pump_console_witness_report.js';
 import { getEls } from '/assets/pump_console_dom.js';
 import { createState } from '/assets/pump_console_state.js';
 import { writeLine } from '/assets/pump_console_log.js';
@@ -26,6 +32,41 @@ import {
 
 const state = createState();
 const els = getEls();
+
+function phaseKey(phaseSign) {
+  return phaseSign === 1 ? '+' : '-';
+}
+
+function buildWitnessRowFromPipe(pipe) {
+  const data = pcExtractWitnessDataFromPipeline(pipe);
+  const anchor =
+    pipe?.readout?.coupler ||
+    pipe?.anchor?.anchorVertex ||
+    data?.anchor ||
+    null;
+
+  const rowState = pipe?.graphState?.state || null;
+
+  return {
+    anchor,
+    label: `${anchor}@Q${rowState?.hostMode ?? '?'}${rowState?.activeSlot ?? '?'}${phaseKey(rowState?.phaseSign)}`,
+    state: rowState,
+    data,
+    w0: pcCanonW0(data),
+    w1Sharp: pcCanonW1Sharp(data),
+    w2: pcCanonW2(data),
+    w2Sharp: pcCanonW2Sharp(data)
+  };
+}
+
+async function buildSurveyRows(states) {
+  const rows = [];
+  for (const s of states) {
+    const pipe = await pipelineFromGraph(s);
+    rows.push(buildWitnessRowFromPipe(pipe));
+  }
+  return rows;
+}
 
 els.datasetSelect.addEventListener('change', (e) => {
   state.datasetId = e.target.value;
@@ -101,10 +142,16 @@ void boot(state, els).then(async () => {
 
     writeLine(els, 'WITNESS_SURVEY', JSON.stringify(survey, null, 2));
 
-    if (Array.isArray(survey.rows)) {
-      const census = pcBuildWitnessCensus(survey.rows);
-      writeLine(els, 'WITNESS_CENSUS', census.text);
-    }
+    const rows = await buildSurveyRows(states);
+    const census = pcBuildWitnessCensus(rows);
+    const censusLines = census.text.split('\n');
+    const preview = censusLines.slice(0, 20).join('\n');
+    const suffix =
+      censusLines.length > 20
+        ? `\n... (${censusLines.length - 20} more anchors omitted from preview)`
+        : '';
+
+    writeLine(els, 'WITNESS_CENSUS_PREVIEW', `${preview}${suffix}`);
   } catch (err) {
     writeLine(els, 'WITNESS_SURVEY_ERR', err?.stack || err?.message || String(err));
   }

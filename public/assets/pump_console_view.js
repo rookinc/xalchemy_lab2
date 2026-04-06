@@ -14,7 +14,7 @@ export function footerTextFor(state, frame) {
   }
 
   if (datasetId === 'full_graph_placeholder') {
-    return 'Structure first, operation second. Current data source is the full AT4val[60,6] graph; local chamber motion is not yet loaded, but full neighborhood structure and quotient data are available.';
+    return 'Structure first, operation second. Current data source is the full AT4val[60,6] graph; ring1 shell, ring2 remainder, and outer-pair quotient structure are available, while chamberized diads and motion remain deferred.';
   }
 
   return `Structure first, operation second. Current data source is ${datasetId}; dataset kind=${kind}.`;

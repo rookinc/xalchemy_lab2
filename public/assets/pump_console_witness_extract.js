@@ -25,9 +25,73 @@ function pcChooseDiads(readout) {
   return diads.map((pair) => [...pair]);
 }
 
+function pcChooseOuterPairs(readout) {
+  const outerPairs = Array.isArray(readout?.outerPairs) ? readout.outerPairs : [];
+  return outerPairs.map((pair) => [...pair]);
+}
+
 function pcChooseRemainder(readout) {
   const nonShell = Array.isArray(readout?.nonShell) ? readout.nonShell : [];
   return nonShell.slice();
+}
+
+function pcDetectWitnessMode(readout, shell, diads, remainder) {
+  const shellSource = readout?.shellSource || null;
+  const diadSource = readout?.diadSource || null;
+  const datasetId = readout?.datasetId || null;
+  const isCanonicalLocalMachine = Boolean(readout?.isCanonicalLocalMachine);
+  const outerPairs = pcChooseOuterPairs(readout);
+
+  const hasShell = Array.isArray(shell) && shell.length > 0;
+  const hasDiads = Array.isArray(diads) && diads.length > 0;
+  const hasOuterPairs = Array.isArray(outerPairs) && outerPairs.length > 0;
+  const hasRemainder = Array.isArray(remainder) && remainder.length > 0;
+
+  if (
+    shellSource === "full-graph/ring1" ||
+    diadSource === "full-graph/outer-pairs-derived" ||
+    diadSource === "full-graph/not-yet-chamberized"
+  ) {
+    return {
+      witnessMode: hasOuterPairs
+        ? "full-graph-outer-pairs-shell"
+        : "full-graph-ring1-placeholder",
+      chamberStatus: hasOuterPairs ? "outer-pairs-only" : "placeholder",
+      note: hasOuterPairs
+        ? "Full-graph path exposes ring1 shell, ring2 remainder, and explicit outer-pair structure; chamberized diads are not yet derived."
+        : "Full-graph path is currently using ring1 shell / ring2 remainder without chamberized outer-pair derivation."
+    };
+  }
+
+  if (isCanonicalLocalMachine && hasShell && hasDiads && hasRemainder) {
+    return {
+      witnessMode: "chamberized-local-machine",
+      chamberStatus: "full",
+      note: "Readout includes shell, outer-pair structure, and remainder for a chamberized local machine."
+    };
+  }
+
+  if (hasShell && hasRemainder && !hasDiads) {
+    return {
+      witnessMode: "shell-plus-remainder",
+      chamberStatus: "partial",
+      note: "Readout has shell and remainder data but no outer-pair chamberization."
+    };
+  }
+
+  if (hasShell && !hasRemainder) {
+    return {
+      witnessMode: "shell-only",
+      chamberStatus: "partial",
+      note: "Readout currently exposes shell data without richer remainder structure."
+    };
+  }
+
+  return {
+    witnessMode: datasetId ? `unknown:${datasetId}` : "unknown",
+    chamberStatus: "unknown",
+    note: "Witness extraction could not classify the readout into a clearer chamber regime."
+  };
 }
 
 export function pcExtractWitnessData(graphAdapter, anchorId, options = {}) {
@@ -37,6 +101,7 @@ export function pcExtractWitnessData(graphAdapter, anchorId, options = {}) {
 
   const shell = pcExtractShell(graphAdapter, anchorId, options);
   const diads = pcExtractDiads(graphAdapter, anchorId, shell, options);
+  const outerPairs = pcChooseOuterPairs(options?.readout || {});
   const remainder = pcExtractRemainder(graphAdapter, anchorId, shell, diads, options);
   const attachments = pcExtractAttachments(graphAdapter, shell, remainder);
   const remainderEdges = pcExtractRemainderEdges(graphAdapter, remainder);
@@ -47,6 +112,8 @@ export function pcExtractWitnessData(graphAdapter, anchorId, options = {}) {
     anchor: anchorId,
     shell: pcSorted(shell),
     diads: pcNormalizeDiads(diads),
+    outerPairs: pcNormalizeDiads(outerPairs),
+    outerPairs: pcNormalizeDiads(outerPairs),
     remainder: pcSorted(remainder),
     attachments,
     remainderEdges,
@@ -65,11 +132,13 @@ export function pcExtractWitnessDataFromReadout(readout, options = {}) {
 
   const shell = pcChooseShell(readout);
   const diads = pcChooseDiads(readout);
+  const outerPairs = pcChooseOuterPairs(readout);
   const remainder = pcChooseRemainder(readout);
   const attachments = pcExtractAttachments(graphAdapter, shell, remainder);
   const remainderEdges = pcExtractRemainderEdges(graphAdapter, remainder);
   const attachmentClasses = pcGroupVerticesByAttachment(attachments);
   const classInteraction = pcBuildClassInteraction(attachmentClasses, remainderEdges);
+  const regime = pcDetectWitnessMode(readout, shell, diads, remainder);
 
   return {
     anchor: readout?.coupler || null,
@@ -87,7 +156,10 @@ export function pcExtractWitnessDataFromReadout(readout, options = {}) {
       orderingSource: readout?.orderingSource || null,
       datasetId: readout?.datasetId || null,
       graphKey: readout?.graphKey || null,
-      isCanonicalLocalMachine: Boolean(readout?.isCanonicalLocalMachine)
+      isCanonicalLocalMachine: Boolean(readout?.isCanonicalLocalMachine),
+      witnessMode: regime.witnessMode,
+      chamberStatus: regime.chamberStatus,
+      witnessModeNote: regime.note
     }
   };
 }

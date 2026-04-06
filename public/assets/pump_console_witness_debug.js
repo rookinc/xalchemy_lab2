@@ -5,6 +5,7 @@ import {
   pcRunWitnessSurveySmokeFromStates
 } from "./pump_console_witness_smoke.js";
 import { pipelineFromGraph } from "./pump_console_graph_adapter.js";
+import { pcBuildWitnessCensus } from "./pump_console_witness_report.js";
 
 function defaultWitnessState(overrides = {}) {
   return {
@@ -18,6 +19,14 @@ function defaultWitnessState(overrides = {}) {
     anchorVertexOverride: null,
     ...overrides
   };
+}
+
+function buildAnchorStates(count, baseOverrides = {}) {
+  const base = defaultWitnessState(baseOverrides);
+  return Array.from({ length: count }, (_, i) => ({
+    ...base,
+    anchorVertexOverride: `v${i}`
+  }));
 }
 
 export function installPumpConsoleWitnessDebug(target = window) {
@@ -45,6 +54,43 @@ export function installPumpConsoleWitnessDebug(target = window) {
     async survey(stateOverridesList = []) {
       const states = stateOverridesList.map((overrides) => defaultWitnessState(overrides));
       return pcRunWitnessSurveySmokeFromStates(states);
+    },
+
+    async anchorSurvey(count = 60, overrides = {}) {
+      const states = buildAnchorStates(count, overrides);
+      return pcRunWitnessSurveySmokeFromStates(states);
+    },
+
+    async fullSurvey60() {
+      return pcRunWitnessSurveySmokeFromStates(
+        buildAnchorStates(60, {
+          datasetId: "full_graph_placeholder",
+          discoveryMode: "structure",
+          hostMode: 0,
+          activeSlot: 0,
+          phaseSign: 1,
+          lastAction: "debug-full-survey"
+        })
+      );
+    },
+
+    async fullSurvey60Census() {
+      const survey = await pcRunWitnessSurveySmokeFromStates(
+        buildAnchorStates(60, {
+          datasetId: "full_graph_placeholder",
+          discoveryMode: "structure",
+          hostMode: 0,
+          activeSlot: 0,
+          phaseSign: 1,
+          lastAction: "debug-full-survey"
+        })
+      );
+      return {
+        summary: survey.summary,
+        collisions: survey.collisions,
+        census: Array.isArray(survey.rows) ? pcBuildWitnessCensus(survey.rows) : null,
+        rows: survey.rows || []
+      };
     }
   };
 
