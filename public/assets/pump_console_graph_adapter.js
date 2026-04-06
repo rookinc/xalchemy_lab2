@@ -67,6 +67,22 @@ function neighborsOf(snapshot, vertex) {
   return adjacency[vertex] ?? [];
 }
 
+function quotientOwnerOf(snapshot, vertex) {
+  return snapshot?.quotients?.v4_action?.owner?.[vertex] ?? null;
+}
+
+function normalizeQuotientShell(snapshot, shellBase) {
+  return [...new Set(
+    (shellBase || [])
+      .map(v => quotientOwnerOf(snapshot, v))
+      .filter(Boolean)
+  )].sort((a, b) => {
+    const ai = Number(String(a).replace(/^g15_/, ''));
+    const bi = Number(String(b).replace(/^g15_/, ''));
+    return ai - bi;
+  });
+}
+
 function isEmptyDataset(snapshot) {
   return Object.keys(snapshot?.adjacency ?? {}).length === 0;
 }
@@ -176,7 +192,6 @@ function normalizeMatching(matching) {
     .map(pair => pair.slice().sort((a, b) => Number(a.slice(1)) - Number(b.slice(1))))
     .sort((p, q) => Number(p[0].slice(1)) - Number(q[0].slice(1)));
 }
-
 function scorePair(snapshot, pair, shellBase) {
   const [a, b] = pair;
   const sigA = shellTouchSignature(snapshot, a, shellBase);
@@ -350,7 +365,6 @@ function scoreShellAndMatching(snapshot, coupler, shellBase) {
       boundaryUniformityScore
   };
 }
-
 function discoverShellBundle(snapshot, coupler) {
   const quads = allQuads(neighborsOf(snapshot, coupler));
   const candidates = [];
@@ -592,7 +606,6 @@ function validateLocalCluster(snapshot, coupler, shell, diads) {
     hasThreeDiads: diads.length === 3 && diads.every(pair => Array.isArray(pair) && pair.length === 2)
   };
 }
-
 export async function getGraphState(state) {
   const datasetId = state.datasetId || null;
   const { meta, snapshot } = await loadGraphState(datasetId);
@@ -698,6 +711,7 @@ export async function clusterFromGraph(anchor) {
     const shellBase = neighborhood.ring1 || [];
     const shell = rotate(shellBase, hostMode);
     const shellRing2Degrees = shellBase.map(v => ring2Degree(snapshot, v, coupler));
+    const quotientShell = normalizeQuotientShell(snapshot, shellBase);
 
     return {
       coupler,
@@ -710,8 +724,10 @@ export async function clusterFromGraph(anchor) {
         neighbors: neighborsOf(snapshot, coupler),
         shellSource: 'full-graph/ring1',
         shellBase,
+        quotientShell,
         shellDebug: [{
           shellBase,
+          quotientShell,
           nonShell: neighborhood.ring2 || [],
           matching: [],
           matchingScore: null,
@@ -797,9 +813,9 @@ export async function clusterFromGraph(anchor) {
 
 export async function orderFromGraph(cluster) {
   const active = cluster.debug.operationalChannels?.[0] ?? null;
-  const isCanonicalLocalMachine =
-    (cluster.graphState.datasetMeta?.kind !== 'full-graph') &&
-    Boolean(active);
+  const isFullGraph = cluster.graphState.datasetMeta?.kind === 'full-graph';
+  const hasNeighborhoodShell = (cluster.debug.shellBase || []).length === 4;
+  const isCanonicalLocalMachine = isFullGraph ? hasNeighborhoodShell : Boolean(active);
 
   return {
     portKey: cluster.mode.modeKey,
@@ -814,6 +830,7 @@ export async function orderFromGraph(cluster) {
     validation: cluster.debug.validation,
     shellSource: cluster.debug.shellSource,
     shellBase: cluster.debug.shellBase,
+    quotientShell: cluster.debug.quotientShell || [],
     shellDebug: cluster.debug.shellDebug,
     shellRing2Degrees: cluster.debug.shellRing2Degrees,
     boundaryVariance: cluster.debug.boundaryVariance,
