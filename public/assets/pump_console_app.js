@@ -56,57 +56,27 @@ void boot(state, els).then(async () => {
   }
 
   try {
+    const baseState = {
+      hostMode: 0,
+      activeSlot: 0,
+      phaseSign: 1,
+      datasetId: 'full_graph_placeholder',
+      discoveryMode: 'structure',
+      stepCount: 0,
+      lastAction: 'survey',
+    };
+
     const survey = await pcRunWitnessSurveySmokeFromStates([
-      {
-        hostMode: 0,
-        activeSlot: 0,
-        phaseSign: 1,
-        datasetId: state.datasetId,
-        discoveryMode: state.discoveryMode,
-        stepCount: 0,
-        lastAction: 'survey',
-        anchorVertexOverride: null,
-      },
-      {
-        hostMode: 1,
-        activeSlot: 0,
-        phaseSign: 1,
-        datasetId: state.datasetId,
-        discoveryMode: state.discoveryMode,
-        stepCount: 0,
-        lastAction: 'survey',
-        anchorVertexOverride: null,
-      },
-      {
-        hostMode: 2,
-        activeSlot: 0,
-        phaseSign: 1,
-        datasetId: state.datasetId,
-        discoveryMode: state.discoveryMode,
-        stepCount: 0,
-        lastAction: 'survey',
-        anchorVertexOverride: null,
-      },
-      {
-        hostMode: 0,
-        activeSlot: 1,
-        phaseSign: 1,
-        datasetId: state.datasetId,
-        discoveryMode: state.discoveryMode,
-        stepCount: 0,
-        lastAction: 'survey',
-        anchorVertexOverride: null,
-      },
-      {
-        hostMode: 0,
-        activeSlot: 0,
-        phaseSign: -1,
-        datasetId: state.datasetId,
-        discoveryMode: state.discoveryMode,
-        stepCount: 0,
-        lastAction: 'survey',
-        anchorVertexOverride: null,
-      }
+      { ...baseState, anchorVertexOverride: 'v0' },
+      { ...baseState, anchorVertexOverride: 'v1' },
+      { ...baseState, anchorVertexOverride: 'v2' },
+      { ...baseState, anchorVertexOverride: 'v3' },
+      { ...baseState, anchorVertexOverride: 'v4' },
+      { ...baseState, anchorVertexOverride: 'v5' },
+      { ...baseState, anchorVertexOverride: 'v6' },
+      { ...baseState, anchorVertexOverride: 'v7' },
+      { ...baseState, anchorVertexOverride: 'v8' },
+      { ...baseState, anchorVertexOverride: 'v9' }
     ]);
 
     writeLine(els, 'WITNESS_SURVEY', JSON.stringify(survey, null, 2));
