@@ -13,7 +13,7 @@ export function pcCanonW0(data) {
 }
 
 export function pcCanonF2Sharp(data) {
-  const perms = pcEnumerateShellDiadSymmetries(data.diads);
+  const perms = pcEnumerateShellSymmetries(data.shell);
   let best = null;
 
   for (const perm of perms) {
@@ -33,7 +33,7 @@ export function pcCanonW1Sharp(data) {
 }
 
 export function pcCanonC2(data) {
-  const perms = pcEnumerateShellDiadSymmetries(data.diads);
+  const perms = pcEnumerateShellSymmetries(data.shell);
   let best = null;
 
   for (const perm of perms) {
@@ -53,7 +53,7 @@ export function pcCanonW2(data) {
 }
 
 export function pcCanonC2Sharp(data) {
-  const perms = pcEnumerateShellDiadSymmetries(data.diads);
+  const perms = pcEnumerateShellSymmetries(data.shell);
   let best = null;
 
   for (const perm of perms) {
@@ -72,19 +72,36 @@ export function pcCanonW2Sharp(data) {
   });
 }
 
-export function pcEnumerateShellDiadSymmetries(diads) {
-  const [[a, b], [c, d]] = pcNormalizeDiads(diads);
+export function pcEnumerateShellSymmetries(shell) {
+  const base = pcSorted(shell);
+  if (base.length === 0) return [{}];
 
-  return [
-    { [a]: a, [b]: b, [c]: c, [d]: d },
-    { [a]: b, [b]: a, [c]: c, [d]: d },
-    { [a]: a, [b]: b, [c]: d, [d]: c },
-    { [a]: b, [b]: a, [c]: d, [d]: c },
-    { [a]: c, [b]: d, [c]: a, [d]: b },
-    { [a]: d, [b]: c, [c]: a, [d]: b },
-    { [a]: c, [b]: d, [c]: b, [d]: a },
-    { [a]: d, [b]: c, [c]: b, [d]: a }
-  ];
+  const perms = [];
+  const seen = new Set();
+
+  const addPermFromImage = (image) => {
+    const perm = {};
+    for (let i = 0; i < base.length; i += 1) {
+      perm[base[i]] = image[i];
+    }
+    const key = pcStableStringify(perm);
+    if (seen.has(key)) return;
+    seen.add(key);
+    perms.push(perm);
+  };
+
+  for (let shift = 0; shift < base.length; shift += 1) {
+    const rotated = base.map((_, i) => base[(i + shift) % base.length]);
+    addPermFromImage(rotated);
+  }
+
+  const reversed = [...base].reverse();
+  for (let shift = 0; shift < reversed.length; shift += 1) {
+    const rotated = reversed.map((_, i) => reversed[(i + shift) % reversed.length]);
+    addPermFromImage(rotated);
+  }
+
+  return perms;
 }
 
 export function pcRelabelSubset(subset, perm) {

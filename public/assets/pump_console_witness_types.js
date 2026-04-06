@@ -1,5 +1,17 @@
+function pcVertexIndex(value) {
+  const m = String(value).match(/^v(\d+)$/);
+  return m ? Number(m[1]) : Number.POSITIVE_INFINITY;
+}
+
+export function pcCompareVertexIds(a, b) {
+  const ai = pcVertexIndex(a);
+  const bi = pcVertexIndex(b);
+  if (Number.isFinite(ai) && Number.isFinite(bi) && ai !== bi) return ai - bi;
+  return String(a).localeCompare(String(b));
+}
+
 export function pcSorted(arr) {
-  return [...arr].sort();
+  return [...arr].sort(pcCompareVertexIds);
 }
 
 export function pcStableStringify(value) {
@@ -14,7 +26,7 @@ export function pcStableStringify(value) {
 }
 
 export function pcNormalizeEdge(a, b) {
-  return a < b ? [a, b] : [b, a];
+  return pcCompareVertexIds(a, b) <= 0 ? [a, b] : [b, a];
 }
 
 export function pcNormalizeSubset(subset) {

@@ -14,9 +14,23 @@ import {
   pcBuildWitnessDebugDump
 } from "./pump_console_witness_report.js";
 
-function pcBuildWitnessRow(anchorId, data) {
+function pcPhaseKey(phaseSign) {
+  return phaseSign === 1 ? "+" : "-";
+}
+
+function pcRowLabel(state = {}, anchorId = null) {
+  const hostMode = state?.hostMode ?? "?";
+  const activeSlot = state?.activeSlot ?? "?";
+  const phase = pcPhaseKey(state?.phaseSign);
+  const anchor = anchorId ?? state?.anchorVertexOverride ?? "(none)";
+  return `${anchor}@Q${hostMode}${activeSlot}${phase}`;
+}
+
+function pcBuildWitnessRow(anchorId, data, state = null) {
   return {
     anchor: anchorId ?? data?.anchor ?? data?.coupler ?? null,
+    label: pcRowLabel(state, anchorId ?? data?.anchor ?? data?.coupler ?? null),
+    state,
     data,
     w0: pcCanonW0(data),
     w1Sharp: pcCanonW1Sharp(data),
@@ -27,7 +41,7 @@ function pcBuildWitnessRow(anchorId, data) {
 
 export function pcRunWitnessSmokeFromReadout(readout, options = {}) {
   const data = pcExtractWitnessDataFromReadout(readout, options);
-  const row = pcBuildWitnessRow(readout?.coupler || data?.anchor || null, data);
+  const row = pcBuildWitnessRow(readout?.coupler || data?.anchor || null, data, null);
   return pcBuildWitnessDebugDump(row);
 }
 
@@ -39,7 +53,8 @@ export function pcRunWitnessSmokeFromPipeline(pipe, options = {}) {
     data?.anchor ||
     null;
 
-  const row = pcBuildWitnessRow(anchorId, data);
+  const state = pipe?.graphState?.state || null;
+  const row = pcBuildWitnessRow(anchorId, data, state);
   return pcBuildWitnessDebugDump(row);
 }
 
@@ -60,7 +75,7 @@ export async function pcRunWitnessSurveySmokeFromStates(states, options = {}) {
       data?.anchor ||
       null;
 
-    rows.push(pcBuildWitnessRow(anchorId, data));
+    rows.push(pcBuildWitnessRow(anchorId, data, state));
   }
 
   return pcBuildWitnessCollisionReport(rows);

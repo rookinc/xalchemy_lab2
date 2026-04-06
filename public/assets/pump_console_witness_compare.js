@@ -6,6 +6,18 @@ import {
   pcCanonW2Sharp
 } from "./pump_console_witness_canon.js";
 
+function pcPhaseKey(phaseSign) {
+  return phaseSign === 1 ? "+" : "-";
+}
+
+function pcStateLabel(state = {}, anchorId = null) {
+  const hostMode = state?.hostMode ?? "?";
+  const activeSlot = state?.activeSlot ?? "?";
+  const phase = pcPhaseKey(state?.phaseSign);
+  const anchor = anchorId ?? state?.anchorVertexOverride ?? "(none)";
+  return `${anchor}@Q${hostMode}${activeSlot}${phase}`;
+}
+
 export function pcSurveyWitnesses(graphAdapter, anchorIds, options = {}) {
   const rows = [];
 
@@ -13,6 +25,8 @@ export function pcSurveyWitnesses(graphAdapter, anchorIds, options = {}) {
     const data = pcExtractWitnessData(graphAdapter, anchorId, options);
     rows.push({
       anchor: anchorId,
+      label: pcStateLabel(options?.state, anchorId),
+      state: options?.state || null,
       data,
       w0: pcCanonW0(data),
       w1Sharp: pcCanonW1Sharp(data),
@@ -30,14 +44,14 @@ export function pcGroupRowsByKey(rows, field) {
   for (const row of rows) {
     const key = row[field];
     if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(row.anchor);
+    groups.get(key).push(row.label || row.anchor);
   }
 
   return [...groups.entries()]
-    .map(([key, anchors]) => ({
+    .map(([key, labels]) => ({
       key,
-      anchors: [...anchors].sort(),
-      size: anchors.length
+      labels: [...labels].sort(),
+      size: labels.length
     }))
     .sort((a, b) => b.size - a.size || a.key.localeCompare(b.key));
 }

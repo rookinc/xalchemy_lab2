@@ -1,5 +1,5 @@
 import '/assets/pump_console_witness_debug.js';
-import { pcRunWitnessSmokeFromState } from '/assets/pump_console_witness_smoke.js';
+import { pcRunWitnessSmokeFromState, pcRunWitnessSurveySmokeFromStates } from '/assets/pump_console_witness_smoke.js';
 import { getEls } from '/assets/pump_console_dom.js';
 import { createState } from '/assets/pump_console_state.js';
 import { writeLine } from '/assets/pump_console_log.js';
@@ -53,5 +53,64 @@ void boot(state, els).then(async () => {
     writeLine(els, 'WITNESS', JSON.stringify(witness, null, 2));
   } catch (err) {
     writeLine(els, 'WITNESS_ERR', err?.stack || err?.message || String(err));
+  }
+
+  try {
+    const survey = await pcRunWitnessSurveySmokeFromStates([
+      {
+        hostMode: 0,
+        activeSlot: 0,
+        phaseSign: 1,
+        datasetId: state.datasetId,
+        discoveryMode: state.discoveryMode,
+        stepCount: 0,
+        lastAction: 'survey',
+        anchorVertexOverride: null,
+      },
+      {
+        hostMode: 1,
+        activeSlot: 0,
+        phaseSign: 1,
+        datasetId: state.datasetId,
+        discoveryMode: state.discoveryMode,
+        stepCount: 0,
+        lastAction: 'survey',
+        anchorVertexOverride: null,
+      },
+      {
+        hostMode: 2,
+        activeSlot: 0,
+        phaseSign: 1,
+        datasetId: state.datasetId,
+        discoveryMode: state.discoveryMode,
+        stepCount: 0,
+        lastAction: 'survey',
+        anchorVertexOverride: null,
+      },
+      {
+        hostMode: 0,
+        activeSlot: 1,
+        phaseSign: 1,
+        datasetId: state.datasetId,
+        discoveryMode: state.discoveryMode,
+        stepCount: 0,
+        lastAction: 'survey',
+        anchorVertexOverride: null,
+      },
+      {
+        hostMode: 0,
+        activeSlot: 0,
+        phaseSign: -1,
+        datasetId: state.datasetId,
+        discoveryMode: state.discoveryMode,
+        stepCount: 0,
+        lastAction: 'survey',
+        anchorVertexOverride: null,
+      }
+    ]);
+
+    writeLine(els, 'WITNESS_SURVEY', JSON.stringify(survey, null, 2));
+  } catch (err) {
+    writeLine(els, 'WITNESS_SURVEY_ERR', err?.stack || err?.message || String(err));
   }
 });
