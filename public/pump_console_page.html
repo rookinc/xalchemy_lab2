@@ -72,7 +72,8 @@
     }
     button:hover { border-color: var(--accent); }
     button.primary { background: #13263c; border-color: #275b7a; }
-    button:disabled {
+    button:disabled,
+    select:disabled {
       cursor: not-allowed;
       opacity: 0.55;
     }
@@ -156,7 +157,7 @@
           dataset
           <select id="datasetSelect" style="background:#16213a;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font:inherit;">
             <option value="local_patch_v0">local patch around v0</option>
-            <option value="full_graph_placeholder">full graph placeholder</option>
+            <option value="full_graph_placeholder">full graph survey</option>
           </select>
         </label>
         <label for="modeSelect" style="display:flex;align-items:center;gap:8px;color:var(--muted);padding-right:4px;">
@@ -285,7 +286,6 @@
       clearBtn: document.getElementById('clearBtn'),
       footerNote: document.getElementById('footerNote'),
     };
-
     function timestamp() {
       return new Date().toLocaleTimeString();
     }
@@ -307,6 +307,7 @@
       writeLine('FLOW', `from ${fromPort} / ${fromSlot} / ${fromFrame.phaseKey ?? '(none)'}`);
       writeLine('FLOW', `to   ${toPort} / ${toSlot} / ${toFrame.phaseKey ?? '(none)'}`);
     }
+
     function footerTextFor(frame) {
       const datasetId = frame.datasetId ?? state.datasetId;
       const kind = frame.datasetMeta?.kind ?? 'unknown';
@@ -328,6 +329,35 @@
       if (kind === 'full-graph') return 'full-graph';
       if (kind === 'full-graph-placeholder') return 'placeholder';
       return kind;
+    }
+
+    function displayModeLabel(frame) {
+      const isFullGraph = frame.datasetMeta?.kind === 'full-graph';
+      if (isFullGraph) return 'full graph survey';
+      return state.discoveryMode === 'seeded'
+        ? 'seeded local witness'
+        : 'structure-only discovery';
+    }
+
+    function syncModeControl(frame) {
+      const seededOption = els.modeSelect.querySelector('option[value="seeded"]');
+      const structureOption = els.modeSelect.querySelector('option[value="structure"]');
+      const isFullGraph = frame.datasetMeta?.kind === 'full-graph';
+
+      if (isFullGraph) {
+        seededOption.textContent = 'full graph survey';
+        structureOption.textContent = 'full graph survey';
+        els.modeSelect.value = 'seeded';
+        els.modeSelect.disabled = true;
+        els.modeSelect.title = 'Discovery mode is inactive while the full graph survey dataset is selected';
+        return;
+      }
+
+      seededOption.textContent = 'seeded local witness';
+      structureOption.textContent = 'structure-only discovery';
+      els.modeSelect.disabled = false;
+      els.modeSelect.title = '';
+      els.modeSelect.value = state.discoveryMode;
     }
 
     async function render() {
@@ -361,16 +391,19 @@
             : ((frame.shell || []).length
                 ? frame.shell.join(', ')
                 : '(no structure loaded)'));
+
       els.channels.innerHTML = (frame.channelMeta || []).length
         ? (frame.channelMeta || [])
             .map(item => `${item.channelKey}=(${item.pair[0]},${item.pair[1]})`)
             .join('<br>')
         : '(none)';
+
       els.diads.innerHTML = (frame.operationalChannels || []).length
         ? (frame.operationalChannels || [])
             .map(item => `${item.slotKey}=(${item.pair[0]},${item.pair[1]}) — ${item.slotName} [${item.channelKey}]`)
             .join('<br>')
         : '(none)';
+
       els.candidates.innerHTML = (frame.shellDebug || []).length
         ? (frame.shellDebug || []).slice(0, 3)
             .map((item, idx) =>
@@ -388,10 +421,10 @@
       els.datasetScope.textContent = scopeLabelFor(frame);
       els.structureState.textContent = hasNeighborhoodStructure ? 'loaded' : 'empty';
       els.motionState.textContent = hasMotion ? 'enabled' : 'blocked';
-
       els.datasetSelect.value = state.datasetId;
-      els.modeSelect.value = state.discoveryMode;
-      els.lastAction.textContent = `${state.lastAction} [${state.datasetId} | ${state.discoveryMode}]`;
+      els.lastAction.textContent = `${state.lastAction} [${state.datasetId} | ${displayModeLabel(frame)}]`;
+
+      syncModeControl(frame);
 
       els.stepBtn.disabled = !hasMotion;
       els.traceBtn.disabled = !hasMotion;
@@ -410,19 +443,34 @@
         const frame = await getFrame(state);
         await render();
 
-        writeLine('BOOT', `graph=${frame.graphKey} (dataset=${frame.datasetId ?? state.datasetId}; kind=${frame.datasetMeta?.kind ?? 'unknown'}; mode=${state.discoveryMode})`);
+        const datasetKind = frame.datasetMeta?.kind ?? 'unknown';
+        const hasMotion = (frame.operationalChannels || []).length > 0;
+
+        writeLine('BOOT', `graph=${frame.graphKey} (dataset=${frame.datasetId ?? state.datasetId}; kind=${datasetKind}; mode=${displayModeLabel(frame)})`);
         writeLine('BOOT', `port=${frame.portKey ?? '(none)'} (${frame.portName ?? '(none)'})`);
         writeLine('BOOT', `phase=${frame.phaseKey ?? '(none)'} (${frame.phaseName ?? '(none)'})`);
 
         if (!(frame.shell || []).length) {
           writeLine('BOOT', `no chamber structure loaded for coupler=${frame.coupler ?? '(none)'}`, 'warn');
           writeLine('READY', 'dataset loaded but no local chamber is available in this mode', 'warn');
-        } else {
-          writeLine('BOOT', `shell={${frame.shell.join(', ')}} coupler=${frame.coupler}`);
+          return;
+        }
+
+        writeLine('BOOT', `shell={${frame.shell.join(', ')}} coupler=${frame.coupler}`);
+
+        if (hasMotion) {
           writeLine('BOOT', `channels ${(frame.channelMeta || []).map(x => `${x.channelKey}=${x.pair.join('/')}`).join(' ')}`);
           writeLine('BOOT', `slots ${(frame.operationalChannels || []).map(x => `${x.slotKey}=${x.pair.join('/')}[${x.channelKey}]`).join(' ')}`);
           writeLine('READY', `local coarse state ${signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign)} with R(F)=(${state.hostMode}, ${state.activeSlot}, ${frame.phaseKey})`);
+          return;
         }
+
+        if (datasetKind === 'full-graph') {
+          writeLine('READY', `structure ready: full graph loaded at ${signedLabelFor(state.hostMode, state.activeSlot, state.phaseSign)}; local chamber motion remains deferred`, 'warn');
+          return;
+        }
+
+        writeLine('READY', 'structure ready, but chamber motion is currently unavailable', 'warn');
       } catch (err) {
         console.error(err);
         writeLine('ERROR', `${err.name}: ${err.message}`, 'warn');
@@ -464,6 +512,7 @@
         writeLine('ERROR', err.stack || 'no stack', 'warn');
       }
     }
+
     async function traceStep() {
       try {
         state.lastAction = 'trace';
@@ -503,7 +552,6 @@
         writeLine('ERROR', err.stack || 'no stack', 'warn');
       }
     }
-
     async function orbitSweep() {
       try {
         state.lastAction = 'signature-sweep';
@@ -677,6 +725,7 @@
         writeLine('ERROR', err.stack || 'no stack', 'warn');
       }
     }
+
     async function frameSweep() {
       try {
         state.lastAction = 'frame-sweep';
@@ -792,7 +841,6 @@
         writeLine('ERROR', err.stack || 'no stack', 'warn');
       }
     }
-
     async function resetState() {
       state.hostMode = 0;
       state.activeSlot = 0;
