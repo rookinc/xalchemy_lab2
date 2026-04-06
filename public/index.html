@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lab2</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #141b34;
+      --ink: #e8ecff;
+      --muted: #aeb8e8;
+      --line: #2b3763;
+      --accent: #7cc7ff;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      min-height: 100vh;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: min(720px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 1.8rem;
+    }
+
+    p {
+      margin: 0 0 18px 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .links {
+      display: grid;
+      gap: 12px;
+    }
+
+    a {
+      display: block;
+      text-decoration: none;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    a:hover {
+      border-color: var(--accent);
+    }
+
+    .label {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .desc {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Lab2</h1>
+    <p>Simple index for current local chamber tools.</p>
+
+    <div class="links">
+      <a href="/public/primed_g60_console.html">
+        <div class="label">Primed G60 Console</div>
+        <div class="desc">Console-first chamber doctrine with G15 / G30 / G60, priming, lock, and closure retention.</div>
+      </a>
+    </div>
+  </main>
+</body>
+</html>
