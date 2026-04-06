@@ -380,6 +380,7 @@
             <div>bare G60</div><div id="bareG60Value">no</div>
             <div>primed G60</div><div id="primedG60Value">no</div>
             <div>locked G60</div><div id="lockedG60Value">no</div>
+            <div>retained through closure</div><div id="retainedClosureValue">no</div>
             <div>first primed hit</div><div id="firstPrimedValue">—</div>
             <div>lock activation</div><div id="lockActivationValue">—</div>
           </div>
@@ -486,6 +487,7 @@
       bareG60Value: document.getElementById('bareG60Value'),
       primedG60Value: document.getElementById('primedG60Value'),
       lockedG60Value: document.getElementById('lockedG60Value'),
+      retainedClosureValue: document.getElementById('retainedClosureValue'),
       firstPrimedValue: document.getElementById('firstPrimedValue'),
       lockActivationValue: document.getElementById('lockActivationValue'),
       mPreview: document.getElementById('mPreview'),
@@ -596,15 +598,39 @@
       if (sectorKey(app.sector) === '11' && app.firstPrimedStep === null) {
         app.firstPrimedStep = app.step;
         pushLog(`PRIMED first reached at step ${app.step}.`);
+        pushLog(`DOCTRINE step ${app.step}: primed diagonal reached; informed closure is now available.`);
       }
 
       if (app.lock === 1 && app.lockActivationStep === null) {
         app.lockActivationStep = app.step;
         pushLog(`LOCK activated at step ${app.step}.`);
+        pushLog(`DOCTRINE step ${app.step}: preserving dwell has stabilized the primed diagonal.`);
       }
 
       recordHistory(event, prevSector, prevLock);
       pushLog(`STEP n=${app.step} event=${event} sign=${signFor((app.step - 1) % TOTAL_STEPS)} χ=${formatSector(app.sector)} state=${stateName(app.sector, app.lock)}`);
+
+      if (app.step % 15 === 0 && app.step % 30 !== 0) {
+        pushLog(`DOCTRINE step ${app.step}: G15 reached under ${stateName(app.sector, app.lock)}; sign depth without full identity closure.`);
+      }
+
+      if (app.step % 30 === 0 && app.step % 60 !== 0) {
+        const sectorMsg = sectorKey(app.sector) === '11'
+          ? 'identity depth reached while informed closure is present'
+          : 'identity depth reached without primed diagonal lock';
+        pushLog(`DOCTRINE step ${app.step}: G30 reached; ${sectorMsg}.`);
+      }
+
+      if (app.step > 0 && app.step % 60 === 0) {
+        let outcome = 'bare G60 only';
+        if (sectorKey(app.sector) === '11' && app.lock === 1) {
+          outcome = 'locked G60 achieved';
+        } else if (sectorKey(app.sector) === '11') {
+          outcome = 'primed G60 achieved without lock';
+        }
+        pushLog(`DOCTRINE step ${app.step}: G60 reached; ${outcome}.`);
+      }
+
       render();
     }
 
@@ -804,9 +830,21 @@
       const atPrimedG60 = atBareG60 && sectorKey(app.sector) === '11';
       const atLockedG60 = atBareG60 && sectorKey(app.sector) === '11' && app.lock === 1;
 
+      let retainedThroughClosure = false;
+      if (atBareG60 && app.history.length) {
+        retainedThroughClosure = app.history.every(h => h.step < (app.lockActivationStep ?? Infinity) || sectorKey(h.sector) === '11');
+        if (app.lockActivationStep === null) retainedThroughClosure = false;
+        if (app.lockActivationStep !== null) {
+          retainedThroughClosure = app.history
+            .filter(h => h.step >= app.lockActivationStep)
+            .every(h => sectorKey(h.sector) === '11' && h.lock === 1);
+        }
+      }
+
       refs.bareG60Value.textContent = atBareG60 ? 'yes' : 'no';
       refs.primedG60Value.textContent = atPrimedG60 ? 'yes' : 'no';
       refs.lockedG60Value.textContent = atLockedG60 ? 'yes' : 'no';
+      refs.retainedClosureValue.textContent = retainedThroughClosure ? 'yes' : 'no';
       refs.firstPrimedValue.textContent = app.firstPrimedStep ?? '—';
       refs.lockActivationValue.textContent = app.lockActivationStep ?? '—';
     }
