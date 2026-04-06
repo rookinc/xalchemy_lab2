@@ -455,8 +455,13 @@ function deriveSeededShell(snapshot, coupler, hostMode) {
   };
 }
 
-function deriveShell(snapshot, coupler, hostMode, discoveryMode = 'seeded') {
-  if (discoveryMode === 'seeded' && coupler === 'v0') {
+function deriveShell(snapshot, coupler, hostMode, discoveryMode = 'seeded', datasetKind = '') {
+  const allowSeededWitness =
+    discoveryMode === 'seeded' &&
+    coupler === 'v0' &&
+    datasetKind === 'seeded-local-patch';
+
+  if (allowSeededWitness) {
     return deriveSeededShell(snapshot, coupler, hostMode);
   }
 
@@ -612,8 +617,21 @@ export async function anchorFromGraph(graphState) {
   const { hostMode, activeSlot, phaseSign } = graphState.state;
   const mode = getModeRecord(hostMode);
   const phase = getPhaseRecord(phaseSign);
-  const requestedAnchor = graphState.state.anchorVertexOverride || graphState.snapshot.anchorVertex || null;
-  const anchorVertex = requestedAnchor && (graphState.snapshot.adjacency?.[requestedAnchor] ? requestedAnchor : requestedAnchor);
+
+  const adjacencyKeys = Object.keys(graphState.snapshot.adjacency || {}).sort(
+    (a, b) => Number(a.slice(1)) - Number(b.slice(1))
+  );
+
+  const requestedAnchor =
+    graphState.state.anchorVertexOverride ||
+    graphState.snapshot.anchorVertex ||
+    adjacencyKeys[0] ||
+    null;
+
+  const anchorVertex =
+    requestedAnchor && graphState.snapshot.adjacency?.[requestedAnchor]
+      ? requestedAnchor
+      : (adjacencyKeys[0] || null);
 
   return {
     graphKey: graphState.graphKey,
@@ -673,7 +691,68 @@ export async function clusterFromGraph(anchor) {
   }
 
   const coupler = anchor.anchorVertex;
-  const shellDerived = deriveShell(snapshot, coupler, hostMode, anchor.graphState.state.discoveryMode);
+  const datasetKind = anchor.graphState.datasetMeta?.kind || '';
+  const neighborhood = neighborhoodSummary(snapshot, coupler);
+
+  if (datasetKind === 'full-graph') {
+    const shellBase = neighborhood.ring1 || [];
+    const shell = rotate(shellBase, hostMode);
+    const shellRing2Degrees = shellBase.map(v => ring2Degree(snapshot, v, coupler));
+
+    return {
+      coupler,
+      shell,
+      diads: [],
+      mode: anchor.mode,
+      phase: anchor.phase,
+      graphState: anchor.graphState,
+      debug: {
+        neighbors: neighborsOf(snapshot, coupler),
+        shellSource: 'full-graph/ring1',
+        shellBase,
+        shellDebug: [{
+          shellBase,
+          nonShell: neighborhood.ring2 || [],
+          matching: [],
+          matchingScore: null,
+          transportScore: null,
+          transportDebug: null,
+          shellRing2Degrees,
+          boundaryVariance: null,
+          boundaryUniformityScore: null,
+          totalScore: null
+        }],
+        shellRing2Degrees,
+        boundaryVariance: null,
+        boundaryUniformityScore: null,
+        matchingScore: null,
+        transportScore: null,
+        transportDebug: null,
+        diadSource: 'full-graph/not-yet-chamberized',
+        nonShell: neighborhood.ring2 || [],
+        rawDiads: [],
+        orderedRawDiads: [],
+        channelMeta: [],
+        operationalChannels: [],
+        orderingSource: 'full-graph/not-yet-chamberized',
+        orderingDebug: [],
+        neighborhood,
+        validation: {
+          shellTouchesCoupler: shellBase.every(v => neighborsOf(snapshot, coupler).includes(v)),
+          diadsTouchCoupler: false,
+          hasThreeDiads: false
+        }
+      }
+    };
+  }
+
+  const shellDerived = deriveShell(
+    snapshot,
+    coupler,
+    hostMode,
+    anchor.graphState.state.discoveryMode,
+    datasetKind
+  );
   const diadDerived = deriveDiads(
     snapshot,
     coupler,
@@ -683,7 +762,6 @@ export async function clusterFromGraph(anchor) {
     activeSlot
   );
   const validation = validateLocalCluster(snapshot, coupler, shellDerived.shell, diadDerived.diads);
-  const neighborhood = neighborhoodSummary(snapshot, coupler);
 
   return {
     coupler,
@@ -719,6 +797,9 @@ export async function clusterFromGraph(anchor) {
 
 export async function orderFromGraph(cluster) {
   const active = cluster.debug.operationalChannels?.[0] ?? null;
+  const isCanonicalLocalMachine =
+    (cluster.graphState.datasetMeta?.kind !== 'full-graph') &&
+    Boolean(active);
 
   return {
     portKey: cluster.mode.modeKey,
@@ -750,7 +831,7 @@ export async function orderFromGraph(cluster) {
     orderingDebug: cluster.debug.orderingDebug,
     neighborhood: cluster.debug.neighborhood,
     graphState: cluster.graphState,
-    isCanonicalLocalMachine: Boolean(active)
+    isCanonicalLocalMachine
   };
 }
 

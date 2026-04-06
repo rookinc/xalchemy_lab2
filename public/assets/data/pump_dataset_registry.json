@@ -9,11 +9,11 @@
       "notes": "15-vertex local neighborhood patch centered at v0."
     },
     "full_graph_placeholder": {
-      "label": "Full graph placeholder",
-      "kind": "full-graph-placeholder",
+      "label": "Full graph",
+      "kind": "full-graph",
       "path": "/assets/data/at4val_60_full_adjacency.json",
       "graphKey": "AT4val[60,6]",
-      "notes": "Reserved slot for full 60-vertex adjacency import."
+      "notes": "Full 60-vertex adjacency for AT4val[60,6]."
     }
   }
 }

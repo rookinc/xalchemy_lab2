@@ -317,7 +317,7 @@
       }
 
       if (datasetId === 'full_graph_placeholder') {
-        return 'Structure first, operation second. Current data source is a full-graph placeholder for AT4val[60,6]; no chamber claims are active until full adjacency is loaded.';
+        return 'Structure first, operation second. Current data source is the full AT4val[60,6] graph; local chamber motion is not yet loaded, but full neighborhood structure and quotient data are available.';
       }
 
       return `Structure first, operation second. Current data source is ${datasetId}; dataset kind=${kind}.`;
@@ -326,6 +326,7 @@
     function scopeLabelFor(frame) {
       const kind = frame.datasetMeta?.kind ?? 'unknown';
       if (kind === 'seeded-local-patch') return 'local-patch';
+      if (kind === 'full-graph') return 'full-graph';
       if (kind === 'full-graph-placeholder') return 'placeholder';
       return kind;
     }
@@ -333,7 +334,12 @@
       const frame = await getFrame(state);
       const prev = previousState(state.hostMode, state.activeSlot, state.phaseSign);
       const next = nextState(state.hostMode, state.activeSlot, state.phaseSign);
-      const hasStructure = Boolean(frame.coupler) && (frame.shell || []).length > 0;
+      const isFullGraph = frame.datasetMeta?.kind === 'full-graph';
+      const hasNeighborhoodStructure =
+        Boolean(frame.coupler) &&
+        (((frame.shell || []).length > 0) || ((frame.neighborhood?.ring1 || []).length > 0));
+      const hasMotion = (frame.operationalChannels || []).length > 0;
+      const neighborhoodShell = isFullGraph ? (frame.neighborhood?.ring1 || []) : [];
 
       els.hostMode.textContent = String(state.hostMode);
       els.modeKey.textContent = frame.portKey ?? '(none)';
@@ -348,7 +354,13 @@
       els.nextState.textContent = signedLabelFor(next.hostMode, next.activeSlot, next.phaseSign);
       els.cyclePos.textContent = `${state.stepCount % 12} / 12`;
       els.coupler.textContent = frame.coupler ?? '(none)';
-      els.shell.textContent = hasStructure ? frame.shell.join(', ') : '(no structure loaded)';
+      els.shell.textContent = hasMotion
+        ? frame.shell.join(', ')
+        : (isFullGraph && neighborhoodShell.length
+            ? neighborhoodShell.join(', ')
+            : ((frame.shell || []).length
+                ? frame.shell.join(', ')
+                : '(no structure loaded)'));
       els.channels.innerHTML = (frame.channelMeta || []).length
         ? (frame.channelMeta || [])
             .map(item => `${item.channelKey}=(${item.pair[0]},${item.pair[1]})`)
@@ -368,23 +380,26 @@
               `m=${item.matchingScore} t=${item.transportScore} score=${item.totalScore}`
             )
             .join('<br><br>')
-        : '(none)';
+        : (isFullGraph
+            ? `ring1=${JSON.stringify(frame.neighborhood?.ring1 || [])}<br>` +
+              `ring2=${JSON.stringify(frame.neighborhood?.ring2 || [])}`
+            : '(none)');
 
       els.datasetScope.textContent = scopeLabelFor(frame);
-      els.structureState.textContent = hasStructure ? 'loaded' : 'empty';
-      els.motionState.textContent = hasStructure ? 'enabled' : 'blocked';
+      els.structureState.textContent = hasNeighborhoodStructure ? 'loaded' : 'empty';
+      els.motionState.textContent = hasMotion ? 'enabled' : 'blocked';
 
       els.datasetSelect.value = state.datasetId;
       els.modeSelect.value = state.discoveryMode;
       els.lastAction.textContent = `${state.lastAction} [${state.datasetId} | ${state.discoveryMode}]`;
 
-      els.stepBtn.disabled = !hasStructure;
-      els.traceBtn.disabled = !hasStructure;
-      els.cycleBtn.disabled = !hasStructure;
+      els.stepBtn.disabled = !hasMotion;
+      els.traceBtn.disabled = !hasMotion;
+      els.cycleBtn.disabled = !hasMotion;
 
-      els.stepBtn.title = hasStructure ? '' : 'No chamber structure loaded for current dataset';
-      els.traceBtn.title = hasStructure ? '' : 'No chamber structure loaded for current dataset';
-      els.cycleBtn.title = hasStructure ? '' : 'No chamber structure loaded for current dataset';
+      els.stepBtn.title = hasMotion ? '' : 'No chamber motion loaded for current dataset';
+      els.traceBtn.title = hasMotion ? '' : 'No chamber motion loaded for current dataset';
+      els.cycleBtn.title = hasMotion ? '' : 'No chamber motion loaded for current dataset';
 
       els.footerNote.textContent = footerTextFor(frame);
     }
@@ -502,20 +517,18 @@
           stepCount: state.stepCount,
           anchorVertexOverride: state.anchorVertexOverride || null
         };
+          const baseFrame = await getFrame(state);
+          const snapshot = baseFrame.snapshot || {};
+          const vertices = Object.keys(snapshot.adjacency || {}).sort();
 
-        const baseFrame = await getFrame(state);
-
-        if (!(baseFrame.shell || []).length) {
-          writeLine('ORBIT', `starting signature sweep on dataset=${state.datasetId} at port=P${state.hostMode} slot=${state.activeSlot} phase=${state.phaseSign > 0 ? '+' : '-'}`);
-          writeLine('ORBIT', 'dataset contains no local chamber structure; signature sweep deferred', 'warn');
-          writeLine('ORBIT', 'canonical anchors 0');
-          writeLine('ORBIT', 'signature classes 0');
-          writeLine('ORBIT', 'signature sweep complete');
-          return;
-        }
-
-        const snapshot = baseFrame.snapshot || {};
-        const vertices = Object.keys(snapshot.adjacency || {}).sort();
+          if (!vertices.length) {
+            writeLine('ORBIT', `starting signature sweep on dataset=${state.datasetId} at port=P${state.hostMode} slot=${state.activeSlot} phase=${state.phaseSign > 0 ? '+' : '-'}`);
+            writeLine('ORBIT', 'dataset contains no graph vertices; signature sweep deferred', 'warn');
+            writeLine('ORBIT', 'canonical anchors 0');
+            writeLine('ORBIT', 'signature classes 0');
+            writeLine('ORBIT', 'signature sweep complete');
+            return;
+          }
         const buckets = new Map();
         let canonicalCount = 0;
 
@@ -606,16 +619,16 @@
           anchorVertexOverride: state.anchorVertexOverride || null
         };
 
-        const baseFrame = await getFrame(state);
+          const baseFrame = await getFrame(state);
+          const snapshot = baseFrame.snapshot || {};
+          const anchors = Object.keys(snapshot.adjacency || {}).sort();
 
-        if (!(baseFrame.shell || []).length) {
-          writeLine('ASWEEP', `starting anchor sweep at port=P${state.hostMode} slot=${state.activeSlot} phase=${state.phaseSign > 0 ? '+' : '-'}`);
-          writeLine('ASWEEP', 'dataset contains no local chamber structure; anchor sweep not applicable', 'warn');
-          writeLine('ASWEEP', 'anchor sweep complete');
-          return;
-        }
-
-        const anchors = ['v0', 'v2', 'v3', 'v4', 'v5', 'v1', 'v6', 'v8', 'v14', 'v7', 'v9'];
+          if (!anchors.length) {
+            writeLine('ASWEEP', `starting anchor sweep at port=P${state.hostMode} slot=${state.activeSlot} phase=${state.phaseSign > 0 ? '+' : '-'}`);
+            writeLine('ASWEEP', 'dataset contains no graph vertices; anchor sweep not applicable', 'warn');
+            writeLine('ASWEEP', 'anchor sweep complete');
+            return;
+          }
 
         writeLine('ASWEEP', `starting anchor sweep at port=P${state.hostMode} slot=${state.activeSlot} phase=${state.phaseSign > 0 ? '+' : '-'}`);
 
