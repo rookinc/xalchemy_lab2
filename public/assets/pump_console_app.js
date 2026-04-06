@@ -1,3 +1,5 @@
+import '/assets/pump_console_witness_debug.js';
+import { pcRunWitnessSmokeFromState } from '/assets/pump_console_witness_smoke.js';
 import { getEls } from '/assets/pump_console_dom.js';
 import { createState } from '/assets/pump_console_state.js';
 import { writeLine } from '/assets/pump_console_log.js';
@@ -45,4 +47,11 @@ els.resetBtn.addEventListener('click', () => { void resetConsoleState(state, els
 els.dumpBtn.addEventListener('click', () => { void dumpState(state, els); });
 els.clearBtn.addEventListener('click', () => { void clearConsole(state, els); });
 
-void boot(state, els);
+void boot(state, els).then(async () => {
+  try {
+    const witness = await pcRunWitnessSmokeFromState(state);
+    writeLine(els, 'WITNESS', JSON.stringify(witness, null, 2));
+  } catch (err) {
+    writeLine(els, 'WITNESS_ERR', err?.stack || err?.message || String(err));
+  }
+});
