@@ -78,5 +78,9 @@ export async function pcRunWitnessSurveySmokeFromStates(states, options = {}) {
     rows.push(pcBuildWitnessRow(anchorId, data, state));
   }
 
-  return pcBuildWitnessCollisionReport(rows);
+  const report = pcBuildWitnessCollisionReport(rows);
+  return {
+    ...report,
+    rows
+  };
 }

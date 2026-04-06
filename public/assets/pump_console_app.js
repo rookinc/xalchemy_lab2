@@ -1,5 +1,11 @@
 import '/assets/pump_console_witness_debug.js';
-import { pcRunWitnessSmokeFromState, pcRunWitnessSurveySmokeFromStates } from '/assets/pump_console_witness_smoke.js';
+import {
+  pcRunWitnessSmokeFromState,
+  pcRunWitnessSurveySmokeFromStates
+} from '/assets/pump_console_witness_smoke.js';
+import {
+  pcBuildWitnessCensus
+} from '/assets/pump_console_witness_report.js';
 import { getEls } from '/assets/pump_console_dom.js';
 import { createState } from '/assets/pump_console_state.js';
 import { writeLine } from '/assets/pump_console_log.js';
@@ -66,20 +72,39 @@ void boot(state, els).then(async () => {
       lastAction: 'survey',
     };
 
-    const survey = await pcRunWitnessSurveySmokeFromStates([
-      { ...baseState, anchorVertexOverride: 'v0' },
-      { ...baseState, anchorVertexOverride: 'v1' },
-      { ...baseState, anchorVertexOverride: 'v2' },
-      { ...baseState, anchorVertexOverride: 'v3' },
-      { ...baseState, anchorVertexOverride: 'v4' },
-      { ...baseState, anchorVertexOverride: 'v5' },
-      { ...baseState, anchorVertexOverride: 'v6' },
-      { ...baseState, anchorVertexOverride: 'v7' },
-      { ...baseState, anchorVertexOverride: 'v8' },
-      { ...baseState, anchorVertexOverride: 'v9' }
-    ]);
+    const anchorIds = Array.from({ length: 60 }, (_, i) => `v${i}`);
+    const states = anchorIds.map((anchorVertexOverride) => ({
+      ...baseState,
+      anchorVertexOverride
+    }));
+
+    const survey = await pcRunWitnessSurveySmokeFromStates(states);
+
+    writeLine(
+      els,
+      'WITNESS_SURVEY_SUMMARY',
+      [
+        `dataset=${baseState.datasetId}`,
+        `mode=${baseState.discoveryMode}`,
+        `anchorCount=${anchorIds.length}`,
+        `anchorRange=${anchorIds[0]}..${anchorIds[anchorIds.length - 1]}`,
+        `uniqueW0=${survey.summary.uniqueW0}`,
+        `uniqueW1Sharp=${survey.summary.uniqueW1Sharp}`,
+        `uniqueW2=${survey.summary.uniqueW2}`,
+        `uniqueW2Sharp=${survey.summary.uniqueW2Sharp}`,
+        `W0 collisions=${survey.collisions.w0.length}`,
+        `W1Sharp collisions=${survey.collisions.w1Sharp.length}`,
+        `W2 collisions=${survey.collisions.w2.length}`,
+        `W2Sharp collisions=${survey.collisions.w2Sharp.length}`
+      ].join('\n')
+    );
 
     writeLine(els, 'WITNESS_SURVEY', JSON.stringify(survey, null, 2));
+
+    if (Array.isArray(survey.rows)) {
+      const census = pcBuildWitnessCensus(survey.rows);
+      writeLine(els, 'WITNESS_CENSUS', census.text);
+    }
   } catch (err) {
     writeLine(els, 'WITNESS_SURVEY_ERR', err?.stack || err?.message || String(err));
   }
