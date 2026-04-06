@@ -68,6 +68,21 @@ export async function render(state, els) {
   const hasMotion = (frame.operationalChannels || []).length > 0;
   const neighborhoodShell = isFullGraph ? (frame.neighborhood?.ring1 || []) : [];
 
+  if (els.console && frame) {
+    const preview = {
+      coupler: frame.coupler,
+      shell: frame.shell,
+      diads: frame.diads,
+      channelMeta: frame.channelMeta,
+      operationalChannels: frame.operationalChannels,
+      shellDebug: frame.shellDebug,
+      shellSource: frame.shellSource,
+      diadSource: frame.diadSource,
+      orderingSource: frame.orderingSource
+    };
+    console.log("PUMP_FRAME_PREVIEW", preview);
+  }
+
   els.hostMode.textContent = String(state.hostMode);
   els.modeKey.textContent = frame.portKey ?? '(none)';
   els.modeName.textContent = frame.portName ?? '(none)';
