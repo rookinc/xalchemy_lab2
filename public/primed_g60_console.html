@@ -1,0 +1,844 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Primed G60 Console</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #141b34;
+      --panel-2: #1a2342;
+      --ink: #e8ecff;
+      --muted: #aeb8e8;
+      --accent: #7cc7ff;
+      --good: #82d996;
+      --warn: #ffd27a;
+      --line: #2b3763;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+
+    .app {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 320px 1fr 360px;
+      gap: 16px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    .panel-inner { padding: 16px; }
+    .stack { display: grid; gap: 14px; }
+    .grid-cards { display: grid; gap: 12px; }
+
+    .header {
+      grid-column: 1 / -1;
+      padding: 18px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      line-height: 1.1;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      background: rgba(255,255,255,0.03);
+    }
+
+    h2, h3 {
+      margin: 0 0 12px 0;
+      font-weight: 700;
+    }
+
+    .controls { display: grid; gap: 10px; }
+
+    button, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #11182f;
+      color: var(--ink);
+      border-radius: 12px;
+      padding: 11px 12px;
+      font: inherit;
+    }
+
+    button:hover, select:hover {
+      border-color: var(--accent);
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: #162448;
+      border-color: #3159a6;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .triple-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .mini-note, .muted {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .cycle-panel {
+      min-height: 420px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .ring-wrap {
+      padding: 10px 0 2px;
+      display: grid;
+      place-items: center;
+    }
+
+    svg { max-width: 100%; height: auto; }
+
+    .strip {
+      display: grid;
+      grid-template-columns: repeat(60, minmax(8px, 1fr));
+      gap: 3px;
+      align-items: end;
+    }
+
+    .tick {
+      height: 18px;
+      border-radius: 4px 4px 2px 2px;
+      background: #243053;
+      border: 1px solid rgba(255,255,255,0.04);
+      position: relative;
+    }
+
+    .tick.current { outline: 2px solid var(--accent); }
+    .tick.g15 { background: #3c3158; }
+    .tick.g30 { background: #2f495f; }
+    .tick.g60 { background: #31533a; }
+    .tick.native { box-shadow: inset 0 -8px 0 rgba(255,255,255,0.03); }
+    .tick.frame { box-shadow: inset 0 -8px 0 rgba(124,199,255,0.35); }
+    .tick.sheet { box-shadow: inset 0 -8px 0 rgba(255,210,122,0.35); }
+    .tick.primed { box-shadow: inset 0 -8px 0 rgba(130,217,150,0.45); }
+    .tick.locked { box-shadow: inset 0 -14px 0 rgba(130,217,150,0.72); }
+
+    .card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 8px 12px;
+      font-size: 0.94rem;
+    }
+
+    .kv div:nth-child(odd) { color: var(--muted); }
+
+    .big {
+      font-family: var(--mono);
+      font-size: 1.2rem;
+      letter-spacing: 0.02em;
+    }
+
+    .state-pill {
+      display: inline-block;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      font-family: var(--mono);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .state-native { color: var(--muted); }
+    .state-frame { color: var(--accent); }
+    .state-sheet { color: var(--warn); }
+    .state-primed { color: var(--good); }
+    .state-locked { color: var(--good); border-color: var(--good); }
+
+    .console {
+      grid-column: 1 / -1;
+      min-height: 260px;
+    }
+
+    .console-log {
+      font-family: var(--mono);
+      font-size: 0.88rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      color: #dce5ff;
+      background: rgba(0,0,0,0.16);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      max-height: 360px;
+      overflow: auto;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .legend span {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .matrix-box {
+      display: grid;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 0.88rem;
+    }
+
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 0.84rem;
+    }
+
+    .preview-table td, .preview-table th {
+      border-bottom: 1px solid var(--line);
+      padding: 6px 4px;
+      text-align: left;
+    }
+
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 1fr; }
+      .console, .header { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="panel header">
+      <div class="title-wrap">
+        <h1>Primed G60 Console</h1>
+        <div class="subtitle">Console-first chamber doctrine. No 3D. Structure first, operation second.</div>
+      </div>
+      <div class="badge-row">
+        <div class="badge">hidden cycle: Z60</div>
+        <div class="badge">sector lens: Z2²</div>
+        <div class="badge">G15 / G30 / G60</div>
+        <div class="badge">Q = MMᵀ preview</div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="panel-inner stack">
+        <div>
+          <h2>Controls</h2>
+          <div class="controls">
+            <label class="mini-note" for="presetSelect">Example schedule</label>
+            <select id="presetSelect">
+              <option value="bare">Bare closure</option>
+              <option value="unstable">Primed but unstable</option>
+              <option value="locked">Primed and locked</option>
+              <option value="manual">Manual / cleared</option>
+            </select>
+            <button id="loadPresetBtn" class="primary">Load example</button>
+            <div class="button-row">
+              <button id="eventPBtn">Inject P</button>
+              <button id="stepBtn" class="primary">Step</button>
+            </div>
+            <div class="button-row">
+              <button id="eventCBtn">Inject C</button>
+              <button id="eventABtn">Inject A</button>
+            </div>
+            <div class="triple-row">
+              <button id="run15Btn">Run to G15</button>
+              <button id="run30Btn">Run to G30</button>
+              <button id="run60Btn">Run to G60</button>
+            </div>
+            <div class="button-row">
+              <button id="runAllBtn">Run full cycle</button>
+              <button id="resetBtn">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Machine law</h3>
+          <div class="mini-note">
+            Hidden: <span class="big">u′ = u + 1 mod 60</span><br>
+            Sector: <span class="big">χ′ = χ</span> on <code>P</code>, <span class="big">χ′ = χ + (1,0)</span> on <code>C</code>, <span class="big">χ′ = χ + (0,1)</span> on <code>A</code>.<br><br>
+            Primed state is <span class="big">χ = (1,1)</span>.<br>
+            Lock activates only after preserving dwell on the primed diagonal.
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Legend</h3>
+          <div class="legend">
+            <span>native = (0,0)</span>
+            <span>frame = (1,0)</span>
+            <span>sheet = (0,1)</span>
+            <span>primed = (1,1)</span>
+            <span>locked = primed + dwell</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="panel">
+      <div class="panel-inner cycle-panel">
+        <div>
+          <h2>Cycle view</h2>
+          <div class="muted">G15 is sign depth. G30 is identity depth. G60 is full orbit depth.</div>
+        </div>
+
+        <div class="ring-wrap">
+          <svg id="ringSvg" viewBox="0 0 520 360" aria-label="60-step cycle ring"></svg>
+        </div>
+
+        <div class="strip" id="tickStrip"></div>
+      </div>
+    </main>
+
+    <aside class="panel">
+      <div class="panel-inner grid-cards">
+        <div class="card">
+          <h3>Current state</h3>
+          <div class="kv">
+            <div>step</div><div id="stepValue" class="big">0</div>
+            <div>sign</div><div id="signValue" class="big">+</div>
+            <div>identity</div><div id="identityValue" class="big">0 mod 30</div>
+            <div>closure depth</div><div id="depthValue">origin</div>
+            <div>next event</div><div id="nextEventValue" class="big">P</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Chamber state</h3>
+          <div id="statePill" class="state-pill state-native">NATIVE</div>
+          <div class="kv" style="margin-top: 12px;">
+            <div>sheet / frame</div><div id="sectorValue" class="big">(0,0)</div>
+            <div>lock flag</div><div id="lockValue" class="big">0</div>
+            <div>status</div><div id="statusValue">native closure</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>G-status</h3>
+          <div class="kv">
+            <div>bare G60</div><div id="bareG60Value">no</div>
+            <div>primed G60</div><div id="primedG60Value">no</div>
+            <div>locked G60</div><div id="lockedG60Value">no</div>
+            <div>first primed hit</div><div id="firstPrimedValue">—</div>
+            <div>lock activation</div><div id="lockActivationValue">—</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Lens preview</h3>
+          <div class="matrix-box">
+            <div><strong>current basis state</strong></div>
+            <div id="basisPreview">e_00</div>
+            <div><strong>M</strong> row symbols for last 12 steps</div>
+            <div id="mPreview">—</div>
+            <div><strong>tail length</strong></div>
+            <div id="tailPreview">0</div>
+            <div><strong>Q = MMᵀ</strong> terminal coherence summary</div>
+            <div id="qPreview">—</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Recent trajectory</h3>
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>n</th>
+                <th>event</th>
+                <th>χ</th>
+                <th>state</th>
+              </tr>
+            </thead>
+            <tbody id="trajectoryTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </aside>
+
+    <section class="panel console">
+      <div class="panel-inner stack">
+        <div>
+          <h2>Console</h2>
+          <div class="muted">This first pass is doctrine-first: hidden orbit, event stream, chamber state, and lens-visible closure.</div>
+        </div>
+        <div class="console-log" id="consoleLog"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const TOTAL_STEPS = 60;
+
+    const presets = {
+      bare: Array(TOTAL_STEPS).fill('P'),
+      unstable: (() => {
+        const arr = Array(TOTAL_STEPS).fill('P');
+        arr[10] = 'C';
+        arr[22] = 'A';
+        arr[41] = 'C';
+        return arr;
+      })(),
+      locked: (() => {
+        const arr = Array(TOTAL_STEPS).fill('P');
+        arr[10] = 'C';
+        arr[22] = 'A';
+        return arr;
+      })(),
+      manual: Array(TOTAL_STEPS).fill('P')
+    };
+
+    const app = {
+      step: 0,
+      sector: [0, 0],
+      lock: 0,
+      events: presets.locked.slice(),
+      logs: [],
+      history: [],
+      firstPrimedStep: null,
+      lockActivationStep: null
+    };
+
+    const refs = {
+      presetSelect: document.getElementById('presetSelect'),
+      loadPresetBtn: document.getElementById('loadPresetBtn'),
+      eventPBtn: document.getElementById('eventPBtn'),
+      eventCBtn: document.getElementById('eventCBtn'),
+      eventABtn: document.getElementById('eventABtn'),
+      stepBtn: document.getElementById('stepBtn'),
+      run15Btn: document.getElementById('run15Btn'),
+      run30Btn: document.getElementById('run30Btn'),
+      run60Btn: document.getElementById('run60Btn'),
+      runAllBtn: document.getElementById('runAllBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      tickStrip: document.getElementById('tickStrip'),
+      ringSvg: document.getElementById('ringSvg'),
+      consoleLog: document.getElementById('consoleLog'),
+      stepValue: document.getElementById('stepValue'),
+      signValue: document.getElementById('signValue'),
+      identityValue: document.getElementById('identityValue'),
+      depthValue: document.getElementById('depthValue'),
+      nextEventValue: document.getElementById('nextEventValue'),
+      sectorValue: document.getElementById('sectorValue'),
+      lockValue: document.getElementById('lockValue'),
+      statusValue: document.getElementById('statusValue'),
+      statePill: document.getElementById('statePill'),
+      bareG60Value: document.getElementById('bareG60Value'),
+      primedG60Value: document.getElementById('primedG60Value'),
+      lockedG60Value: document.getElementById('lockedG60Value'),
+      firstPrimedValue: document.getElementById('firstPrimedValue'),
+      lockActivationValue: document.getElementById('lockActivationValue'),
+      mPreview: document.getElementById('mPreview'),
+      qPreview: document.getElementById('qPreview'),
+      basisPreview: document.getElementById('basisPreview'),
+      tailPreview: document.getElementById('tailPreview'),
+      trajectoryTable: document.getElementById('trajectoryTable')
+    };
+
+    function sectorKey([f, h]) {
+      return `${f}${h}`;
+    }
+
+    function signFor(step) {
+      return (Math.floor(step / 15) % 2 === 0) ? '+' : '-';
+    }
+
+    function depthLabel(step) {
+      if (step === 0) return 'origin';
+      if (step % 60 === 0) return 'G60';
+      if (step % 30 === 0) return 'G30';
+      if (step % 15 === 0) return 'G15';
+      return 'interior';
+    }
+
+    function stateName(sector, lock) {
+      const key = sectorKey(sector);
+      if (key === '00') return 'NATIVE';
+      if (key === '10') return 'FRAME-DISPLACED';
+      if (key === '01') return 'SHEET-DISPLACED';
+      if (key === '11' && lock) return 'LOCKED';
+      if (key === '11') return 'PRIMED';
+      return 'UNKNOWN';
+    }
+
+    function stateClass(sector, lock) {
+      const key = sectorKey(sector);
+      if (key === '00') return 'state-native';
+      if (key === '10') return 'state-frame';
+      if (key === '01') return 'state-sheet';
+      if (key === '11' && lock) return 'state-locked';
+      return 'state-primed';
+    }
+
+    function statusText(sector, lock) {
+      const key = sectorKey(sector);
+      if (key === '00') return 'native closure';
+      if (key === '10') return 'frame displacement';
+      if (key === '01') return 'sheet displacement';
+      if (key === '11' && lock) return 'locked informed closure';
+      return 'primed informed closure';
+    }
+
+    function eventAt(step) {
+      return app.events[step % TOTAL_STEPS] || 'P';
+    }
+
+    function pushLog(msg) {
+      const stamp = new Date().toLocaleTimeString([], { hour12: false });
+      app.logs.push(`[${stamp}] ${msg}`);
+      if (app.logs.length > 160) app.logs = app.logs.slice(-160);
+    }
+
+    function recordHistory(eventUsed, prevSector, prevLock) {
+      app.history.push({
+        step: app.step,
+        event: eventUsed,
+        sector: [...app.sector],
+        lock: app.lock,
+        prevSector: [...prevSector],
+        prevLock
+      });
+      if (app.history.length > 120) app.history = app.history.slice(-120);
+    }
+
+    function applyEventToSector(sector, event) {
+      const [f, h] = sector;
+      if (event === 'C') return [(f + 1) % 2, h];
+      if (event === 'A') return [f, (h + 1) % 2];
+      return [f, h];
+    }
+
+    function formatSector(sector) {
+      return `(${sector[0]},${sector[1]})`;
+    }
+
+    function stepMachine() {
+      const event = eventAt(app.step);
+      const prevSector = [...app.sector];
+      const prevLock = app.lock;
+      const nextSector = applyEventToSector(app.sector, event);
+
+      let nextLock = 0;
+      const primedNow = (nextSector[0] === 1 && nextSector[1] === 1);
+
+      if (primedNow && prevLock === 1) {
+        nextLock = 1;
+      } else if (sectorKey(app.sector) === '11' && event === 'P') {
+        nextLock = 1;
+      } else {
+        nextLock = 0;
+      }
+
+      app.sector = nextSector;
+      app.lock = nextLock;
+      app.step += 1;
+
+      if (sectorKey(app.sector) === '11' && app.firstPrimedStep === null) {
+        app.firstPrimedStep = app.step;
+        pushLog(`PRIMED first reached at step ${app.step}.`);
+      }
+
+      if (app.lock === 1 && app.lockActivationStep === null) {
+        app.lockActivationStep = app.step;
+        pushLog(`LOCK activated at step ${app.step}.`);
+      }
+
+      recordHistory(event, prevSector, prevLock);
+      pushLog(`STEP n=${app.step} event=${event} sign=${signFor((app.step - 1) % TOTAL_STEPS)} χ=${formatSector(app.sector)} state=${stateName(app.sector, app.lock)}`);
+      render();
+    }
+
+    function loadPreset(name) {
+      app.events = presets[name].slice();
+      resetMachine(false);
+      pushLog(`PRESET loaded: ${name}`);
+      render();
+    }
+
+    function resetMachine(withLog = true) {
+      app.step = 0;
+      app.sector = [0, 0];
+      app.lock = 0;
+      app.history = [];
+      app.firstPrimedStep = null;
+      app.lockActivationStep = null;
+      if (withLog) pushLog('RESET machine to origin.');
+      render();
+    }
+
+    function setCurrentEvent(symbol) {
+      app.events[app.step % TOTAL_STEPS] = symbol;
+      pushLog(`EVENT set at slot ${app.step % TOTAL_STEPS}: ${symbol}`);
+      render();
+    }
+
+    function runUntil(target) {
+      while (app.step < target) stepMachine();
+    }
+
+    function simulateFromCurrentPreset() {
+      let sector = [0, 0];
+      let lock = 0;
+      const out = [];
+
+      for (let i = 0; i < TOTAL_STEPS; i += 1) {
+        const event = app.events[i];
+        const nextSector = applyEventToSector(sector, event);
+
+        let nextLock = 0;
+        if (sectorKey(nextSector) === '11' && lock === 1) {
+          nextLock = 1;
+        } else if (sectorKey(sector) === '11' && event === 'P') {
+          nextLock = 1;
+        }
+
+        const key = sectorKey(nextSector);
+        let tickClass = '';
+        if (i === 14 || i === 44) tickClass += ' g15';
+        if (i === 29) tickClass += ' g30';
+        if (i === 59) tickClass += ' g60';
+        if (key === '00') tickClass += ' native';
+        if (key === '10') tickClass += ' frame';
+        if (key === '01') tickClass += ' sheet';
+        if (key === '11' && nextLock === 0) tickClass += ' primed';
+        if (key === '11' && nextLock === 1) tickClass += ' locked';
+
+        out.push({
+          index: i,
+          event,
+          sector: nextSector,
+          lock: nextLock,
+          name: stateName(nextSector, nextLock),
+          tickClass: tickClass.trim()
+        });
+
+        sector = nextSector;
+        lock = nextLock;
+      }
+
+      return out;
+    }
+
+    function buildTickStrip() {
+      refs.tickStrip.innerHTML = '';
+      const sim = simulateFromCurrentPreset();
+
+      for (let i = 0; i < TOTAL_STEPS; i += 1) {
+        const tick = document.createElement('div');
+        const item = sim[i];
+        tick.className = `tick ${item.tickClass}`;
+        if ((app.step % TOTAL_STEPS) === i && app.step !== 60) tick.classList.add('current');
+        tick.title = `n=${i} event=${item.event} χ=${formatSector(item.sector)} state=${item.name}`;
+        refs.tickStrip.appendChild(tick);
+      }
+    }
+
+    function buildRing() {
+      const sim = simulateFromCurrentPreset();
+      const cx = 260, cy = 178, r = 118;
+
+      const pts = sim.map((item, i) => {
+        const angle = (-90 + (360 * i / TOTAL_STEPS)) * Math.PI / 180;
+        return {
+          x: cx + r * Math.cos(angle),
+          y: cy + r * Math.sin(angle),
+          item,
+          i
+        };
+      });
+
+      const circles = pts.map(({ x, y, item, i }) => {
+        const key = sectorKey(item.sector);
+        let fill = '#243053';
+        if (key === '10') fill = '#4b7aa6';
+        if (key === '01') fill = '#8e7745';
+        if (key === '11') fill = item.lock ? '#82d996' : '#5ca86c';
+        const isCurrent = (app.step % TOTAL_STEPS) === i && app.step !== 60;
+        const stroke = isCurrent ? '#7cc7ff' : '#2b3763';
+        const strokeWidth = isCurrent ? 3 : 1.5;
+        return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" />`;
+      }).join('');
+
+      const markers = [
+        { n: 15, label: 'G15', color: '#ffd27a' },
+        { n: 30, label: 'G30', color: '#7cc7ff' },
+        { n: 60, label: 'G60', color: '#82d996' }
+      ].map(m => {
+        const idx = (m.n === 60) ? 59 : m.n - 1;
+        const p = pts[idx];
+        return `<text x="${p.x}" y="${p.y - 16}" text-anchor="middle" font-size="11" fill="${m.color}" font-family="monospace">${m.label}</text>`;
+      }).join('');
+
+      refs.ringSvg.innerHTML = `
+        <circle cx="${cx}" cy="${cy}" r="${r + 24}" fill="none" stroke="#243053" stroke-width="1.5" />
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#2b3763" stroke-width="2" />
+        <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="20" fill="#e8ecff">Z60 hidden orbit</text>
+        ${circles}
+        ${markers}
+      `;
+    }
+
+    function computeTailBlock() {
+      if (!app.history.length) {
+        return {
+          label: 'No recurrence yet. Terminal block not formed.',
+          tail: 0,
+          stateLabel: 'e_00'
+        };
+      }
+
+      const hist = app.history;
+      const lastKey = sectorKey(hist[hist.length - 1].sector);
+      let tail = 0;
+
+      for (let i = hist.length - 1; i >= 0; i -= 1) {
+        if (sectorKey(hist[i].sector) === lastKey) tail += 1;
+        else break;
+      }
+
+      const stateLabel = `e_${lastKey}`;
+      return {
+        label: `terminal ${tail}×${tail} coherence block on ${stateLabel}`,
+        tail,
+        stateLabel
+      };
+    }
+
+    function buildPreviews() {
+      const last = app.history.slice(-12);
+
+      refs.mPreview.textContent = last.length
+        ? last.map(h => `e_${h.sector[0]}${h.sector[1]}`).join('  ')
+        : 'e_00';
+
+      const lockedTail = computeTailBlock();
+      refs.basisPreview.textContent = `e_${app.sector[0]}${app.sector[1]}`;
+      refs.tailPreview.textContent = String(lockedTail.tail);
+      refs.qPreview.textContent = lockedTail.label;
+
+      refs.trajectoryTable.innerHTML = last.length
+        ? last.slice().reverse().map(h => `
+          <tr>
+            <td>${h.step}</td>
+            <td>${h.event}</td>
+            <td>${formatSector(h.sector)}</td>
+            <td>${stateName(h.sector, h.lock)}</td>
+          </tr>
+        `).join('')
+        : `<tr><td>0</td><td>—</td><td>(0,0)</td><td>NATIVE</td></tr>`;
+    }
+
+    function updateInfo() {
+      refs.stepValue.textContent = String(app.step);
+      refs.signValue.textContent = signFor(app.step % TOTAL_STEPS);
+      refs.identityValue.textContent = `${app.step % 30} mod 30`;
+      refs.depthValue.textContent = depthLabel(app.step);
+      refs.nextEventValue.textContent = eventAt(app.step);
+      refs.sectorValue.textContent = formatSector(app.sector);
+      refs.lockValue.textContent = String(app.lock);
+      refs.statusValue.textContent = statusText(app.sector, app.lock);
+      refs.statePill.textContent = stateName(app.sector, app.lock);
+      refs.statePill.className = `state-pill ${stateClass(app.sector, app.lock)}`;
+
+      const atBareG60 = app.step > 0 && app.step % 60 === 0;
+      const atPrimedG60 = atBareG60 && sectorKey(app.sector) === '11';
+      const atLockedG60 = atBareG60 && sectorKey(app.sector) === '11' && app.lock === 1;
+
+      refs.bareG60Value.textContent = atBareG60 ? 'yes' : 'no';
+      refs.primedG60Value.textContent = atPrimedG60 ? 'yes' : 'no';
+      refs.lockedG60Value.textContent = atLockedG60 ? 'yes' : 'no';
+      refs.firstPrimedValue.textContent = app.firstPrimedStep ?? '—';
+      refs.lockActivationValue.textContent = app.lockActivationStep ?? '—';
+    }
+
+    function renderConsole() {
+      refs.consoleLog.textContent = app.logs.join('\n');
+      refs.consoleLog.scrollTop = refs.consoleLog.scrollHeight;
+    }
+
+    function render() {
+      buildTickStrip();
+      buildRing();
+      updateInfo();
+      buildPreviews();
+      renderConsole();
+    }
+
+    refs.loadPresetBtn.addEventListener('click', () => loadPreset(refs.presetSelect.value));
+    refs.eventPBtn.addEventListener('click', () => setCurrentEvent('P'));
+    refs.eventCBtn.addEventListener('click', () => setCurrentEvent('C'));
+    refs.eventABtn.addEventListener('click', () => setCurrentEvent('A'));
+    refs.stepBtn.addEventListener('click', () => stepMachine());
+    refs.run15Btn.addEventListener('click', () => runUntil(15));
+    refs.run30Btn.addEventListener('click', () => runUntil(30));
+    refs.run60Btn.addEventListener('click', () => runUntil(60));
+    refs.runAllBtn.addEventListener('click', () => runUntil(60));
+    refs.resetBtn.addEventListener('click', () => resetMachine(true));
+
+    pushLog('BOOT Primed G60 Console.');
+    pushLog('LOAD first-pass doctrine view: hidden cycle + chamber state + lens preview.');
+    refs.presetSelect.value = 'locked';
+    loadPreset('locked');
+  </script>
+</body>
+</html>
