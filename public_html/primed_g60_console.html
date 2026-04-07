@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-3MHQ9Y1GJX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-3MHQ9Y1GJX');
+  </script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Primed G60 Console</title>
+  <link rel="stylesheet" href="assets/primed_g60_console.css" />
+</head>
+<body>
+  <div class="app">
+    <section class="panel header">
+      <div class="title-wrap">
+        <h1>Primed G60 Console</h1>
+        <div class="subtitle">Console-first chamber doctrine. No 3D. Structure first, operation second.</div>
+      </div>
+      <div class="badge-row">
+        <div class="badge">hidden cycle: Z60</div>
+        <div class="badge">sector lens: Z2²</div>
+        <div class="badge">G15 / G30 / G60</div>
+        <div class="badge">Q = MMᵀ preview</div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="panel-inner stack">
+        <div>
+          <h2>Controls</h2>
+          <div class="controls">
+            <label class="mini-note" for="presetSelect">Example schedule</label>
+            <select id="presetSelect">
+              <option value="bare">Bare closure</option>
+              <option value="unstable">Primed but unstable</option>
+              <option value="locked">Primed and locked</option>
+              <option value="manual">Manual / cleared</option>
+            </select>
+            <button id="loadPresetBtn" class="primary">Load example</button>
+            <div class="button-row">
+              <button id="eventPBtn">Inject P</button>
+              <button id="stepBtn" class="primary">Step</button>
+            </div>
+            <div class="button-row">
+              <button id="eventCBtn">Inject C</button>
+              <button id="eventABtn">Inject A</button>
+            </div>
+            <div class="triple-row">
+              <button id="run15Btn">Run to G15</button>
+              <button id="run30Btn">Run to G30</button>
+              <button id="run60Btn">Run to G60</button>
+            </div>
+            <div class="button-row">
+              <button id="runAllBtn">Run full cycle</button>
+              <button id="resetBtn">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Machine law</h3>
+          <div class="mini-note">
+            Hidden: <span class="big">u′ = u + 1 mod 60</span><br>
+            Sector: <span class="big">χ′ = χ</span> on <code>P</code>, <span class="big">χ′ = χ + (1,0)</span> on <code>C</code>, <span class="big">χ′ = χ + (0,1)</span> on <code>A</code>.<br><br>
+            Primed state is <span class="big">χ = (1,1)</span>.<br>
+            Lock activates only after preserving dwell on the primed diagonal.
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Legend</h3>
+          <div class="legend">
+            <span>native = (0,0)</span>
+            <span>frame = (1,0)</span>
+            <span>sheet = (0,1)</span>
+            <span>primed = (1,1)</span>
+            <span>locked = primed + dwell</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="panel">
+      <div class="panel-inner cycle-panel">
+        <div>
+          <h2>Cycle view</h2>
+          <div class="muted">G15 is sign depth. G30 is identity depth. G60 is full orbit depth.</div>
+        </div>
+
+        <div class="ring-wrap">
+          <svg id="ringSvg" viewBox="0 0 520 360" aria-label="60-step cycle ring"></svg>
+        </div>
+
+        <div class="strip" id="tickStrip"></div>
+      </div>
+    </main>
+
+    <aside class="panel">
+      <div class="panel-inner grid-cards">
+        <div class="card">
+          <h3>Current state</h3>
+          <div class="kv">
+            <div>step</div><div id="stepValue" class="big">0</div>
+            <div>sign</div><div id="signValue" class="big">+</div>
+            <div>identity</div><div id="identityValue" class="big">0 mod 30</div>
+            <div>closure depth</div><div id="depthValue">origin</div>
+            <div>next event</div><div id="nextEventValue" class="big">P</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Chamber state</h3>
+          <div id="statePill" class="state-pill state-native">NATIVE</div>
+          <div class="kv" style="margin-top: 12px;">
+            <div>sheet / frame</div><div id="sectorValue" class="big">(0,0)</div>
+            <div>lock flag</div><div id="lockValue" class="big">0</div>
+            <div>status</div><div id="statusValue">native closure</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>G-status</h3>
+          <div class="kv">
+            <div>bare G60</div><div id="bareG60Value">no</div>
+            <div>primed G60</div><div id="primedG60Value">no</div>
+            <div>locked G60</div><div id="lockedG60Value">no</div>
+            <div>retained through closure</div><div id="retainedClosureValue">no</div>
+            <div>first primed hit</div><div id="firstPrimedValue">—</div>
+            <div>lock activation</div><div id="lockActivationValue">—</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Lens preview</h3>
+          <div class="matrix-box">
+            <div><strong>current basis state</strong></div>
+            <div id="basisPreview">e_00</div>
+            <div><strong>M</strong> row symbols for last 12 steps</div>
+            <div id="mPreview">—</div>
+            <div><strong>tail length</strong></div>
+            <div id="tailPreview">0</div>
+            <div><strong>Q = MMᵀ</strong> terminal coherence summary</div>
+            <div id="qPreview">—</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Recent trajectory</h3>
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>n</th>
+                <th>event</th>
+                <th>χ</th>
+                <th>state</th>
+              </tr>
+            </thead>
+            <tbody id="trajectoryTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </aside>
+
+    <section class="panel console">
+      <div class="panel-inner stack">
+        <div>
+          <h2>Console</h2>
+          <div class="muted">This first pass is doctrine-first: hidden orbit, event stream, chamber state, and lens-visible closure.</div>
+        </div>
+        <div class="console-log" id="consoleLog"></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="assets/primed_g60_console.js"></script>
+</body>
+</html>
