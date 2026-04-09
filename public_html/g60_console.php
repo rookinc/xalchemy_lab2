@@ -1,7 +1,8 @@
 <?php
 $page_title = 'Primed G60 Console';
-$page_css = ['/assets/g60_console.css'];
+$page_css = ['assets/index.css', 'assets/g60_console.css'];
 include __DIR__ . '/includes/head.php';
+include __DIR__ . '/includes/site_header.php';
 ?>
 
 <div class="app">
@@ -169,3 +170,5 @@ include __DIR__ . '/includes/head.php';
 <script src="/assets/g60_console.js"></script>
 
 <?php include __DIR__ . '/includes/site_footer.php'; ?>
+</body>
+</html>
