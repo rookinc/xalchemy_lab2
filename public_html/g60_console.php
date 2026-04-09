@@ -165,6 +165,25 @@ include __DIR__ . '/includes/site_header.php';
       <div class="console-log" id="consoleLog"></div>
     </div>
   </section>
+
+  <section class="panel">
+    <div class="panel-inner stack">
+      <div>
+        <p class="mini-note">Supporting artifacts</p>
+        <h2>Current release files</h2>
+        <div class="muted">
+          Immediate public artifacts accompanying the active G60 chamber.
+        </div>
+      </div>
+
+      <div class="card">
+        <p><a href="json/metadata.json">Metadata</a></p>
+        <p><a href="json/theorem_object.json">Theorem Object</a></p>
+        <p><a href="json/verify_report.json">Verify Report</a></p>
+        <p><a href="json/transport_cocycle.json">Transport Cocycle</a></p>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script src="/assets/g60_console.js"></script>
