@@ -1,7 +1,7 @@
 <header class="global-header">
   <div class="global-header__inner">
-    <a class="brand-mark" href="index.php" aria-label="Aletheos.ai home">
-      <span class="brand-mark__box">Aletheos.ai</span>
+    <a class="brand-mark" href="index.php" aria-label="CoRI home">
+      <span class="brand-mark__box">LOGO</span>
     </a>
 
     <nav class="global-nav" aria-label="Primary">

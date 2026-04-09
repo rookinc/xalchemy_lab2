@@ -170,9 +170,9 @@ include __DIR__ . '/includes/site_header.php';
     <div class="panel-inner stack">
       <div>
         <p class="mini-note">Supporting artifacts</p>
-        <h2>Current release files</h2>
+        <h2>Public theorem artifacts</h2>
         <div class="muted">
-          Immediate public artifacts accompanying the active G60 chamber.
+          Canonical files accompanying the active G60 chamber, published for inspection, verification, and reuse.
         </div>
       </div>
 

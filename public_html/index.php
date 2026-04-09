@@ -23,30 +23,6 @@ include __DIR__ . '/includes/site_header.php';
         <h3>G60 Console</h3>
         <p>Console-first public chamber for the current G60 surface.</p>
       </a>
-
-      <a class="index-card" href="json/metadata.json">
-        <span class="card-label">Metadata</span>
-        <h3>Metadata</h3>
-        <p>Release-facing metadata included in the current public layer.</p>
-      </a>
-
-      <a class="index-card" href="json/theorem_object.json">
-        <span class="card-label">Theorem</span>
-        <h3>Theorem Object</h3>
-        <p>Structured theorem-facing artifact included in the current public release.</p>
-      </a>
-
-      <a class="index-card" href="json/verify_report.json">
-        <span class="card-label">Verification</span>
-        <h3>Verify Report</h3>
-        <p>Verification-facing artifact included in the current public release.</p>
-      </a>
-
-      <a class="index-card" href="json/transport_cocycle.json">
-        <span class="card-label">Transport</span>
-        <h3>Transport Cocycle</h3>
-        <p>Transport-facing artifact included in the current public release.</p>
-      </a>
     </div>
   </section>
 
