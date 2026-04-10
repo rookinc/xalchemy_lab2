@@ -24,7 +24,7 @@ include __DIR__ . '/includes/site_header.php';
     </div>
   </section>
 
-  <section class="panel intro-hero">
+  <section id="overview" class="panel intro-hero">
     <div class="panel-inner intro-hero-grid">
       <div class="card intro-card">
         <p class="eyebrow">What this work is</p>
@@ -68,7 +68,7 @@ include __DIR__ . '/includes/site_header.php';
     </div>
   </section>
 
-  <section class="panel hero-panel">
+  <section id="proof-status" class="panel hero-panel">
     <div class="panel-inner hero-grid">
       <div class="card hero-card">
         <h2>Proof status</h2>
@@ -104,7 +104,7 @@ include __DIR__ . '/includes/site_header.php';
     </div>
   </section>
 
-  <section class="panel">
+  <section id="verified-claims" class="panel">
     <div class="panel-inner">
       <div class="section-head">
         <h2>Verified claims</h2>
@@ -141,7 +141,7 @@ include __DIR__ . '/includes/site_header.php';
     </div>
   </section>
 
-  <section class="panel">
+  <section id="artifacts" class="panel">
     <div class="panel-inner">
       <h2>Artifact browser</h2>
       <div class="artifacts-grid">
@@ -184,7 +184,7 @@ include __DIR__ . '/includes/site_header.php';
     </div>
   </section>
 
-  <section class="panel">
+  <section id="theorem-snapshot" class="panel">
     <div class="panel-inner">
       <h2>Core theorem snapshot</h2>
       <div class="snapshot-grid">
@@ -223,7 +223,7 @@ include __DIR__ . '/includes/site_header.php';
     </div>
   </section>
 
-  <section class="panel console">
+  <section id="boundary" class="panel console">
     <div class="panel-inner">
       <h2>Legacy exploration note</h2>
       <p class="muted">
@@ -240,4 +240,4 @@ The dashboard below exists to expose the checked finite core.
 </main>
 
 <?php include __DIR__ . '/includes/site_footer.php'; ?>
-<script src="assets/proof_kernel.js?v=20260410f"></script>
+<script src="assets/proof_kernel.js?v=20260410-final"></script>

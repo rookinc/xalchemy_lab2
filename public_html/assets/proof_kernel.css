@@ -15,6 +15,20 @@
 
 * { box-sizing: border-box; }
 
+
+html {
+  scroll-behavior: smooth;
+}
+
+#overview,
+#proof-status,
+#verified-claims,
+#artifacts,
+#theorem-snapshot,
+#boundary {
+  scroll-margin-top: 88px;
+}
+
 html,
 body {
   margin: 0;
@@ -331,4 +345,40 @@ h2, h3 {
     grid-template-columns: 1fr;
     align-items: start;
   }
+}
+
+
+.mini-toc {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.mini-toc-title {
+  margin-bottom: 0.65rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.mini-toc-list {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mini-toc-list li {
+  color: var(--muted);
+}
+
+.mini-toc-list a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.mini-toc-list a:hover {
+  text-decoration: underline;
 }
