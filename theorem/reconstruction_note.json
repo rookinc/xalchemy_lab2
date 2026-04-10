@@ -1,0 +1,15 @@
+{
+  "artifact": "theorem/cpsat_exact_solution.json",
+  "status": "honest_reconstruction",
+  "summary": [
+    "This file is a reconstructed exact witness artifact.",
+    "It is derived from the current canonical theorem object.",
+    "It is not asserted to be the original historical CP-SAT solver output.",
+    "Its purpose is to provide a truthful provenance anchor for the discrete witness now under verification."
+  ],
+  "source_theorem_object": "theorem/theorem_object.json",
+  "derived_hashes": {
+    "matrix_M_sha256": "159525cb94b9ec9ca55ed498fbc907eac2f43dcc2187622eb4ee5655574e52c7",
+    "gram_Q_sha256": "84797962599223eb8fa8cd93cf26753c9e024ed9247296463815f572de686eac"
+  }
+}

@@ -1433,5 +1433,7 @@
       7
     ]
   ],
-  "source_artifact": "artifacts/g15_transport_search/cpsat_exact_solution.json"
+  "source_artifact": "theorem/cpsat_exact_solution.json",
+  "source_artifact_status": "reconstructed_exact_witness",
+  "source_artifact_note": "This points to a truthful reconstructed exact witness artifact derived from the canonical theorem object. The original historical CP-SAT output was not recovered."
 }

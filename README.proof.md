@@ -1,7 +1,7 @@
 # Proof Pipeline Notes
 
 ## What this is
-This repository now contains a verification-first proof scaffold for the canonical transport object.
+This repository contains a verification-first proof scaffold for the canonical transport object.
 
 ## Official command
 Run:
@@ -22,6 +22,11 @@ The current proof layer mechanically checks that:
 - The ordered distance-count profile of the overlap-9 graph is exactly {0:15, 1:60, 2:120, 3:30}.
 - The exported adjacency and distance matrices of the overlap-9 graph are symmetric, have zero diagonal, and the adjacency matrix has constant row sum 4.
 
+## Exact witness artifacts
+- theorem/theorem_object.json is the canonical theorem object.
+- theorem/cpsat_exact_solution.json is a truthful reconstructed exact witness artifact derived from the canonical theorem object.
+- theorem/reconstruction_note.json explains the reconstruction status and limits.
+
 ## Boundary
 - theorem/ contains theorem-facing artifacts.
 - checkers/ contains machine checks.
@@ -30,10 +35,11 @@ The current proof layer mechanically checks that:
 - public_html/ remains the public site and demo surface.
 
 ## Current stance
-This is currently a verified witness pipeline, not yet a fully reproduced generator pipeline.
+This is currently a verified witness pipeline, not yet a fully reproduced historical generator pipeline.
 
-## Missing upstream artifact
-The provenance string artifacts/g15_transport_search/cpsat_exact_solution.json appears in earlier metadata, but no such file is currently present in this repository bundle.
+## Provenance status
+The original upstream CP-SAT artifact was not recovered.
+A truthful reconstructed exact witness artifact now exists at theorem/cpsat_exact_solution.json.
 
 ## Demo boundary
 The public G60 PHP/JS console is a visualization layer, not the proof kernel.

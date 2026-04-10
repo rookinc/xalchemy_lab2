@@ -1,7 +1,7 @@
 {
   "name": "g15_transport",
   "status": "canonical",
-  "source_artifact": "artifacts/g15_transport_search/cpsat_exact_solution.json",
+  "source_artifact": "theorem/cpsat_exact_solution.json",
   "row_weight": 14,
   "column_weight": 7,
   "distance_overlap": {
@@ -10,5 +10,7 @@
     "2": 5,
     "3": 4
   },
-  "adjacency_polynomial": "Q = 2 I + 2 A^2 + A^3"
+  "adjacency_polynomial": "Q = 2 I + 2 A^2 + A^3",
+  "source_artifact_status": "reconstructed_exact_witness",
+  "source_artifact_note": "This points to a truthful reconstructed exact witness artifact derived from the canonical theorem object. The original historical CP-SAT output was not recovered."
 }
