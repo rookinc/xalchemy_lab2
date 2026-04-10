@@ -1,7 +1,7 @@
 <?php
-$page_title = 'Thalean Proof Kernel';
+$page_title = 'The Thalean Graph AT4val[60,6]';
 $page_description = 'Public proof page for the Thalean quotient-core theorem.';
-$page_css = ['assets/proof_kernel.css'];
+$page_css = ['assets/thalean_graph.css'];
 include __DIR__ . '/includes/head.php';
 include __DIR__ . '/includes/site_header.php';
 ?>
@@ -42,8 +42,8 @@ include __DIR__ . '/includes/site_header.php';
           and explains the quotient-core result in full.
         </p>
         <div class="paper-actions">
-          <a class="paper-button" href="archive/papers/Dodecahedral_Transport__Sector_Geometry_on_L_Petersen.pdf" target="_blank" rel="noopener">
-            Open the preprint
+          <a class="paper-button" href="https://zenodo.org/records/19043356" target="_blank" rel="noopener">
+            Download the preprint
           </a>
         </div>
         <div class="paper-meta">
@@ -209,4 +209,4 @@ include __DIR__ . '/includes/site_header.php';
 </main>
 
 <?php include __DIR__ . '/includes/site_footer.php'; ?>
-<script src="assets/proof_kernel.js?v=20260410-final"></script>
+<script src="assets/thalean_graph.js?v=20260410-final"></script>

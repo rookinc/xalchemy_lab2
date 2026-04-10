@@ -4,11 +4,13 @@
       <span class="brand-mark__box">Aletheos.ai</span>
     </a>
 
+<!--
     <nav class="global-nav" aria-label="Primary">
       <a class="global-nav__link" href="index.php">Home</a>
-      <a class="global-nav__link" href="proof_kernel.php">Proof</a>
+      <a class="global-nav__link" href="thalean_graph.php">Proof</a>
       <a class="global-nav__link is-disabled" href="#" aria-disabled="true">About</a>
       <a class="global-nav__link is-disabled" href="#" aria-disabled="true">Contact</a>
     </nav>
+-->
   </div>
 </header>

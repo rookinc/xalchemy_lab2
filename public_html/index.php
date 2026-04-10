@@ -1,4 +1,7 @@
 <?php
+header('Location: thalean_graph.php', true, 302);
+exit;
+
 $page_title = 'CoRI';
 $page_description = 'Public entry point for current G60 developments and selected archived artifacts.';
 $page_css = ['assets/index.css'];
