@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-04-10T16:55:41.692071+00:00",
+  "generated_at_utc": "2026-04-10T16:58:37.713720+00:00",
   "theorem_object": "/Users/scottcave/dev/cori/aletheos.ai/theorem/theorem_object.json",
   "overall_status": "pass",
   "results": [
@@ -198,6 +198,28 @@
       }
     },
     {
+      "checker": "check_three_angle_geometry.py",
+      "status": "ok",
+      "result": {
+        "claim_id": "T10",
+        "status": "pass",
+        "details": {
+          "common_centered_norm": "112/15",
+          "same_norm": true,
+          "observed_normalized_inner_products": [
+            "-19/56",
+            "-23/112",
+            "37/112"
+          ],
+          "expected_normalized_inner_products": [
+            "-19/56",
+            "-23/112",
+            "37/112"
+          ]
+        }
+      }
+    },
+    {
       "checker": "check_overlap9_matrices.py",
       "status": "ok",
       "result": {
@@ -277,6 +299,11 @@
     {
       "checker": "check_polynomial_identity.py",
       "claim_id": "T9",
+      "status": "pass"
+    },
+    {
+      "checker": "check_three_angle_geometry.py",
+      "claim_id": "T10",
       "status": "pass"
     },
     {

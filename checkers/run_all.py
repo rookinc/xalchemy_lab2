@@ -14,6 +14,7 @@ CHECKERS = [
     "check_graph.py",
     "check_distance_profile.py",
     "check_polynomial_identity.py",
+    "check_three_angle_geometry.py",
 ]
 
 EXPORT_CHECKERS = [

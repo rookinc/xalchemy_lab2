@@ -48,6 +48,11 @@
       "statement": "If A is the overlap-9 adjacency matrix derived from Q, then Q = A^3 + 2A^2 + 2I."
     },
     {
+      "id": "T10",
+      "type": "theorem",
+      "statement": "After centering and normalization of the row vectors of M, the induced spherical configuration has exactly three off-diagonal inner products: 37/112, -23/112, and -38/112."
+    },
+    {
       "id": "I1",
       "type": "interpretation",
       "statement": "The transport cocycle supplies a lawful chart-change interpretation for the object."

@@ -22,6 +22,7 @@ The current proof layer mechanically checks that:
 - The ordered distance-count profile of the overlap-9 graph is exactly {0:15, 1:60, 2:120, 3:30}.
 - The exported adjacency and distance matrices of the overlap-9 graph are symmetric, have zero diagonal, and the adjacency matrix has constant row sum 4.
 - If A is the overlap-9 adjacency matrix derived from Q, then Q = A^3 + 2A^2 + 2I.
+- After centering and normalization of the row vectors of M, the induced spherical configuration has exactly three off-diagonal inner products: 37/112, -23/112, and -38/112.
 
 ## Exact witness artifacts
 - theorem/theorem_object.json is the canonical theorem object.
