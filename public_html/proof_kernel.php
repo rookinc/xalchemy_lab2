@@ -222,21 +222,6 @@ include __DIR__ . '/includes/site_header.php';
       </div>
     </div>
   </section>
-
-  <section id="boundary" class="panel console">
-    <div class="panel-inner">
-      <h2>Legacy exploration note</h2>
-      <p class="muted">
-        The older chamber-state simulator has been demoted from center stage. It remains useful as
-        an interpretive or pedagogical layer, but it does not define theorem truth.
-      </p>
-      <div class="console-log" id="consoleLog">
-Proof-first orientation active.
-The paper is the primary statement.
-The dashboard below exists to expose the checked finite core.
-      </div>
-    </div>
-  </section>
 </main>
 
 <?php include __DIR__ . '/includes/site_footer.php'; ?>
