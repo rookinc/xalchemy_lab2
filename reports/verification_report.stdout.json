@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-04-10T16:51:23.794555+00:00",
+  "generated_at_utc": "2026-04-10T16:55:41.692071+00:00",
   "theorem_object": "/Users/scottcave/dev/cori/aletheos.ai/theorem/theorem_object.json",
   "overall_status": "pass",
   "results": [
@@ -184,6 +184,20 @@
       }
     },
     {
+      "checker": "check_polynomial_identity.py",
+      "status": "ok",
+      "result": {
+        "claim_id": "T9",
+        "status": "pass",
+        "details": {
+          "identity": "Q = A^3 + 2A^2 + 2I",
+          "adjacency_rule": "A[i][j] = 1 iff i != j and Q[i][j] == 9",
+          "mismatch_count": 0,
+          "sample_mismatches": []
+        }
+      }
+    },
+    {
       "checker": "check_overlap9_matrices.py",
       "status": "ok",
       "result": {
@@ -258,6 +272,11 @@
     {
       "checker": "check_distance_profile.py",
       "claim_id": "T7",
+      "status": "pass"
+    },
+    {
+      "checker": "check_polynomial_identity.py",
+      "claim_id": "T9",
       "status": "pass"
     },
     {

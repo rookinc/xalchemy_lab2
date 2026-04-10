@@ -43,6 +43,11 @@
       "statement": "For the overlap-9 graph, the derived adjacency and distance matrices are symmetric, have zero diagonal, and the adjacency matrix has constant row sum 4."
     },
     {
+      "id": "T9",
+      "type": "theorem",
+      "statement": "If A is the overlap-9 adjacency matrix derived from Q, then Q = A^3 + 2A^2 + 2I."
+    },
+    {
       "id": "I1",
       "type": "interpretation",
       "statement": "The transport cocycle supplies a lawful chart-change interpretation for the object."

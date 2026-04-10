@@ -13,6 +13,7 @@ CHECKERS = [
     "check_overlap_profile.py",
     "check_graph.py",
     "check_distance_profile.py",
+    "check_polynomial_identity.py",
 ]
 
 EXPORT_CHECKERS = [

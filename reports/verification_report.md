@@ -13,4 +13,5 @@
 - `T5` via `check_overlap_profile.py` -> **pass**
 - `T6` via `check_graph.py` -> **pass**
 - `T7` via `check_distance_profile.py` -> **pass**
+- `T9` via `check_polynomial_identity.py` -> **pass**
 - `T8` via `check_overlap9_matrices.py` -> **pass**

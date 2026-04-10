@@ -21,6 +21,7 @@ The current proof layer mechanically checks that:
 - The overlap-9 derived graph is connected, 4-regular, and has diameter 3.
 - The ordered distance-count profile of the overlap-9 graph is exactly {0:15, 1:60, 2:120, 3:30}.
 - The exported adjacency and distance matrices of the overlap-9 graph are symmetric, have zero diagonal, and the adjacency matrix has constant row sum 4.
+- If A is the overlap-9 adjacency matrix derived from Q, then Q = A^3 + 2A^2 + 2I.
 
 ## Exact witness artifacts
 - theorem/theorem_object.json is the canonical theorem object.
