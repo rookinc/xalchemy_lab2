@@ -85,21 +85,6 @@ include __DIR__ . '/includes/site_header.php';
           <div>Generated report</div><div id="reportTimestamp">loading…</div>
         </div>
       </div>
-
-      <div class="card hero-card">
-        <h2>What this page verifies</h2>
-        <p class="muted">
-          The public proof layer begins at the canonical quotient-core witness. It checks the
-          incidence matrix M, the overlap matrix Q, the cubic identity, the induced three-angle geometry,
-          and the cocycle companion layer.
-        </p>
-        <div class="legend">
-          <span>witness</span>
-          <span>graph</span>
-          <span>algebra</span>
-          <span>geometry</span>
-          <span>cocycle</span>
-        </div>
       </div>
     </div>
   </section>
@@ -168,6 +153,26 @@ include __DIR__ . '/includes/site_header.php';
           <ul class="artifact-list link-list">
             <li><a href="json/transport_cocycle.json" target="_blank" rel="noopener">transport_cocycle.json</a></li>
             <li id="cocycleArtifactLine" class="muted">companion invariant status loading…</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Audit the verifier</h3>
+          <ul class="artifact-list link-list">
+            <li><a href="audit/checkers/check_shape.py" target="_blank" rel="noopener">check_shape.py</a></li>
+            <li><a href="audit/checkers/check_binary.py" target="_blank" rel="noopener">check_binary.py</a></li>
+            <li><a href="audit/checkers/check_row_col_sums.py" target="_blank" rel="noopener">check_row_col_sums.py</a></li>
+            <li><a href="audit/checkers/check_gram.py" target="_blank" rel="noopener">check_gram.py</a></li>
+            <li><a href="audit/checkers/check_graph.py" target="_blank" rel="noopener">check_graph.py</a></li>
+            <li><a href="audit/checkers/check_overlap_profile.py" target="_blank" rel="noopener">check_overlap_profile.py</a></li>
+            <li><a href="audit/checkers/check_distance_profile.py" target="_blank" rel="noopener">check_distance_profile.py</a></li>
+            <li><a href="audit/checkers/check_polynomial_identity.py" target="_blank" rel="noopener">check_polynomial_identity.py</a></li>
+            <li><a href="audit/checkers/check_three_angle_geometry.py" target="_blank" rel="noopener">check_three_angle_geometry.py</a></li>
+            <li><a href="audit/checkers/check_overlap9_matrices.py" target="_blank" rel="noopener">check_overlap9_matrices.py</a></li>
+            <li><a href="audit/checkers/check_cocycle_data.py" target="_blank" rel="noopener">check_cocycle_data.py</a></li>
+            <li><a href="audit/checkers/check_cocycle_min_support.py" target="_blank" rel="noopener">check_cocycle_min_support.py</a></li>
+            <li><a href="audit/checkers/check_cocycle_holonomy.py" target="_blank" rel="noopener">check_cocycle_holonomy.py</a></li>
+            <li><a href="audit/checkers/run_all.py" target="_blank" rel="noopener">run_all.py</a></li>
           </ul>
         </div>
 
