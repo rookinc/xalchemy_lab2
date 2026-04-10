@@ -1,6 +1,6 @@
 # Verification Report
 
-- theorem object: `/data/data/com.termux/files/home/dev/cori/aletheos.ai/theorem/theorem_object.json`
+- theorem object: `/Users/scottcave/dev/cori/aletheos.ai/theorem/theorem_object.json`
 - overall status: **PASS**
 
 ## Claim Summary

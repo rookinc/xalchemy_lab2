@@ -1,6 +1,6 @@
 {
-  "generated_at_utc": "2026-04-10T16:19:01.011791+00:00",
-  "theorem_object": "/data/data/com.termux/files/home/dev/cori/aletheos.ai/theorem/theorem_object.json",
+  "generated_at_utc": "2026-04-10T16:51:23.794555+00:00",
+  "theorem_object": "/Users/scottcave/dev/cori/aletheos.ai/theorem/theorem_object.json",
   "overall_status": "pass",
   "results": [
     {
@@ -215,7 +215,7 @@
           "zero_diag_D": true,
           "finite_only": true
         },
-        "written": "/data/data/com.termux/files/home/dev/cori/aletheos.ai/reports/overlap9_matrices.json"
+        "written": "/Users/scottcave/dev/cori/aletheos.ai/reports/overlap9_matrices.json"
       }
     }
   ],
