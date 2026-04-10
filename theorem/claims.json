@@ -51,6 +51,26 @@
       "id": "D1",
       "type": "demo",
       "statement": "The public G60 console is a visualization/demo layer and is not the proof kernel."
+    },
+    {
+      "id": "C1",
+      "type": "cocycle",
+      "statement": "A Z2-valued cocycle representative on the 30 edges of G15 is fixed as theorem-facing data."
+    },
+    {
+      "id": "C2",
+      "type": "cocycle",
+      "statement": "The cocycle representative has edge-sign counts 10 parallel and 20 crossed."
+    },
+    {
+      "id": "C3",
+      "type": "cocycle",
+      "statement": "Within its switching class, the cocycle has minimal support size 6."
+    },
+    {
+      "id": "C4",
+      "type": "cocycle",
+      "statement": "The cocycle has at least one odd-holonomy cycle and is therefore nontrivial."
     }
   ]
 }
