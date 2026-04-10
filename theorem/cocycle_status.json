@@ -1,0 +1,18 @@
+{
+  "cocycle_layer_status": "verified_companion_invariant",
+  "current_scope": [
+    "fixed cocycle representative on the 30 edges of G15",
+    "sign-count verification",
+    "switching-class minimal support search",
+    "odd-holonomy witness search"
+  ],
+  "verified_claims": {
+    "C1": "edge set matches active overlap-9 graph labeling",
+    "C2": "10 parallel and 20 crossed edges",
+    "C3": "minimal support size 6 with 40 distinct minimal supports",
+    "C4": "odd-holonomy witness cycles exist"
+  },
+  "theorem_file": "theorem/cocycle_data.json",
+  "archived_pre_alignment_file": "theorem/cocycle_data.archived_labeling.json",
+  "intended_boundary": "companion invariant independent of the quadratic overlap structure"
+}

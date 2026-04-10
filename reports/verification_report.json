@@ -1,6 +1,5 @@
 {
-  "generated_at_utc": "2026-04-10T16:51:23.794555+00:00",
-  "theorem_object": "/Users/scottcave/dev/cori/aletheos.ai/theorem/theorem_object.json",
+  "generated_at_utc": "2026-04-10T17:34:57.229728+00:00",
   "overall_status": "pass",
   "results": [
     {
@@ -184,6 +183,145 @@
       }
     },
     {
+      "checker": "check_polynomial_identity.py",
+      "status": "ok",
+      "result": {
+        "claim_id": "T9",
+        "status": "pass",
+        "details": {
+          "identity": "Q = A^3 + 2A^2 + 2I",
+          "adjacency_rule": "A[i][j] = 1 iff i != j and Q[i][j] == 9",
+          "mismatch_count": 0,
+          "sample_mismatches": []
+        }
+      }
+    },
+    {
+      "checker": "check_three_angle_geometry.py",
+      "status": "ok",
+      "result": {
+        "claim_id": "T10",
+        "status": "pass",
+        "details": {
+          "common_centered_norm": "112/15",
+          "same_norm": true,
+          "observed_normalized_inner_products": [
+            "-19/56",
+            "-23/112",
+            "37/112"
+          ],
+          "expected_normalized_inner_products": [
+            "-19/56",
+            "-23/112",
+            "37/112"
+          ]
+        }
+      }
+    },
+    {
+      "checker": "check_cocycle_data.py",
+      "status": "ok",
+      "result": {
+        "claims": [
+          {
+            "claim_id": "C1",
+            "status": "pass",
+            "details": {
+              "edge_count_graph": 30,
+              "edge_count_cocycle": 30,
+              "edge_sets_match": true
+            }
+          },
+          {
+            "claim_id": "C2",
+            "status": "pass",
+            "details": {
+              "parallel_count": 10,
+              "crossed_count": 20,
+              "expected_parallel": 10,
+              "expected_crossed": 20
+            }
+          }
+        ]
+      }
+    },
+    {
+      "checker": "check_cocycle_min_support.py",
+      "status": "ok",
+      "result": {
+        "claim_id": "C3",
+        "status": "pass",
+        "details": {
+          "minimal_support_size": 6,
+          "expected_minimal_support_size": 6,
+          "number_of_distinct_minimal_supports": 40,
+          "sample_minimal_support": [
+            [
+              0,
+              14
+            ],
+            [
+              1,
+              13
+            ],
+            [
+              2,
+              12
+            ],
+            [
+              5,
+              12
+            ],
+            [
+              8,
+              13
+            ],
+            [
+              11,
+              14
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "checker": "check_cocycle_holonomy.py",
+      "status": "ok",
+      "result": {
+        "claim_id": "C4",
+        "status": "pass",
+        "details": {
+          "odd_cycle_count": 8,
+          "sample_odd_cycle": [
+            [
+              3,
+              13
+            ],
+            [
+              1,
+              13
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              3,
+              5
+            ]
+          ]
+        }
+      }
+    },
+    {
       "checker": "check_overlap9_matrices.py",
       "status": "ok",
       "result": {
@@ -215,7 +353,7 @@
           "zero_diag_D": true,
           "finite_only": true
         },
-        "written": "/Users/scottcave/dev/cori/aletheos.ai/reports/overlap9_matrices.json"
+        "written": "/data/data/com.termux/files/home/dev/cori/aletheos.ai/reports/overlap9_matrices.json"
       }
     }
   ],
@@ -258,6 +396,36 @@
     {
       "checker": "check_distance_profile.py",
       "claim_id": "T7",
+      "status": "pass"
+    },
+    {
+      "checker": "check_polynomial_identity.py",
+      "claim_id": "T9",
+      "status": "pass"
+    },
+    {
+      "checker": "check_three_angle_geometry.py",
+      "claim_id": "T10",
+      "status": "pass"
+    },
+    {
+      "checker": "check_cocycle_data.py",
+      "claim_id": "C1",
+      "status": "pass"
+    },
+    {
+      "checker": "check_cocycle_data.py",
+      "claim_id": "C2",
+      "status": "pass"
+    },
+    {
+      "checker": "check_cocycle_min_support.py",
+      "claim_id": "C3",
+      "status": "pass"
+    },
+    {
+      "checker": "check_cocycle_holonomy.py",
+      "claim_id": "C4",
       "status": "pass"
     },
     {
