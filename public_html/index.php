@@ -18,10 +18,10 @@ include __DIR__ . '/includes/site_header.php';
     </div>
 
     <div class="card-grid">
-      <a class="index-card feature-card" href="g60_console.php">
+      <a class="index-card feature-card" href="proof_kernel.php">
         <span class="card-label">Primary</span>
-        <h3>G60 Console</h3>
-        <p>Console-first public chamber for the current G60 surface.</p>
+        <h3>Proof Kernel</h3>
+        <p>Public proof page for the current Thalean quotient-core theorem.</p>
       </a>
     </div>
   </section>
