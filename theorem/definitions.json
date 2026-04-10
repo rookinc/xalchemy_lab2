@@ -1,0 +1,10 @@
+{
+  "matrix_symbol": "M",
+  "gram_symbol": "Q",
+  "definitions": {
+    "binary_matrix": "All entries are in {0,1}.",
+    "gram_matrix": "Q = M M^T.",
+    "distance_graph": "Not yet fixed from Q in the proof layer.",
+    "overlap_spectrum_off_diagonal": "Frequency count of Q[i][j] for i < j."
+  }
+}

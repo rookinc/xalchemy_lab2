@@ -1,0 +1,56 @@
+{
+  "object_id": "g15_transport_canonical",
+  "status": "working",
+  "claims": [
+    {
+      "id": "T1",
+      "type": "theorem",
+      "statement": "M is a 15x30 binary matrix."
+    },
+    {
+      "id": "T2",
+      "type": "theorem",
+      "statement": "Each row of M has sum 14."
+    },
+    {
+      "id": "T3",
+      "type": "theorem",
+      "statement": "Each column of M has sum 7."
+    },
+    {
+      "id": "T4",
+      "type": "theorem",
+      "statement": "Q = M M^T."
+    },
+    {
+      "id": "T5",
+      "type": "theorem",
+      "statement": "The off-diagonal overlap spectrum of Q is exactly {4:15, 5:60, 9:30}."
+    },
+    {
+      "id": "T6",
+      "type": "theorem",
+      "statement": "The derived graph obtained by declaring i~j iff Q[i][j] = 9 is connected, 4-regular, and has diameter 3."
+    },
+    {
+      "id": "T7",
+      "type": "theorem",
+      "statement": "The ordered distance-count profile of the overlap-9 graph is exactly {0:15, 1:60, 2:120, 3:30}."
+    },
+    {
+      "id": "T8",
+      "type": "theorem",
+      "statement": "For the overlap-9 graph, the derived adjacency and distance matrices are symmetric, have zero diagonal, and the adjacency matrix has constant row sum 4."
+    },
+    {
+      "id": "I1",
+      "type": "interpretation",
+      "statement": "The transport cocycle supplies a lawful chart-change interpretation for the object."
+    },
+    {
+      "id": "D1",
+      "type": "demo",
+      "statement": "The public G60 console is a visualization/demo layer and is not the proof kernel."
+    }
+  ]
+}

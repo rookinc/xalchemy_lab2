@@ -1,0 +1,269 @@
+{
+  "generated_at_utc": "2026-04-10T16:19:01.011791+00:00",
+  "theorem_object": "/data/data/com.termux/files/home/dev/cori/aletheos.ai/theorem/theorem_object.json",
+  "overall_status": "pass",
+  "results": [
+    {
+      "checker": "check_shape.py",
+      "status": "ok",
+      "result": {
+        "claim_id": "T1",
+        "status": "pass",
+        "details": {
+          "rows": 15,
+          "cols": 30,
+          "rectangular": true
+        }
+      }
+    },
+    {
+      "checker": "check_binary.py",
+      "status": "ok",
+      "result": {
+        "claim_id": "T1.binary",
+        "status": "pass",
+        "details": {
+          "bad_entries": [],
+          "bad_entry_count": 0
+        }
+      }
+    },
+    {
+      "checker": "check_row_col_sums.py",
+      "status": "ok",
+      "result": {
+        "claims": [
+          {
+            "claim_id": "T2",
+            "status": "pass",
+            "details": {
+              "row_sums": [
+                14,
+                14,
+                14,
+                14,
+                14,
+                14,
+                14,
+                14,
+                14,
+                14,
+                14,
+                14,
+                14,
+                14,
+                14
+              ]
+            }
+          },
+          {
+            "claim_id": "T3",
+            "status": "pass",
+            "details": {
+              "col_sums": [
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "checker": "check_gram.py",
+      "status": "ok",
+      "result": {
+        "claim_id": "T4",
+        "status": "pass",
+        "details": {
+          "mismatch_count": 0,
+          "mismatches": []
+        }
+      }
+    },
+    {
+      "checker": "check_overlap_profile.py",
+      "status": "ok",
+      "result": {
+        "claim_id": "T5",
+        "status": "pass",
+        "details": {
+          "observed": {
+            "4": 15,
+            "5": 60,
+            "9": 30
+          },
+          "expected": {
+            "4": 15,
+            "5": 60,
+            "9": 30
+          }
+        }
+      }
+    },
+    {
+      "checker": "check_graph.py",
+      "status": "ok",
+      "result": {
+        "claim_id": "T6",
+        "status": "pass",
+        "details": {
+          "adjacency_overlap": 9,
+          "degrees": [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "regular_4": true,
+          "connected": true,
+          "diameter": 3
+        }
+      }
+    },
+    {
+      "checker": "check_distance_profile.py",
+      "status": "ok",
+      "result": {
+        "claim_id": "T7",
+        "status": "pass",
+        "details": {
+          "adjacency_overlap": 9,
+          "observed_distance_counts": {
+            "0": 15,
+            "1": 60,
+            "2": 120,
+            "3": 30
+          },
+          "expected_distance_counts": {
+            "0": 15,
+            "1": 60,
+            "2": 120,
+            "3": 30
+          }
+        }
+      }
+    },
+    {
+      "checker": "check_overlap9_matrices.py",
+      "status": "ok",
+      "result": {
+        "claim_id": "T8",
+        "status": "pass",
+        "details": {
+          "adjacency_overlap": 9,
+          "symmetric_A": true,
+          "zero_diag_A": true,
+          "degree_sums": [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "regular_4": true,
+          "symmetric_D": true,
+          "zero_diag_D": true,
+          "finite_only": true
+        },
+        "written": "/data/data/com.termux/files/home/dev/cori/aletheos.ai/reports/overlap9_matrices.json"
+      }
+    }
+  ],
+  "summary": [
+    {
+      "checker": "check_shape.py",
+      "claim_id": "T1",
+      "status": "pass"
+    },
+    {
+      "checker": "check_binary.py",
+      "claim_id": "T1.binary",
+      "status": "pass"
+    },
+    {
+      "checker": "check_row_col_sums.py",
+      "claim_id": "T2",
+      "status": "pass"
+    },
+    {
+      "checker": "check_row_col_sums.py",
+      "claim_id": "T3",
+      "status": "pass"
+    },
+    {
+      "checker": "check_gram.py",
+      "claim_id": "T4",
+      "status": "pass"
+    },
+    {
+      "checker": "check_overlap_profile.py",
+      "claim_id": "T5",
+      "status": "pass"
+    },
+    {
+      "checker": "check_graph.py",
+      "claim_id": "T6",
+      "status": "pass"
+    },
+    {
+      "checker": "check_distance_profile.py",
+      "claim_id": "T7",
+      "status": "pass"
+    },
+    {
+      "checker": "check_overlap9_matrices.py",
+      "claim_id": "T8",
+      "status": "pass"
+    }
+  ]
+}

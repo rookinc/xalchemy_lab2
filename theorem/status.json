@@ -1,0 +1,8 @@
+{
+  "proof_status": "verification-first",
+  "generator_status": "missing_upstream_generator_artifact",
+  "generator_note": "No cpsat_exact_solution.json is currently present in this repository bundle.",
+  "cocycle_status": "interpretive_component",
+  "ui_status": "demo_component",
+  "canonical_object": "theorem/theorem_object.json"
+}
