@@ -14,6 +14,12 @@ const refs = {
   claimsGeometry: document.getElementById('claimsGeometry'),
   claimsCocycle: document.getElementById('claimsCocycle'),
 
+  countWitness: document.getElementById('countWitness'),
+  countGraph: document.getElementById('countGraph'),
+  countAlgebra: document.getElementById('countAlgebra'),
+  countGeometry: document.getElementById('countGeometry'),
+  countCocycle: document.getElementById('countCocycle'),
+
   mShape: document.getElementById('mShape'),
   qShape: document.getElementById('qShape'),
   rowSums: document.getElementById('rowSums'),
@@ -84,6 +90,11 @@ function renderClaims(target, ids, summaryMap) {
   });
 }
 
+function renderCount(target, label, ids, summaryMap) {
+  const passCount = ids.filter(id => summaryMap.get(id) === 'pass').length;
+  target.textContent = `${label}: ${passCount}/${ids.length}`;
+}
+
 function uniqueValues(arr) {
   return [...new Set(arr)];
 }
@@ -102,14 +113,15 @@ function formatSpectrum(Q) {
 async function main() {
   try {
     const [report, theorem, metadata, cocycle] = await Promise.all([
-      fetchJson('json/verify_report.json'),
-      fetchJson('json/theorem_object.json'),
-      fetchJson('json/metadata.json'),
-      fetchJson('json/transport_cocycle.json').catch(() => null)
+      fetchJson('json/verify_report.json?v=20260410c'),
+      fetchJson('json/theorem_object.json?v=20260410c'),
+      fetchJson('json/metadata.json?v=20260410c'),
+      fetchJson('json/transport_cocycle.json?v=20260410c').catch(() => null)
     ]);
 
-    const summaryMap = new Map((report.summary || []).map(item => [item.claim_id, item.status]));
-    const overall = (report.overall_status || 'fail').toLowerCase();
+    const summaryRows = Array.isArray(report.summary) ? report.summary : [];
+    const summaryMap = new Map(summaryRows.map(item => [item.claim_id, item.status]));
+    const overall = String(report.overall_status || 'fail').toLowerCase();
 
     setOverallStatus(overall);
 
@@ -146,24 +158,44 @@ async function main() {
     renderClaims(refs.claimsGeometry, groups.geometry, summaryMap);
     renderClaims(refs.claimsCocycle, groups.cocycle, summaryMap);
 
-    const cocycleDataResult = report.results.find(r => r.checker === 'check_cocycle_data.py');
+    renderCount(refs.countWitness, 'witness', groups.witness, summaryMap);
+    renderCount(refs.countGraph, 'graph', groups.graph, summaryMap);
+    renderCount(refs.countAlgebra, 'algebra', groups.algebra, summaryMap);
+    renderCount(refs.countGeometry, 'geometry', groups.geometry, summaryMap);
+    renderCount(refs.countCocycle, 'cocycle', groups.cocycle, summaryMap);
+
+    const reportResults = Array.isArray(report.results) ? report.results : [];
+
+    const cocycleDataResult = reportResults.find(r => r.checker === 'check_cocycle_data.py');
     if (cocycleDataResult?.result?.claims) {
-      const c2 = cocycleDataResult.result.claims.find(c => c.claim_id === 'C2');
+      const c2Claims = Array.isArray(cocycleDataResult.result.claims) ? cocycleDataResult.result.claims : [];
+      const c2 = c2Claims.find(c => c.claim_id === 'C2');
       if (c2?.details) {
-        refs.parallelCount.textContent = c2.details.parallel_count;
-        refs.crossedCount.textContent = c2.details.crossed_count;
+        refs.parallelCount.textContent = c2.details.parallel_count ?? '—';
+        refs.crossedCount.textContent = c2.details.crossed_count ?? '—';
+      } else {
+        refs.parallelCount.textContent = '—';
+        refs.crossedCount.textContent = '—';
       }
+    } else {
+      refs.parallelCount.textContent = '—';
+      refs.crossedCount.textContent = '—';
     }
 
-    const minSupportResult = report.results.find(r => r.checker === 'check_cocycle_min_support.py');
+    const minSupportResult = reportResults.find(r => r.checker === 'check_cocycle_min_support.py');
     if (minSupportResult?.result?.details) {
-      refs.minimalSupport.textContent = minSupportResult.result.details.minimal_support_size;
-      refs.distinctMinima.textContent = minSupportResult.result.details.number_of_distinct_minimal_supports;
+      refs.minimalSupport.textContent = minSupportResult.result.details.minimal_support_size ?? '—';
+      refs.distinctMinima.textContent = minSupportResult.result.details.number_of_distinct_minimal_supports ?? '—';
+    } else {
+      refs.minimalSupport.textContent = '—';
+      refs.distinctMinima.textContent = '—';
     }
 
-    const holonomyResult = report.results.find(r => r.checker === 'check_cocycle_holonomy.py');
+    const holonomyResult = reportResults.find(r => r.checker === 'check_cocycle_holonomy.py');
     if (holonomyResult?.result?.details) {
-      refs.oddCycleCount.textContent = holonomyResult.result.details.odd_cycle_count;
+      refs.oddCycleCount.textContent = holonomyResult.result.details.odd_cycle_count ?? '—';
+    } else {
+      refs.oddCycleCount.textContent = '—';
     }
   } catch (err) {
     refs.overallPill.textContent = 'ERROR';

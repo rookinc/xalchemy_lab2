@@ -76,14 +76,16 @@ a:hover {
 }
 
 .badge-row,
-.legend {
+.legend,
+.count-row {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
 .badge,
-.legend span {
+.legend span,
+.count-pill {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 6px 10px;
@@ -92,9 +94,18 @@ a:hover {
   background: rgba(255,255,255,0.03);
 }
 
+.count-pill {
+  font-family: var(--mono);
+}
+
 h2, h3 {
   margin: 0 0 12px;
   font-weight: 700;
+}
+
+.section-head {
+  display: grid;
+  gap: 12px;
 }
 
 .hero-grid,
@@ -150,19 +161,9 @@ h2, h3 {
   background: rgba(255,255,255,0.05);
 }
 
-.status-loading {
-  color: var(--muted);
-}
-
-.status-pass {
-  color: var(--good);
-  border-color: var(--good);
-}
-
-.status-fail {
-  color: var(--bad);
-  border-color: var(--bad);
-}
+.status-loading { color: var(--muted); }
+.status-pass { color: var(--good); border-color: var(--good); }
+.status-fail { color: var(--bad); border-color: var(--bad); }
 
 .kv {
   display: grid;
@@ -188,16 +189,25 @@ h2, h3 {
   line-height: 1.45;
 }
 
-.claim-pass {
-  color: var(--ink);
+.claim-pass { color: var(--ink); }
+.claim-fail { color: var(--bad); }
+.claim-note { color: var(--muted); }
+
+.link-list {
+  padding-left: 0;
 }
 
-.claim-fail {
-  color: var(--bad);
+.link-list li {
+  list-style: none;
+  border: 1px solid var(--line);
+  background: rgba(0,0,0,0.14);
+  border-radius: 10px;
+  padding: 10px 12px;
 }
 
-.claim-note {
-  color: var(--muted);
+.link-list li a {
+  display: block;
+  width: 100%;
 }
 
 .formula-stack {
@@ -232,21 +242,10 @@ h2, h3 {
 }
 
 @media (max-width: 1250px) {
-  .claims-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .artifacts-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .snapshot-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .hero-grid {
-    grid-template-columns: 1fr;
-  }
+  .claims-grid { grid-template-columns: repeat(2, 1fr); }
+  .artifacts-grid { grid-template-columns: repeat(2, 1fr); }
+  .snapshot-grid { grid-template-columns: 1fr; }
+  .hero-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 760px) {

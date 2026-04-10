@@ -64,7 +64,16 @@ include __DIR__ . '/includes/site_header.php';
 
   <section class="panel">
     <div class="panel-inner">
-      <h2>Verified claims</h2>
+      <div class="section-head">
+        <h2>Verified claims</h2>
+        <div class="count-row">
+          <span class="count-pill" id="countWitness">witness: —</span>
+          <span class="count-pill" id="countGraph">graph: —</span>
+          <span class="count-pill" id="countAlgebra">algebra: —</span>
+          <span class="count-pill" id="countGeometry">geometry: —</span>
+          <span class="count-pill" id="countCocycle">cocycle: —</span>
+        </div>
+      </div>
       <div class="claims-grid">
         <div class="card">
           <h3>Witness</h3>
@@ -96,7 +105,7 @@ include __DIR__ . '/includes/site_header.php';
       <div class="artifacts-grid">
         <div class="card">
           <h3>Canonical theorem artifacts</h3>
-          <ul class="artifact-list">
+          <ul class="artifact-list link-list">
             <li><a href="json/theorem_object.json" target="_blank" rel="noopener">theorem_object.json</a></li>
             <li><a href="json/metadata.json" target="_blank" rel="noopener">metadata.json</a></li>
             <li><a href="json/matrix_M.json" target="_blank" rel="noopener">matrix_M.json</a></li>
@@ -106,7 +115,7 @@ include __DIR__ . '/includes/site_header.php';
 
         <div class="card">
           <h3>Generated proof outputs</h3>
-          <ul class="artifact-list">
+          <ul class="artifact-list link-list">
             <li><a href="json/verify_report.json" target="_blank" rel="noopener">verify_report.json</a></li>
             <li id="reportPassLine" class="muted">verification report summary loading…</li>
           </ul>
@@ -114,7 +123,7 @@ include __DIR__ . '/includes/site_header.php';
 
         <div class="card">
           <h3>Cocycle and transport artifacts</h3>
-          <ul class="artifact-list">
+          <ul class="artifact-list link-list">
             <li><a href="json/transport_cocycle.json" target="_blank" rel="noopener">transport_cocycle.json</a></li>
             <li id="cocycleArtifactLine" class="muted">companion invariant status loading…</li>
           </ul>
@@ -190,4 +199,4 @@ Legacy G60 chamber doctrine is retained only as a secondary interpretive view.
 </main>
 
 <?php include __DIR__ . '/includes/site_footer.php'; ?>
-<script src="assets/g60_console.js"></script>
+<script src="assets/g60_console.js?v=20260410c"></script>
