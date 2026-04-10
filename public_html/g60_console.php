@@ -1,193 +1,193 @@
 <?php
-$page_title = 'Primed G60 Console';
-$page_css = ['assets/index.css', 'assets/g60_console.css'];
+$page_title = 'Thalean Proof Kernel';
+$page_description = 'Machine-checked proof dashboard for the canonical G15 witness, polynomial identity, spherical geometry, and cocycle companion invariant.';
+$page_css = ['assets/g60_console.css'];
 include __DIR__ . '/includes/head.php';
 include __DIR__ . '/includes/site_header.php';
 ?>
 
-<div class="app">
+<main class="app proof-app">
   <section class="panel header">
     <div class="title-wrap">
-      <h1>Primed G60 Console</h1>
-      <div class="subtitle">Console-first chamber doctrine. No 3D. Structure first, operation second.</div>
+      <h1>Thalean Proof Kernel</h1>
+      <p class="subtitle">
+        Machine-checked verification of the canonical 15×30 witness, the overlap law
+        Q = MMᵀ, the polynomial identity Q = A³ + 2A² + 2I, the induced three-angle
+        geometry, and the cocycle companion invariant.
+      </p>
     </div>
     <div class="badge-row">
-      <div class="badge">hidden cycle: Z60</div>
-      <div class="badge">sector lens: Z2²</div>
-      <div class="badge">G15 / G30 / G60</div>
-      <div class="badge">Q = MMᵀ preview</div>
+      <span class="badge">canonical witness: 15×30 binary M</span>
+      <span class="badge">core graph: G15 ≅ L(Petersen)</span>
+      <span class="badge">quadratic law: Q = MMᵀ</span>
+      <span class="badge">cubic law: Q = A³ + 2A² + 2I</span>
+      <span class="badge">geometry: three-angle</span>
+      <span class="badge">cocycle: verified companion invariant</span>
     </div>
   </section>
 
-  <aside class="panel">
-    <div class="panel-inner stack">
-      <div>
-        <h2>Controls</h2>
-        <div class="controls">
-          <label class="mini-note" for="presetSelect">Example schedule</label>
-          <select id="presetSelect">
-            <option value="bare">Bare closure</option>
-            <option value="unstable">Primed but unstable</option>
-            <option value="locked">Primed and locked</option>
-            <option value="manual">Manual / cleared</option>
-          </select>
-          <button id="loadPresetBtn" class="primary">Load example</button>
-          <div class="button-row">
-            <button id="eventPBtn">Inject P</button>
-            <button id="stepBtn" class="primary">Step</button>
+  <section class="panel hero-panel">
+    <div class="panel-inner hero-grid">
+      <div class="card hero-card">
+        <h2>Proof status</h2>
+        <div class="proof-status-row">
+          <div id="overallPill" class="status-pill status-loading">Loading</div>
+          <div class="muted" id="statusSummary">
+            Reading verification artifacts…
           </div>
-          <div class="button-row">
-            <button id="eventCBtn">Inject C</button>
-            <button id="eventABtn">Inject A</button>
-          </div>
-          <div class="triple-row">
-            <button id="run15Btn">Run to G15</button>
-            <button id="run30Btn">Run to G30</button>
-            <button id="run60Btn">Run to G60</button>
-          </div>
-          <div class="button-row">
-            <button id="runAllBtn">Run full cycle</button>
-            <button id="resetBtn">Reset</button>
-          </div>
+        </div>
+        <div class="kv">
+          <div>Canonical object</div><div id="canonicalObject">theorem/theorem_object.json</div>
+          <div>Witness provenance</div><div id="witnessStatus">loading…</div>
+          <div>Cocycle layer</div><div id="cocycleStatus">loading…</div>
+          <div>Generated report</div><div id="reportTimestamp">loading…</div>
         </div>
       </div>
 
-      <div class="card">
-        <h3>Machine law</h3>
-        <div class="mini-note">
-          Hidden: <span class="big">u′ = u + 1 mod 60</span><br>
-          Sector: <span class="big">χ′ = χ</span> on <code>P</code>, <span class="big">χ′ = χ + (1,0)</span> on <code>C</code>, <span class="big">χ′ = χ + (0,1)</span> on <code>A</code>.<br><br>
-          Primed state is <span class="big">χ = (1,1)</span>.<br>
-          Lock activates only after preserving dwell on the primed diagonal.
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Legend</h3>
+      <div class="card hero-card">
+        <h2>What is proved here</h2>
+        <p class="muted">
+          This page is proof-first. The central theorem lives on the quotient core G15, where the
+          sector-incidence matrix M induces the overlap matrix Q and the cubic identity.
+          The cocycle sits beside that quadratic geometry as a companion invariant.
+        </p>
         <div class="legend">
-          <span>native = (0,0)</span>
-          <span>frame = (1,0)</span>
-          <span>sheet = (0,1)</span>
-          <span>primed = (1,1)</span>
-          <span>locked = primed + dwell</span>
+          <span>witness</span>
+          <span>graph</span>
+          <span>algebra</span>
+          <span>geometry</span>
+          <span>cocycle</span>
         </div>
       </div>
-    </div>
-  </aside>
-
-  <main class="panel">
-    <div class="panel-inner cycle-panel">
-      <div>
-        <h2>Cycle view</h2>
-        <div class="muted">G15 is sign depth. G30 is identity depth. G60 is full orbit depth.</div>
-      </div>
-
-      <div class="ring-wrap">
-        <svg id="ringSvg" viewBox="0 0 520 360" aria-label="60-step cycle ring"></svg>
-      </div>
-
-      <div class="strip" id="tickStrip"></div>
-    </div>
-  </main>
-
-  <aside class="panel">
-    <div class="panel-inner grid-cards">
-      <div class="card">
-        <h3>Current state</h3>
-        <div class="kv">
-          <div>step</div><div id="stepValue" class="big">0</div>
-          <div>sign</div><div id="signValue" class="big">+</div>
-          <div>identity</div><div id="identityValue" class="big">0 mod 30</div>
-          <div>closure depth</div><div id="depthValue">origin</div>
-          <div>next event</div><div id="nextEventValue" class="big">P</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Chamber state</h3>
-        <div id="statePill" class="state-pill state-native">NATIVE</div>
-        <div class="kv" style="margin-top: 12px;">
-          <div>sheet / frame</div><div id="sectorValue" class="big">(0,0)</div>
-          <div>lock flag</div><div id="lockValue" class="big">0</div>
-          <div>status</div><div id="statusValue">native closure</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>G-status</h3>
-        <div class="kv">
-          <div>bare G60</div><div id="bareG60Value">no</div>
-          <div>primed G60</div><div id="primedG60Value">no</div>
-          <div>locked G60</div><div id="lockedG60Value">no</div>
-          <div>retained through closure</div><div id="retainedClosureValue">no</div>
-          <div>first primed hit</div><div id="firstPrimedValue">—</div>
-          <div>lock activation</div><div id="lockActivationValue">—</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Lens preview</h3>
-        <div class="matrix-box">
-          <div><strong>current basis state</strong></div>
-          <div id="basisPreview">e_00</div>
-          <div><strong>M</strong> row symbols for last 12 steps</div>
-          <div id="mPreview">—</div>
-          <div><strong>tail length</strong></div>
-          <div id="tailPreview">0</div>
-          <div><strong>Q = MMᵀ</strong> terminal coherence summary</div>
-          <div id="qPreview">—</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Recent trajectory</h3>
-        <table class="preview-table">
-          <thead>
-            <tr>
-              <th>n</th>
-              <th>event</th>
-              <th>χ</th>
-              <th>state</th>
-            </tr>
-          </thead>
-          <tbody id="trajectoryTable"></tbody>
-        </table>
-      </div>
-    </div>
-  </aside>
-
-  <section class="panel console">
-    <div class="panel-inner stack">
-      <div>
-        <h2>Console</h2>
-        <div class="muted">This first pass is doctrine-first: hidden orbit, event stream, chamber state, and lens-visible closure.</div>
-      </div>
-      <div class="console-log" id="consoleLog"></div>
     </div>
   </section>
 
   <section class="panel">
-    <div class="panel-inner stack">
-      <div>
-        <p class="mini-note">Supporting artifacts</p>
-        <h2>Public theorem artifacts</h2>
-        <div class="muted">
-          Canonical files accompanying the active G60 chamber, published for inspection, verification, and reuse.
+    <div class="panel-inner">
+      <h2>Verified claims</h2>
+      <div class="claims-grid">
+        <div class="card">
+          <h3>Witness</h3>
+          <ul id="claimsWitness" class="claim-list"></ul>
         </div>
-      </div>
-
-      <div class="card">
-        <p><a href="json/metadata.json">Metadata</a></p>
-        <p><a href="json/theorem_object.json">Theorem Object</a></p>
-        <p><a href="json/verify_report.json">Verify Report</a></p>
-        <p><a href="json/transport_cocycle.json">Transport Cocycle</a></p>
+        <div class="card">
+          <h3>Graph</h3>
+          <ul id="claimsGraph" class="claim-list"></ul>
+        </div>
+        <div class="card">
+          <h3>Algebra</h3>
+          <ul id="claimsAlgebra" class="claim-list"></ul>
+        </div>
+        <div class="card">
+          <h3>Geometry</h3>
+          <ul id="claimsGeometry" class="claim-list"></ul>
+        </div>
+        <div class="card">
+          <h3>Cocycle</h3>
+          <ul id="claimsCocycle" class="claim-list"></ul>
+        </div>
       </div>
     </div>
   </section>
-</div>
 
-<script src="/assets/g60_console.js"></script>
+  <section class="panel">
+    <div class="panel-inner">
+      <h2>Artifact browser</h2>
+      <div class="artifacts-grid">
+        <div class="card">
+          <h3>Canonical theorem artifacts</h3>
+          <ul class="artifact-list">
+            <li><a href="json/theorem_object.json" target="_blank" rel="noopener">theorem_object.json</a></li>
+            <li><a href="json/metadata.json" target="_blank" rel="noopener">metadata.json</a></li>
+            <li><a href="json/matrix_M.json" target="_blank" rel="noopener">matrix_M.json</a></li>
+            <li><a href="json/gram_Q.json" target="_blank" rel="noopener">gram_Q.json</a></li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Generated proof outputs</h3>
+          <ul class="artifact-list">
+            <li><a href="json/verify_report.json" target="_blank" rel="noopener">verify_report.json</a></li>
+            <li id="reportPassLine" class="muted">verification report summary loading…</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Cocycle and transport artifacts</h3>
+          <ul class="artifact-list">
+            <li><a href="json/transport_cocycle.json" target="_blank" rel="noopener">transport_cocycle.json</a></li>
+            <li id="cocycleArtifactLine" class="muted">companion invariant status loading…</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Current public boundary</h3>
+          <ul class="artifact-list">
+            <li>The public page verifies the quotient-core theorem from a canonical witness.</li>
+            <li>The historical upstream CP-SAT generator output was not recovered.</li>
+            <li>A truthful reconstructed exact witness is used in the active repo.</li>
+            <li>The full dodecahedral-to-G60 construction remains an upstream frontier.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-inner">
+      <h2>Core theorem snapshot</h2>
+      <div class="snapshot-grid">
+        <div class="card">
+          <h3>Witness summary</h3>
+          <div class="kv">
+            <div>M shape</div><div id="mShape">loading…</div>
+            <div>Q shape</div><div id="qShape">loading…</div>
+            <div>Row sums</div><div id="rowSums">loading…</div>
+            <div>Column sums</div><div id="colSums">loading…</div>
+            <div>Overlap spectrum</div><div id="overlapSpectrum">loading…</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Core identities</h3>
+          <div class="formula-stack">
+            <div class="formula">Q = MMᵀ</div>
+            <div class="formula">Q = A³ + 2A² + 2I</div>
+            <div class="formula">off-diagonal overlaps = {4, 5, 9}</div>
+            <div class="formula">three-angle geometry = {37/112, −23/112, −38/112}</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Cocycle snapshot</h3>
+          <div class="kv">
+            <div>Parallel edges</div><div id="parallelCount">loading…</div>
+            <div>Crossed edges</div><div id="crossedCount">loading…</div>
+            <div>Minimal support</div><div id="minimalSupport">loading…</div>
+            <div>Distinct minima</div><div id="distinctMinima">loading…</div>
+            <div>Odd-holonomy witnesses</div><div id="oddCycleCount">loading…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel console">
+    <div class="panel-inner">
+      <h2>Legacy exploration note</h2>
+      <p class="muted">
+        The older chamber-state simulator has been demoted from center stage. It remains useful as
+        an interpretive or pedagogical layer, but it does not define theorem truth. The proof kernel
+        above is the authoritative surface.
+      </p>
+      <div class="console-log" id="consoleLog">
+Proof-first orientation active.
+The current page is centered on the verified quotient-core theorem and companion cocycle layer.
+Legacy G60 chamber doctrine is retained only as a secondary interpretive view.
+      </div>
+    </div>
+  </section>
+</main>
 
 <?php include __DIR__ . '/includes/site_footer.php'; ?>
-</body>
-</html>
+<script src="assets/g60_console.js"></script>

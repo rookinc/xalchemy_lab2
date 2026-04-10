@@ -1,448 +1,175 @@
-const TOTAL_STEPS = 60;
-
-const presets = {
-  bare: Array(TOTAL_STEPS).fill('P'),
-  unstable: (() => {
-    const arr = Array(TOTAL_STEPS).fill('P');
-    arr[10] = 'C';
-    arr[22] = 'A';
-    arr[41] = 'C';
-    return arr;
-  })(),
-  locked: (() => {
-    const arr = Array(TOTAL_STEPS).fill('P');
-    arr[10] = 'C';
-    arr[22] = 'A';
-    return arr;
-  })(),
-  manual: Array(TOTAL_STEPS).fill('P')
-};
-
-const app = {
-  step: 0,
-  sector: [0, 0],
-  lock: 0,
-  events: presets.locked.slice(),
-  logs: [],
-  history: [],
-  firstPrimedStep: null,
-  lockActivationStep: null
-};
-
 const refs = {
-  presetSelect: document.getElementById('presetSelect'),
-  loadPresetBtn: document.getElementById('loadPresetBtn'),
-  eventPBtn: document.getElementById('eventPBtn'),
-  eventCBtn: document.getElementById('eventCBtn'),
-  eventABtn: document.getElementById('eventABtn'),
-  stepBtn: document.getElementById('stepBtn'),
-  run15Btn: document.getElementById('run15Btn'),
-  run30Btn: document.getElementById('run30Btn'),
-  run60Btn: document.getElementById('run60Btn'),
-  runAllBtn: document.getElementById('runAllBtn'),
-  resetBtn: document.getElementById('resetBtn'),
-  tickStrip: document.getElementById('tickStrip'),
-  ringSvg: document.getElementById('ringSvg'),
-  consoleLog: document.getElementById('consoleLog'),
-  stepValue: document.getElementById('stepValue'),
-  signValue: document.getElementById('signValue'),
-  identityValue: document.getElementById('identityValue'),
-  depthValue: document.getElementById('depthValue'),
-  nextEventValue: document.getElementById('nextEventValue'),
-  sectorValue: document.getElementById('sectorValue'),
-  lockValue: document.getElementById('lockValue'),
-  statusValue: document.getElementById('statusValue'),
-  statePill: document.getElementById('statePill'),
-  bareG60Value: document.getElementById('bareG60Value'),
-  primedG60Value: document.getElementById('primedG60Value'),
-  lockedG60Value: document.getElementById('lockedG60Value'),
-  retainedClosureValue: document.getElementById('retainedClosureValue'),
-  firstPrimedValue: document.getElementById('firstPrimedValue'),
-  lockActivationValue: document.getElementById('lockActivationValue'),
-  mPreview: document.getElementById('mPreview'),
-  qPreview: document.getElementById('qPreview'),
-  basisPreview: document.getElementById('basisPreview'),
-  tailPreview: document.getElementById('tailPreview'),
-  trajectoryTable: document.getElementById('trajectoryTable')
+  overallPill: document.getElementById('overallPill'),
+  statusSummary: document.getElementById('statusSummary'),
+  canonicalObject: document.getElementById('canonicalObject'),
+  witnessStatus: document.getElementById('witnessStatus'),
+  cocycleStatus: document.getElementById('cocycleStatus'),
+  reportTimestamp: document.getElementById('reportTimestamp'),
+  reportPassLine: document.getElementById('reportPassLine'),
+  cocycleArtifactLine: document.getElementById('cocycleArtifactLine'),
+
+  claimsWitness: document.getElementById('claimsWitness'),
+  claimsGraph: document.getElementById('claimsGraph'),
+  claimsAlgebra: document.getElementById('claimsAlgebra'),
+  claimsGeometry: document.getElementById('claimsGeometry'),
+  claimsCocycle: document.getElementById('claimsCocycle'),
+
+  mShape: document.getElementById('mShape'),
+  qShape: document.getElementById('qShape'),
+  rowSums: document.getElementById('rowSums'),
+  colSums: document.getElementById('colSums'),
+  overlapSpectrum: document.getElementById('overlapSpectrum'),
+
+  parallelCount: document.getElementById('parallelCount'),
+  crossedCount: document.getElementById('crossedCount'),
+  minimalSupport: document.getElementById('minimalSupport'),
+  distinctMinima: document.getElementById('distinctMinima'),
+  oddCycleCount: document.getElementById('oddCycleCount')
 };
 
-function sectorKey([f, h]) {
-  return `${f}${h}`;
+const claimText = {
+  T1: 'M is a 15×30 matrix.',
+  'T1.binary': 'M is binary.',
+  T2: 'Every row of M has sum 14.',
+  T3: 'Every column of M has sum 7.',
+  T4: 'Q = MMᵀ.',
+  T5: 'The off-diagonal overlap spectrum is exactly {4:15, 5:60, 9:30}.',
+  T6: 'The overlap-9 graph is connected, 4-regular, and has diameter 3.',
+  T7: 'The overlap-9 graph has distance-count profile {0:15, 1:60, 2:120, 3:30}.',
+  T8: 'The exported adjacency and distance matrices are symmetric with the expected regularity.',
+  T9: 'Q = A³ + 2A² + 2I on the overlap-9 graph.',
+  T10: 'The centered normalized row geometry is three-angular.',
+  C1: 'The cocycle representative is fixed on the active G15 edge set.',
+  C2: 'The cocycle has 10 parallel edges and 20 crossed edges.',
+  C3: 'The cocycle has switching-minimal support size 6.',
+  C4: 'The cocycle has odd-holonomy witnesses and is nontrivial.'
+};
+
+const groups = {
+  witness: ['T1', 'T1.binary', 'T2', 'T3', 'T4'],
+  graph: ['T5', 'T6', 'T7', 'T8'],
+  algebra: ['T9'],
+  geometry: ['T10'],
+  cocycle: ['C1', 'C2', 'C3', 'C4']
+};
+
+async function fetchJson(path) {
+  const res = await fetch(path, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Failed to load ${path}`);
+  return res.json();
 }
 
-function signFor(step) {
-  return (Math.floor(step / 15) % 2 === 0) ? '+' : '-';
+function setOverallStatus(status) {
+  refs.overallPill.textContent = status.toUpperCase();
+  refs.overallPill.className = `status-pill ${status === 'pass' ? 'status-pass' : 'status-fail'}`;
+  refs.statusSummary.textContent =
+    status === 'pass'
+      ? 'All active proof-kernel claims currently pass.'
+      : 'One or more active proof-kernel claims are failing.';
 }
 
-function depthLabel(step) {
-  if (step === 0) return 'origin';
-  if (step % 60 === 0) return 'G60';
-  if (step % 30 === 0) return 'G30';
-  if (step % 15 === 0) return 'G15';
-  return 'interior';
-}
-
-function stateName(sector, lock) {
-  const key = sectorKey(sector);
-  if (key === '00') return 'NATIVE';
-  if (key === '10') return 'FRAME-DISPLACED';
-  if (key === '01') return 'SHEET-DISPLACED';
-  if (key === '11' && lock) return 'LOCKED';
-  if (key === '11') return 'PRIMED';
-  return 'UNKNOWN';
-}
-
-function stateClass(sector, lock) {
-  const key = sectorKey(sector);
-  if (key === '00') return 'state-native';
-  if (key === '10') return 'state-frame';
-  if (key === '01') return 'state-sheet';
-  if (key === '11' && lock) return 'state-locked';
-  return 'state-primed';
-}
-
-function statusText(sector, lock) {
-  const key = sectorKey(sector);
-  if (key === '00') return 'native closure';
-  if (key === '10') return 'frame displacement';
-  if (key === '01') return 'sheet displacement';
-  if (key === '11' && lock) return 'locked informed closure';
-  return 'primed informed closure';
-}
-
-function eventAt(step) {
-  return app.events[step % TOTAL_STEPS] || 'P';
-}
-
-function pushLog(msg) {
-  const stamp = new Date().toLocaleTimeString([], { hour12: false });
-  app.logs.push(`[${stamp}] ${msg}`);
-  if (app.logs.length > 160) app.logs = app.logs.slice(-160);
-}
-
-function recordHistory(eventUsed, prevSector, prevLock) {
-  app.history.push({
-    step: app.step,
-    event: eventUsed,
-    sector: [...app.sector],
-    lock: app.lock,
-    prevSector: [...prevSector],
-    prevLock
+function renderClaims(target, ids, summaryMap) {
+  target.innerHTML = '';
+  ids.forEach(id => {
+    const li = document.createElement('li');
+    const status = summaryMap.get(id) || 'missing';
+    li.textContent = claimText[id] || id;
+    li.className =
+      status === 'pass'
+        ? 'claim-pass'
+        : status === 'fail'
+          ? 'claim-fail'
+          : 'claim-note';
+    target.appendChild(li);
   });
-  if (app.history.length > 120) app.history = app.history.slice(-120);
 }
 
-function applyEventToSector(sector, event) {
-  const [f, h] = sector;
-  if (event === 'C') return [(f + 1) % 2, h];
-  if (event === 'A') return [f, (h + 1) % 2];
-  return [f, h];
+function uniqueValues(arr) {
+  return [...new Set(arr)];
 }
 
-function formatSector(sector) {
-  return `(${sector[0]},${sector[1]})`;
-}
-
-function stepMachine() {
-  const event = eventAt(app.step);
-  const prevSector = [...app.sector];
-  const prevLock = app.lock;
-  const nextSector = applyEventToSector(app.sector, event);
-
-  let nextLock = 0;
-  const primedNow = (nextSector[0] === 1 && nextSector[1] === 1);
-
-  if (primedNow && prevLock === 1) {
-    nextLock = 1;
-  } else if (sectorKey(app.sector) === '11' && event === 'P') {
-    nextLock = 1;
-  } else {
-    nextLock = 0;
-  }
-
-  app.sector = nextSector;
-  app.lock = nextLock;
-  app.step += 1;
-
-  if (sectorKey(app.sector) === '11' && app.firstPrimedStep === null) {
-    app.firstPrimedStep = app.step;
-    pushLog(`PRIMED first reached at step ${app.step}.`);
-    pushLog(`DOCTRINE step ${app.step}: primed diagonal reached; informed closure is now available.`);
-  }
-
-  if (app.lock === 1 && app.lockActivationStep === null) {
-    app.lockActivationStep = app.step;
-    pushLog(`LOCK activated at step ${app.step}.`);
-    pushLog(`DOCTRINE step ${app.step}: preserving dwell has stabilized the primed diagonal.`);
-  }
-
-  recordHistory(event, prevSector, prevLock);
-  pushLog(`STEP n=${app.step} event=${event} sign=${signFor((app.step - 1) % TOTAL_STEPS)} χ=${formatSector(app.sector)} state=${stateName(app.sector, app.lock)}`);
-
-  if (app.step % 15 === 0 && app.step % 30 !== 0) {
-    pushLog(`DOCTRINE step ${app.step}: G15 reached under ${stateName(app.sector, app.lock)}; sign depth without full identity closure.`);
-  }
-
-  if (app.step % 30 === 0 && app.step % 60 !== 0) {
-    const sectorMsg = sectorKey(app.sector) === '11'
-      ? 'identity depth reached while informed closure is present'
-      : 'identity depth reached without primed diagonal lock';
-    pushLog(`DOCTRINE step ${app.step}: G30 reached; ${sectorMsg}.`);
-  }
-
-  if (app.step > 0 && app.step % 60 === 0) {
-    let outcome = 'bare G60 only';
-    if (sectorKey(app.sector) === '11' && app.lock === 1) {
-      outcome = 'locked G60 achieved';
-    } else if (sectorKey(app.sector) === '11') {
-      outcome = 'primed G60 achieved without lock';
-    }
-    pushLog(`DOCTRINE step ${app.step}: G60 reached; ${outcome}.`);
-  }
-
-  render();
-}
-
-function loadPreset(name) {
-  app.events = presets[name].slice();
-  resetMachine(false);
-  pushLog(`PRESET loaded: ${name}`);
-  render();
-}
-
-function resetMachine(withLog = true) {
-  app.step = 0;
-  app.sector = [0, 0];
-  app.lock = 0;
-  app.history = [];
-  app.firstPrimedStep = null;
-  app.lockActivationStep = null;
-  if (withLog) pushLog('RESET machine to origin.');
-  render();
-}
-
-function setCurrentEvent(symbol) {
-  app.events[app.step % TOTAL_STEPS] = symbol;
-  pushLog(`EVENT set at slot ${app.step % TOTAL_STEPS}: ${symbol}`);
-  render();
-}
-
-function runUntil(target) {
-  while (app.step < target) stepMachine();
-}
-
-function simulateFromCurrentPreset() {
-  let sector = [0, 0];
-  let lock = 0;
-  const out = [];
-
-  for (let i = 0; i < TOTAL_STEPS; i += 1) {
-    const event = app.events[i];
-    const nextSector = applyEventToSector(sector, event);
-
-    let nextLock = 0;
-    if (sectorKey(nextSector) === '11' && lock === 1) {
-      nextLock = 1;
-    } else if (sectorKey(sector) === '11' && event === 'P') {
-      nextLock = 1;
-    }
-
-    const key = sectorKey(nextSector);
-    let tickClass = '';
-    if (i === 14 || i === 44) tickClass += ' g15';
-    if (i === 29) tickClass += ' g30';
-    if (i === 59) tickClass += ' g60';
-    if (key === '00') tickClass += ' native';
-    if (key === '10') tickClass += ' frame';
-    if (key === '01') tickClass += ' sheet';
-    if (key === '11' && nextLock === 0) tickClass += ' primed';
-    if (key === '11' && nextLock === 1) tickClass += ' locked';
-
-    out.push({
-      index: i,
-      event,
-      sector: nextSector,
-      lock: nextLock,
-      name: stateName(nextSector, nextLock),
-      tickClass: tickClass.trim()
-    });
-
-    sector = nextSector;
-    lock = nextLock;
-  }
-
-  return out;
-}
-
-function buildTickStrip() {
-  refs.tickStrip.innerHTML = '';
-  const sim = simulateFromCurrentPreset();
-
-  for (let i = 0; i < TOTAL_STEPS; i += 1) {
-    const tick = document.createElement('div');
-    const item = sim[i];
-    tick.className = `tick ${item.tickClass}`;
-    if ((app.step % TOTAL_STEPS) === i && app.step !== 60) tick.classList.add('current');
-    tick.title = `n=${i} event=${item.event} χ=${formatSector(item.sector)} state=${item.name}`;
-    refs.tickStrip.appendChild(tick);
-  }
-}
-
-function buildRing() {
-  const sim = simulateFromCurrentPreset();
-  const cx = 260, cy = 178, r = 118;
-
-  const pts = sim.map((item, i) => {
-    const angle = (-90 + (360 * i / TOTAL_STEPS)) * Math.PI / 180;
-    return {
-      x: cx + r * Math.cos(angle),
-      y: cy + r * Math.sin(angle),
-      item,
-      i
-    };
-  });
-
-  const circles = pts.map(({ x, y, item, i }) => {
-    const key = sectorKey(item.sector);
-    let fill = '#243053';
-    if (key === '10') fill = '#4b7aa6';
-    if (key === '01') fill = '#8e7745';
-    if (key === '11') fill = item.lock ? '#82d996' : '#5ca86c';
-    const isCurrent = (app.step % TOTAL_STEPS) === i && app.step !== 60;
-    const stroke = isCurrent ? '#7cc7ff' : '#2b3763';
-    const strokeWidth = isCurrent ? 3 : 1.5;
-    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" />`;
-  }).join('');
-
-  const markers = [
-    { n: 15, label: 'G15', color: '#ffd27a' },
-    { n: 30, label: 'G30', color: '#7cc7ff' },
-    { n: 60, label: 'G60', color: '#82d996' }
-  ].map(m => {
-    const idx = (m.n === 60) ? 59 : m.n - 1;
-    const p = pts[idx];
-    return `<text x="${p.x}" y="${p.y - 16}" text-anchor="middle" font-size="11" fill="${m.color}" font-family="monospace">${m.label}</text>`;
-  }).join('');
-
-  refs.ringSvg.innerHTML = `
-    <circle cx="${cx}" cy="${cy}" r="${r + 24}" fill="none" stroke="#243053" stroke-width="1.5" />
-    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#2b3763" stroke-width="2" />
-    <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="20" fill="#e8ecff">Z60 hidden orbit</text>
-    ${circles}
-    ${markers}
-  `;
-}
-
-function computeTailBlock() {
-  if (!app.history.length) {
-    return {
-      label: 'No recurrence yet. Terminal block not formed.',
-      tail: 0,
-      stateLabel: 'e_00'
-    };
-  }
-
-  const hist = app.history;
-  const lastKey = sectorKey(hist[hist.length - 1].sector);
-  let tail = 0;
-
-  for (let i = hist.length - 1; i >= 0; i -= 1) {
-    if (sectorKey(hist[i].sector) === lastKey) tail += 1;
-    else break;
-  }
-
-  const stateLabel = `e_${lastKey}`;
-  return {
-    label: `terminal ${tail}×${tail} coherence block on ${stateLabel}`,
-    tail,
-    stateLabel
-  };
-}
-
-function buildPreviews() {
-  const last = app.history.slice(-12);
-
-  refs.mPreview.textContent = last.length
-    ? last.map(h => `e_${h.sector[0]}${h.sector[1]}`).join('  ')
-    : 'e_00';
-
-  const lockedTail = computeTailBlock();
-  refs.basisPreview.textContent = `e_${app.sector[0]}${app.sector[1]}`;
-  refs.tailPreview.textContent = String(lockedTail.tail);
-  refs.qPreview.textContent = lockedTail.label;
-
-  refs.trajectoryTable.innerHTML = last.length
-    ? last.slice().reverse().map(h => `
-      <tr>
-        <td>${h.step}</td>
-        <td>${h.event}</td>
-        <td>${formatSector(h.sector)}</td>
-        <td>${stateName(h.sector, h.lock)}</td>
-      </tr>
-    `).join('')
-    : `<tr><td>0</td><td>—</td><td>(0,0)</td><td>NATIVE</td></tr>`;
-}
-
-function updateInfo() {
-  refs.stepValue.textContent = String(app.step);
-  refs.signValue.textContent = signFor(app.step % TOTAL_STEPS);
-  refs.identityValue.textContent = `${app.step % 30} mod 30`;
-  refs.depthValue.textContent = depthLabel(app.step);
-  refs.nextEventValue.textContent = eventAt(app.step);
-  refs.sectorValue.textContent = formatSector(app.sector);
-  refs.lockValue.textContent = String(app.lock);
-  refs.statusValue.textContent = statusText(app.sector, app.lock);
-  refs.statePill.textContent = stateName(app.sector, app.lock);
-  refs.statePill.className = `state-pill ${stateClass(app.sector, app.lock)}`;
-
-  const atBareG60 = app.step > 0 && app.step % 60 === 0;
-  const atPrimedG60 = atBareG60 && sectorKey(app.sector) === '11';
-  const atLockedG60 = atBareG60 && sectorKey(app.sector) === '11' && app.lock === 1;
-
-  let retainedThroughClosure = false;
-  if (atBareG60 && app.history.length) {
-    retainedThroughClosure = app.history.every(h => h.step < (app.lockActivationStep ?? Infinity) || sectorKey(h.sector) === '11');
-    if (app.lockActivationStep === null) retainedThroughClosure = false;
-    if (app.lockActivationStep !== null) {
-      retainedThroughClosure = app.history
-        .filter(h => h.step >= app.lockActivationStep)
-        .every(h => sectorKey(h.sector) === '11' && h.lock === 1);
+function formatSpectrum(Q) {
+  const counts = new Map();
+  for (let i = 0; i < Q.length; i += 1) {
+    for (let j = i + 1; j < Q.length; j += 1) {
+      const v = Q[i][j];
+      counts.set(v, (counts.get(v) || 0) + 1);
     }
   }
-
-  refs.bareG60Value.textContent = atBareG60 ? 'yes' : 'no';
-  refs.primedG60Value.textContent = atPrimedG60 ? 'yes' : 'no';
-  refs.lockedG60Value.textContent = atLockedG60 ? 'yes' : 'no';
-  refs.retainedClosureValue.textContent = retainedThroughClosure ? 'yes' : 'no';
-  refs.firstPrimedValue.textContent = app.firstPrimedStep ?? '—';
-  refs.lockActivationValue.textContent = app.lockActivationStep ?? '—';
+  return `{${[...counts.entries()].sort((a, b) => a[0] - b[0]).map(([k, v]) => `${k}:${v}`).join(', ')}}`;
 }
 
-function renderConsole() {
-  refs.consoleLog.textContent = app.logs.join('\n');
-  refs.consoleLog.scrollTop = refs.consoleLog.scrollHeight;
+async function main() {
+  try {
+    const [report, theorem, metadata, cocycle] = await Promise.all([
+      fetchJson('json/verify_report.json'),
+      fetchJson('json/theorem_object.json'),
+      fetchJson('json/metadata.json'),
+      fetchJson('json/transport_cocycle.json').catch(() => null)
+    ]);
+
+    const summaryMap = new Map((report.summary || []).map(item => [item.claim_id, item.status]));
+    const overall = (report.overall_status || 'fail').toLowerCase();
+
+    setOverallStatus(overall);
+
+    refs.reportTimestamp.textContent = report.generated_at_utc || 'not available';
+    refs.canonicalObject.textContent = 'json/theorem_object.json';
+    refs.reportPassLine.textContent = `overall report status: ${overall.toUpperCase()}`;
+
+    const sourceStatus = metadata.source_artifact_status || theorem.source_artifact_status || 'not recorded';
+    const sourceNote = metadata.source_artifact_note || theorem.source_artifact_note || 'not recorded';
+    refs.witnessStatus.textContent = `${sourceStatus} — ${sourceNote}`;
+
+    refs.cocycleStatus.textContent = overall === 'pass'
+      ? 'verified companion invariant in active proof kernel'
+      : 'companion invariant not fully passing';
+
+    refs.cocycleArtifactLine.textContent = cocycle
+      ? 'transport_cocycle.json is public; active cocycle proof state lives in the repo proof kernel.'
+      : 'no public cocycle JSON loaded';
+
+    const M = theorem.M || theorem.matrix_M;
+    const Q = theorem.Q || theorem.gram_Q;
+
+    refs.mShape.textContent = `${M.length} × ${M[0].length}`;
+    refs.qShape.textContent = `${Q.length} × ${Q[0].length}`;
+    refs.rowSums.textContent = uniqueValues(M.map(r => r.reduce((a, b) => a + b, 0))).join(', ');
+    refs.colSums.textContent = uniqueValues(
+      M[0].map((_, j) => M.reduce((s, row) => s + row[j], 0))
+    ).join(', ');
+    refs.overlapSpectrum.textContent = formatSpectrum(Q);
+
+    renderClaims(refs.claimsWitness, groups.witness, summaryMap);
+    renderClaims(refs.claimsGraph, groups.graph, summaryMap);
+    renderClaims(refs.claimsAlgebra, groups.algebra, summaryMap);
+    renderClaims(refs.claimsGeometry, groups.geometry, summaryMap);
+    renderClaims(refs.claimsCocycle, groups.cocycle, summaryMap);
+
+    const cocycleDataResult = report.results.find(r => r.checker === 'check_cocycle_data.py');
+    if (cocycleDataResult?.result?.claims) {
+      const c2 = cocycleDataResult.result.claims.find(c => c.claim_id === 'C2');
+      if (c2?.details) {
+        refs.parallelCount.textContent = c2.details.parallel_count;
+        refs.crossedCount.textContent = c2.details.crossed_count;
+      }
+    }
+
+    const minSupportResult = report.results.find(r => r.checker === 'check_cocycle_min_support.py');
+    if (minSupportResult?.result?.details) {
+      refs.minimalSupport.textContent = minSupportResult.result.details.minimal_support_size;
+      refs.distinctMinima.textContent = minSupportResult.result.details.number_of_distinct_minimal_supports;
+    }
+
+    const holonomyResult = report.results.find(r => r.checker === 'check_cocycle_holonomy.py');
+    if (holonomyResult?.result?.details) {
+      refs.oddCycleCount.textContent = holonomyResult.result.details.odd_cycle_count;
+    }
+  } catch (err) {
+    refs.overallPill.textContent = 'ERROR';
+    refs.overallPill.className = 'status-pill status-fail';
+    refs.statusSummary.textContent = err.message;
+  }
 }
 
-function render() {
-  buildTickStrip();
-  buildRing();
-  updateInfo();
-  buildPreviews();
-  renderConsole();
-}
-
-refs.loadPresetBtn.addEventListener('click', () => loadPreset(refs.presetSelect.value));
-refs.eventPBtn.addEventListener('click', () => setCurrentEvent('P'));
-refs.eventCBtn.addEventListener('click', () => setCurrentEvent('C'));
-refs.eventABtn.addEventListener('click', () => setCurrentEvent('A'));
-refs.stepBtn.addEventListener('click', () => stepMachine());
-refs.run15Btn.addEventListener('click', () => runUntil(15));
-refs.run30Btn.addEventListener('click', () => runUntil(30));
-refs.run60Btn.addEventListener('click', () => runUntil(60));
-refs.runAllBtn.addEventListener('click', () => runUntil(60));
-refs.resetBtn.addEventListener('click', () => resetMachine(true));
-
-pushLog('BOOT Primed G60 Console.');
-pushLog('LOAD first-pass doctrine view: hidden cycle + chamber state + lens preview.');
-refs.presetSelect.value = 'locked';
-loadPreset('locked');
+main();
