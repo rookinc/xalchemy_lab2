@@ -7,30 +7,12 @@ include __DIR__ . '/includes/site_header.php';
 ?>
 
 <main class="app proof-app">
-  <section class="panel header">
-    <div class="title-wrap">
-      <h1>Thalean Proof Kernel</h1>
-      <p class="subtitle">
-        A local transport rule on the dodecahedron collapses, on a canonical 15-vertex core, to an exact cubic incidence law.
-      </p>
-    </div>
-    <div class="badge-row">
-      <span class="badge">G60 → G30 → G15</span>
-      <span class="badge">G15 ≅ L(Petersen)</span>
-      <span class="badge">M: 15×30 binary incidence matrix</span>
-      <span class="badge">Q = MMᵀ = A³ + 2A² + 2I</span>
-      <span class="badge">three-angle geometry</span>
-      <span class="badge">cocycle companion invariant</span>
-    </div>
-  </section>
-
   <section id="overview" class="panel intro-hero">
     <div class="panel-inner intro-hero-grid">
-      <div class="card intro-card">
-        <p class="eyebrow">What this work is</p>
-        <h2>A paper about one exact thing</h2>
+          <div class="card intro-card">
+        <h1>Dodecahedral Transport, Sector Geometry on L(Petersen), and the Identity MMᵀ = A³ + 2A² + 2I</h1>
         <p class="muted">
-          The paper starts with a local question: if you move through the flag structure of the combinatorial
+          The paper begins with a local question: if you move through the flag structure of the combinatorial
           dodecahedron by a small transport rule, what exact structure survives on the quotient core?
           The answer is unexpectedly rigid. The construction produces a quotient tower
           G60 → G30 → G15, with G15 ≅ L(Petersen), and on that core it induces a 15 × 30
@@ -39,20 +21,25 @@ include __DIR__ . '/includes/site_header.php';
         </p>
         <p class="muted">
           That identity is the mathematical center of the paper. The three-angle spherical realization
-          and the Z₂-valued cocycle are important, but they travel alongside the main incidence theorem;
-          they are not the headline instead of it.
+          and the Z₂-valued cocycle matter, but they travel alongside the main incidence theorem;
+          they are consequences and companion structure, not the headline instead of it.
+        </p>
+        <p class="muted">
+          The 60-vertex transport graph G60 is identified with <strong>AT4val[60,6]</strong>.
+          It also sits against a broader geometric backdrop: the related graph
+          <strong>AT4val[60,0]</strong> appears in connection with the tetravalent tessellation
+          picture in hyperbolic space. That wider setting is part of the story around the graph
+          family, but this page stays focused on the finite quotient-core theorem proved here.
         </p>
         <p class="muted">
           This page exists to make that core claim inspectable. The paper is the primary statement.
           The dashboard below is supporting machinery: proof status, checked claims, and access to the finite artifacts.
         </p>
-      </div>
 
-      <div class="card paper-card">
         <p class="eyebrow">Read first</p>
-        <h2>The paper</h2>
         <p class="muted">
-          Start here. This is the preprint that defines the construction, states the theorem, and explains the quotient-core result in full.
+          Start here. This is the preprint that defines the construction, states the theorem,
+          and explains the quotient-core result in full.
         </p>
         <div class="paper-actions">
           <a class="paper-button" href="archive/papers/Dodecahedral_Transport__Sector_Geometry_on_L_Petersen.pdf" target="_blank" rel="noopener">
@@ -85,6 +72,45 @@ include __DIR__ . '/includes/site_header.php';
           <div>Generated report</div><div id="reportTimestamp">loading…</div>
         </div>
       </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="theorem-snapshot" class="panel">
+    <div class="panel-inner">
+      <h2>Core theorem snapshot</h2>
+      <div class="snapshot-grid">
+        <div class="card">
+          <h3>Witness summary</h3>
+          <div class="kv">
+            <div>M shape</div><div id="mShape">loading…</div>
+            <div>Q shape</div><div id="qShape">loading…</div>
+            <div>Row sums</div><div id="rowSums">loading…</div>
+            <div>Column sums</div><div id="colSums">loading…</div>
+            <div>Overlap spectrum</div><div id="overlapSpectrum">loading…</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Core identities</h3>
+          <div class="formula-stack">
+            <div class="formula">Q = MMᵀ</div>
+            <div class="formula">Q = A³ + 2A² + 2I</div>
+            <div class="formula">off-diagonal overlaps = {4, 5, 9}</div>
+            <div class="formula">three-angle geometry = {37/112, −23/112, −38/112}</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Cocycle snapshot</h3>
+          <div class="kv">
+            <div>Parallel edges</div><div id="parallelCount">loading…</div>
+            <div>Crossed edges</div><div id="crossedCount">loading…</div>
+            <div>Minimal support</div><div id="minimalSupport">loading…</div>
+            <div>Distinct minima</div><div id="distinctMinima">loading…</div>
+            <div>Odd-holonomy witnesses</div><div id="oddCycleCount">loading…</div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -176,57 +202,10 @@ include __DIR__ . '/includes/site_header.php';
           </ul>
         </div>
 
-        <div class="card">
-          <h3>Current public boundary</h3>
-          <ul class="artifact-list">
-            <li>The paper is the main statement.</li>
-            <li>This page verifies the quotient-core theorem from a canonical witness.</li>
-            <li>The original historical CP-SAT generator output was not recovered.</li>
-            <li>The full dodecahedral-to-G60 construction remains an upstream frontier.</li>
-          </ul>
-        </div>
       </div>
     </div>
   </section>
 
-  <section id="theorem-snapshot" class="panel">
-    <div class="panel-inner">
-      <h2>Core theorem snapshot</h2>
-      <div class="snapshot-grid">
-        <div class="card">
-          <h3>Witness summary</h3>
-          <div class="kv">
-            <div>M shape</div><div id="mShape">loading…</div>
-            <div>Q shape</div><div id="qShape">loading…</div>
-            <div>Row sums</div><div id="rowSums">loading…</div>
-            <div>Column sums</div><div id="colSums">loading…</div>
-            <div>Overlap spectrum</div><div id="overlapSpectrum">loading…</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>Core identities</h3>
-          <div class="formula-stack">
-            <div class="formula">Q = MMᵀ</div>
-            <div class="formula">Q = A³ + 2A² + 2I</div>
-            <div class="formula">off-diagonal overlaps = {4, 5, 9}</div>
-            <div class="formula">three-angle geometry = {37/112, −23/112, −38/112}</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>Cocycle snapshot</h3>
-          <div class="kv">
-            <div>Parallel edges</div><div id="parallelCount">loading…</div>
-            <div>Crossed edges</div><div id="crossedCount">loading…</div>
-            <div>Minimal support</div><div id="minimalSupport">loading…</div>
-            <div>Distinct minima</div><div id="distinctMinima">loading…</div>
-            <div>Odd-holonomy witnesses</div><div id="oddCycleCount">loading…</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 </main>
 
 <?php include __DIR__ . '/includes/site_footer.php'; ?>
