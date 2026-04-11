@@ -9,47 +9,57 @@ include __DIR__ . '/includes/site_header.php';
 <main class="app proof-app">
   <section id="overview" class="panel intro-hero">
     <div class="panel-inner intro-hero-grid">
-          <div class="card intro-card">
-        <h1>Dodecahedral Transport, Sector Geometry on L(Petersen), and the Identity MMᵀ = A³ + 2A² + 2I</h1>
+      <div class="card intro-card">
+        <h1>The Thalean Graph AT4val[60,6]</h1>
         <p class="muted">
-          The paper begins with a local question: if you move through the flag structure of the combinatorial
-          dodecahedron by a small transport rule, what exact structure survives on the quotient core?
-          The answer is unexpectedly rigid. The construction produces a quotient tower
-          G60 → G30 → G15, with G15 ≅ L(Petersen), and on that core it induces a 15 × 30
-          sector-edge incidence matrix M whose Gram matrix satisfies the exact identity
+          This page presents a finite witness assembled from two companion results. Starting from a
+          local transport rule on the flag structure of the combinatorial dodecahedron, one obtains a
+          quotient tower G60 → G30 → G15 with G15 ≅ L(Petersen), together with a
+          15 × 30 sector-edge incidence matrix M satisfying the exact quadratic law
           Q = MMᵀ = A³ + 2A² + 2I.
         </p>
         <p class="muted">
-          That identity is the mathematical center of the paper. The three-angle spherical realization
-          and the Z₂-valued cocycle matter, but they travel alongside the main incidence theorem;
-          they are consequences and companion structure, not the headline instead of it.
+          That law gives one side of the witness. The other is internal organization: the same matrix
+          M decomposes into a rigid chamber grammar with canonical block and row classes. In
+          combination, these results show that the quotient-core witness is simultaneously algebraic,
+          combinatorial, and inspectably finite.
         </p>
         <p class="muted">
-          The 60-vertex transport graph G60 is identified with <strong>AT4val[60,6]</strong>.
-          It also sits against a broader geometric backdrop: the related graph
-          <strong>AT4val[60,0]</strong> appears in connection with the tetravalent tessellation
-          picture in hyperbolic space. That wider setting is part of the story around the graph
-          family, but this page stays focused on the finite quotient-core theorem proved here.
+          The transport graph G60 is identified with <strong>AT4val[60,6]</strong> and sits within a
+          broader family that includes the related graph <strong>AT4val[60,0]</strong> in the
+          tetravalent hyperbolic tessellation picture. That surrounding geometry belongs to the wider
+          family context; the focus here is the finite witness itself and the exact claims carried by
+          its canonical artifacts.
         </p>
         <p class="muted">
-          This page exists to make that core claim inspectable. The paper is the primary statement.
-          The dashboard below is supporting machinery: proof status, checked claims, and access to the finite artifacts.
+          The March 2026 preprint supplies the quotient-core construction and the quadratic identity.
+          The April 2026 preprint supplies the chamber grammar internal to the same witness matrix.
+          This page gathers their shared outcome into one public audit surface.
         </p>
 
-        <p class="eyebrow">Read first</p>
+        <p class="eyebrow">Read the papers</p>
         <p class="muted">
-          Start here. This is the preprint that defines the construction, states the theorem,
-          and explains the quotient-core result in full.
+          Two companion preprints support the theorem surface shown here. The March 2026 paper
+          establishes the quotient-core theorem and proves the identity
+          Q = MMᵀ = A³ + 2A² + 2I. The April 2026 paper shows that the same matrix M carries a rigid
+          chamber grammar with canonical block and row classes. Read together, they describe the
+          algebraic law and the internal organization of a single finite witness.
         </p>
         <div class="paper-actions">
           <a class="paper-button" href="https://zenodo.org/records/19043356" target="_blank" rel="noopener">
-            Download the preprint
+            Download the March 2026 preprint
+          </a>
+          <a class="paper-button" href="https://zenodo.org/records/19520206" target="_blank" rel="noopener">
+            Download the April 2026 preprint
           </a>
         </div>
         <div class="paper-meta">
-          <div><strong>Title:</strong> Dodecahedral Transport, Sector Geometry on L(Petersen), and the Identity MMᵀ = A³ + 2A² + 2I</div>
+          <div><strong>March paper:</strong> <em>Dodecahedral Transport, Sector Geometry on L(Petersen), and the Identity MMᵀ = A³ + 2A² + 2I</em></div>
           <div><strong>DOI:</strong> 10.5281/zenodo.19043356</div>
           <div><strong>Status:</strong> March 2026 preprint</div>
+          <div><strong>April paper:</strong> <em>The Chamber Grammar of the Thalean Sector Matrix</em></div>
+          <div><strong>DOI:</strong> 10.5281/zenodo.19520206</div>
+          <div><strong>Status:</strong> April 2026 preprint</div>
         </div>
       </div>
     </div>
@@ -71,7 +81,6 @@ include __DIR__ . '/includes/site_header.php';
           <div>Cocycle layer</div><div id="cocycleStatus">loading…</div>
           <div>Generated report</div><div id="reportTimestamp">loading…</div>
         </div>
-      </div>
       </div>
     </div>
   </section>
@@ -201,7 +210,6 @@ include __DIR__ . '/includes/site_header.php';
             <li><a href="audit/checkers/run_all.py" target="_blank" rel="noopener">run_all.py</a></li>
           </ul>
         </div>
-
       </div>
     </div>
   </section>
