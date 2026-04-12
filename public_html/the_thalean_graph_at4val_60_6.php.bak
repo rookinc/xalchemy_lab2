@@ -39,7 +39,7 @@ include __DIR__ . '/includes/site_header.php';
 
         <p class="eyebrow">Read the papers</p>
         <p class="muted">
-          Two companion working papers support the theorem surface shown here. The March 2026 paper
+          Two companion preprints support the theorem surface shown here. The March 2026 paper
           establishes the quotient-core theorem and proves the identity
           Q = MMᵀ = A³ + 2A² + 2I. The April 2026 paper shows that the same matrix M carries a rigid
           chamber grammar with canonical block and row classes. Read together, they describe the
@@ -47,13 +47,10 @@ include __DIR__ . '/includes/site_header.php';
         </p>
         <div class="paper-actions">
           <a class="paper-button" href="https://zenodo.org/records/19043356" target="_blank" rel="noopener">
-           Dodecahedral Transport 
+            Download the March 2026 preprint
           </a>
           <a class="paper-button" href="https://zenodo.org/records/19520206" target="_blank" rel="noopener">
-        Chamber Grammar
-          </a>
-          <a class="paper-button" href="https://zenodo.org/records/19542052" target="_blank" rel="noopener">
-            Thalean Witness
+            Download the April 2026 preprint
           </a>
         </div>
         <div class="paper-meta">
