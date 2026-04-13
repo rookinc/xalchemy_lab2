@@ -12,7 +12,7 @@ include __DIR__ . '/includes/site_header.php';
       <div class="card intro-card">
         <h1>The Thalean Graph AT4val[60,6]</h1>
         <p class="muted">
-          This page presents a finite witness assembled from two companion results. Starting from a
+          This page presents a finite witness assembled from companion results. Starting from a
           local transport rule on the flag structure of the combinatorial dodecahedron, one obtains a
           quotient tower G60 → G30 → G15 with G15 ≅ L(Petersen), together with a
           15 × 30 sector-edge incidence matrix M satisfying the exact quadratic law
@@ -34,34 +34,50 @@ include __DIR__ . '/includes/site_header.php';
         <p class="muted">
           The March 2026 preprint supplies the quotient-core construction and the quadratic identity.
           The April 2026 preprint supplies the chamber grammar internal to the same witness matrix.
-          This page gathers their shared outcome into one public audit surface.
+          A companion witness note presents the unified finite surface. A new CMB methods note explores
+          a structural benchmark program using mixed family comparisons inspired by this broader template
+          reservoir. This page gathers the theorem-facing outcome into one public audit surface.
         </p>
 
         <p class="eyebrow">Read the papers</p>
         <p class="muted">
-          Two companion working papers support the theorem surface shown here. The March 2026 paper
+          Four companion papers now sit around this theorem surface. The March 2026 paper
           establishes the quotient-core theorem and proves the identity
           Q = MMᵀ = A³ + 2A² + 2I. The April 2026 paper shows that the same matrix M carries a rigid
-          chamber grammar with canonical block and row classes. Read together, they describe the
-          algebraic law and the internal organization of a single finite witness.
+          chamber grammar with canonical block and row classes. The witness note gathers the finite
+          object into one unified theorem-facing surface. The CMB note is a separate exploratory
+          methods/result paper: it does not prove the theorem, but studies whether a benchmarked
+          CMB pattern is structurally selective with respect to related family classes.
         </p>
         <div class="paper-actions">
           <a class="paper-button" href="https://zenodo.org/records/19043356" target="_blank" rel="noopener">
-           Dodecahedral Transport 
+            Dodecahedral Transport
           </a>
           <a class="paper-button" href="https://zenodo.org/records/19520206" target="_blank" rel="noopener">
-        Chamber Grammar
+            Chamber Grammar
           </a>
           <a class="paper-button" href="https://zenodo.org/records/19542052" target="_blank" rel="noopener">
             Thalean Witness
+          </a>
+          <a class="paper-button" href="https://doi.org/10.5281/zenodo.19561286" target="_blank" rel="noopener">
+            CMB Structured Benchmark
           </a>
         </div>
         <div class="paper-meta">
           <div><strong>March paper:</strong> <em>Dodecahedral Transport, Sector Geometry on L(Petersen), and the Identity MMᵀ = A³ + 2A² + 2I</em></div>
           <div><strong>DOI:</strong> 10.5281/zenodo.19043356</div>
           <div><strong>Status:</strong> March 2026 preprint</div>
+
           <div><strong>April paper:</strong> <em>The Chamber Grammar of the Thalean Sector Matrix</em></div>
           <div><strong>DOI:</strong> 10.5281/zenodo.19520206</div>
+          <div><strong>Status:</strong> April 2026 preprint</div>
+
+          <div><strong>Witness note:</strong> <em>Thalean Witness</em></div>
+          <div><strong>DOI:</strong> 10.5281/zenodo.19542052</div>
+          <div><strong>Status:</strong> April 2026 preprint</div>
+
+          <div><strong>CMB note:</strong> <em>A Mixed Structured Template for a TE-Dominated Middle-Band CMB Benchmark</em></div>
+          <div><strong>DOI:</strong> 10.5281/zenodo.19561286</div>
           <div><strong>Status:</strong> April 2026 preprint</div>
         </div>
       </div>
