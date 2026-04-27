@@ -1,0 +1,130 @@
+{
+  "schema": "d4.growth_state.v1",
+  "title": "Prime growth runtime state",
+  "description": "Turn-based mirror/cohesion growth state for prime tetra propagation.",
+  "prime_ref": "prime_tetra",
+  "orientation_policy": {
+    "derive_all_local_orientation_from_centroid": true,
+    "north_is_centroid_derived": true,
+    "composite_origin_is_face_4_centroid": true
+  },
+  "growth_policy": {
+    "operation": "ordered_face_mirroring",
+    "one_surface_cohesion_per_turn": true,
+    "local_face_order": [1, 2, 3],
+    "cycle_increments": [3, 6, 9],
+    "cycle_sum": 18
+  },
+  "runtime": {
+    "current_d4s": 0,
+    "turn_index": 0,
+    "current_phase": "A",
+    "current_phase_progress": 0,
+    "current_cycle_completed": 0,
+    "residue_mod_18": 0,
+    "active_tetra_id": null,
+    "active_face_label": null,
+    "active_chirality": null
+  },
+  "topology": {
+    "open_vertices": 0,
+    "closed_vertices": 0,
+    "edges": 0,
+    "internal_faces": 0,
+    "exposed_faces": 0,
+    "cells": 0,
+    "chambers": 0
+  },
+  "scene": {
+    "vertices": [],
+    "tetrahedra": [],
+    "open_face_registry": [],
+    "internal_face_registry": [],
+    "chambers": []
+  },
+  "tetrahedron_record_template": {
+    "tetra_id": "T17",
+    "parent_tetra_id": "T16",
+    "generated_by_face": 2,
+    "generated_by_operation": "mirror",
+    "turn_index": 17,
+    "chirality": "left",
+    "generation": 5,
+    "centroid_frame": {
+      "origin": [0.0, 0.0, 0.0],
+      "down_axis": [0.0, 0.0, -1.0],
+      "north_axis": [0.0, 1.0, 0.0],
+      "east_axis": [1.0, 0.0, 0.0]
+    },
+    "vertex_ids": ["V0", "V1", "V2", "V3"],
+    "face_state": {
+      "1": "open",
+      "2": "closed",
+      "3": "open",
+      "4": "composite"
+    },
+    "composite_state": {
+      "4": "occupied",
+      "5": "open",
+      "6": "open",
+      "7": "closed",
+      "8": "open",
+      "9": "open",
+      "10": "reserved",
+      "11": "closed",
+      "12": "open"
+    }
+  },
+  "open_face_record_template": {
+    "face_key": "V1|V2|V3",
+    "tetra_id": "T17",
+    "face_label": 1,
+    "state": "exposed",
+    "chirality_owner": "left",
+    "centroid": [0.0, 0.0, 0.0],
+    "normal": [0.0, 0.0, 1.0]
+  },
+  "turn_rule": {
+    "steps": [
+      "identify_active_tetra",
+      "identify_next_cohesion_surface",
+      "mirror_through_active_face",
+      "generate_one_child_prime",
+      "flip_chirality",
+      "update_composite_pleat_state",
+      "update_open_closed_topology",
+      "advance_turn_index"
+    ]
+  },
+  "derived_working_answers": {
+    "pleat_order": {
+      "4": "carrier_center",
+      "5": "north",
+      "6": "north_east",
+      "7": "east",
+      "8": "south_east",
+      "9": "south",
+      "10": "south_west",
+      "11": "west",
+      "12": "north_west"
+    },
+    "chamber_definition": "one completed local 1_to_2_to_3 coherence round around a common carrier context",
+    "plus_9_meaning": "full composite-layer update across 4_through_12",
+    "cycle_complete_condition": "current_d4s % 18 == 0",
+    "milestone_example": {
+      "cycle_sum": 18,
+      "cycle_count": 50,
+      "derived_tetra_total": 900,
+      "formula": "18 * 50 = 900"
+    }
+  },
+  "active_conjectures": {
+    "global_backbone": {
+      "candidate": "AT4val[60,6]",
+      "status": "comparison_target_not_identity"
+    },
+    "resonance_at_900": {
+      "status": "plausible_not_proven"
+    }
+  }
+}

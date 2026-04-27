@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Graph View</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #0f1318;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background: #0f1318;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <script type="module">
+    import { SpringSolver } from "./kernel/spring_solver.js";
+    import { CanvasGraphRenderer } from "./kernel/canvas_renderer.js";
+
+    const canvas = document.getElementById("c");
+
+    function buildGraphFromApi(payload) {
+      const viewNodeMap = new Map(
+        payload.view_nodes.map((vn) => [vn.graph_node_id, vn])
+      );
+
+      const nodes = payload.nodes.map((n) => {
+        const vn = viewNodeMap.get(n.id);
+
+        return {
+          id: n.id,
+          node_key: n.node_key,
+          label: n.label,
+          x: (vn?.x ?? 0) + window.innerWidth / 2,
+          y: (vn?.y ?? 0) + window.innerHeight / 2,
+          vx: 0,
+          vy: 0,
+          fx: 0,
+          fy: 0,
+          pinned: Boolean(vn?.pinned),
+        };
+      });
+
+      const nodeIndexById = new Map(nodes.map((n, i) => [n.id, i]));
+
+      const edges = payload.edges.map((e) => ({
+        id: e.id,
+        edge_key: e.edge_key,
+        edge_class: e.edge_class,
+        source: nodeIndexById.get(e.source_node_id),
+        target: nodeIndexById.get(e.target_node_id),
+      }));
+
+      const viewEdgeMap = new Map(
+        payload.view_edges.map((ve) => [ve.graph_edge_id, ve])
+      );
+
+      for (const edge of edges) {
+        edge.style = viewEdgeMap.get(edge.id)?.style_json ?? null;
+      }
+
+      return { nodes, edges };
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const graphKey = params.get("graph") || "petersen";
+    const viewKey = params.get("view") || "spring_debug";
+
+    const response = await fetch(`/api/graphs/${graphKey}/views/${viewKey}`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const payload = await response.json();
+    const graph = buildGraphFromApi(payload);
+
+    const solver = new SpringSolver(graph, payload.view.params_json || {});
+    const renderer = new CanvasGraphRenderer(canvas, graph, {
+      nodeRadius: payload.view.params_json?.nodeRadius ?? 10,
+    });
+
+    function frame() {
+      solver.step(canvas.width, canvas.height);
+      renderer.draw();
+      requestAnimationFrame(frame);
+    }
+
+    frame();
+  </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+{
+  "schema": "d4.playback_state.v1",
+  "title": "Viewer playback and camera state",
+  "description": "Soft-stop playback controls and persistent camera/display state for d4 viewer.",
+  "playback": {
+    "pause_at_d4s": 900,
+    "current_d4s": 0,
+    "is_playing": false,
+    "auto_pause_enabled": true,
+    "auto_pause_armed": true,
+    "can_resume_beyond_pause": true,
+    "hz": 30,
+    "step_mode": "single_turn"
+  },
+  "display": {
+    "mode": "prime",
+    "allowed_modes": [
+      "scaffold",
+      "prime",
+      "prime_plus_composite",
+      "hybrid"
+    ],
+    "show_stage_grid": true,
+    "show_faces": true,
+    "show_labels": false,
+    "preserve_camera_on_mode_switch": true
+  },
+  "camera": {
+    "projection": "perspective",
+    "distance": 14.0,
+    "yaw": 0.0,
+    "pitch": -0.28,
+    "pan_x": 0.0,
+    "pan_y": 0.0,
+    "orbit_enabled": false,
+    "controls": {
+      "left_drag": "rotate",
+      "shift_drag": "pan",
+      "right_drag": "pan",
+      "wheel": "zoom"
+    }
+  },
+  "stage_label": {
+    "format": "{current_d4s} > STAGE",
+    "hide_when_nonzero": true
+  },
+  "view_presets": {
+    "recommended": [
+      "front",
+      "top",
+      "look_down_face_1",
+      "look_down_face_2",
+      "look_down_face_3",
+      "junction"
+    ]
+  },
+  "soft_stop_semantics": {
+    "description": "pause_at_d4s is a viewer threshold, not a sacred ontological target",
+    "behavior": [
+      "grow_from_current_state_upward",
+      "auto_pause_when_current_d4s_reaches_pause_at_d4s",
+      "play_can_resume_beyond_pause_threshold",
+      "reset_returns_to_zero"
+    ]
+  }
+}

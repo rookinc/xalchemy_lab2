@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>D4 Lab</title>
+  <link rel="stylesheet" href="/graph_viewer_assets/lab.css" />
+</head>
+<body>
+  <div class="lab-shell">
+    <header class="site-header">
+      <div class="site-header__logo">
+        <div class="logo-box">LOGO</div>
+      </div>
+
+      <div class="site-header__main">
+        <nav class="site-nav" aria-label="Site navigation">
+          <a href="/" class="site-nav__item site-nav__item--home">Home</a>
+          <a href="#" class="site-nav__item">Site Nav</a>
+          <a href="#" class="site-nav__item">Site Nav</a>
+          <a href="#" class="site-nav__item">Site Nav</a>
+          <div class="site-nav__lab">LAB</div>
+        </nav>
+
+        <button id="settings-btn" class="icon-btn settings-btn" type="button" aria-label="Settings">
+          ⚙
+        </button>
+      </div>
+    </header>
+
+    <section class="lab-bar" aria-label="Lab controls">
+      <div class="lab-bar__group lab-bar__group--opacity">
+        <div class="inline-field inline-field--slider">
+          <label for="left-face-opacity-slider">L</label>
+          <input id="left-face-opacity-slider" type="range" min="0" max="100" step="1" value="80" />
+        </div>
+
+        <div class="inline-field inline-field--slider">
+          <label for="right-face-opacity-slider">R</label>
+          <input id="right-face-opacity-slider" type="range" min="0" max="100" step="1" value="80" />
+        </div>
+      </div>
+
+      <div class="lab-bar__group lab-bar__group--toggles">
+        <label class="inline-check">
+          <input type="checkbox" id="toggle-faces" checked />
+          <span>Faces</span>
+        </label>
+
+        <label class="inline-check">
+          <input type="checkbox" id="toggle-edges" checked />
+          <span>Edges</span>
+        </label>
+      </div>
+
+      <div class="lab-bar__group lab-bar__group--transport">
+        <button id="reset-btn" class="icon-btn" type="button" aria-label="Reset">↺</button>
+        <button id="step-back-btn" class="icon-btn" type="button" aria-label="Step back">|◀</button>
+        <button id="step-btn" class="icon-btn" type="button" aria-label="Step forward">▶|</button>
+        <button id="play-btn" class="play-btn" type="button" aria-label="Play or pause">▶</button>
+      </div>
+    </section>
+
+    <main class="workspace">
+      <section class="stage-column">
+        <div class="stage-frame">
+          <canvas id="stage-canvas"></canvas>
+
+          <aside class="zoom-rail zoom-rail--mobile-only" aria-label="Zoom">
+            <label for="zoom-slider">Zoom</label>
+            <input id="zoom-slider" type="range" min="4.5" max="60" step="0.1" value="15" />
+          </aside>
+        </div>
+
+        <div class="stage-readout">
+          <div class="stage-readout__item"><span>Tick</span><strong id="metric-turn">0</strong></div>
+          <div class="stage-readout__item"><span>Dist</span><strong id="metric-camera-distance">15.00</strong></div>
+          <div class="stage-readout__item"><span>Yaw</span><strong id="metric-camera-yaw">0.00</strong></div>
+          <div class="stage-readout__item"><span>Pitch</span><strong id="metric-camera-pitch">0.00</strong></div>
+          <div class="stage-readout__item stage-readout__status"><span>Status</span><strong id="status-text">ready</strong></div>
+        </div>
+      </section>
+
+      <aside class="left-rail">
+        <section class="rail-card">
+          <div class="rail-card__title">Render</div>
+
+          <div class="field">
+            <label for="display-mode-select">Render mode</label>
+            <select id="display-mode-select">
+              <option value="prime" selected>Prime</option>
+            </select>
+          </div>
+
+          <label class="stack-check">
+            <input type="checkbox" id="toggle-spinors" checked />
+            <span>Show spinors</span>
+          </label>
+
+          <div class="field spinor-opacity-field" id="spinor-opacity-field">
+            <label for="spinor-opacity-slider">Spinor opacity</label>
+            <input id="spinor-opacity-slider" type="range" min="0" max="100" step="1" value="28" />
+          </div>
+
+          <label class="stack-check">
+            <input type="checkbox" id="toggle-trurtle" checked />
+            <span>Show trurtle</span>
+          </label>
+
+          <label class="stack-check">
+            <input type="checkbox" id="toggle-color-edges" checked />
+            <span>Show color edges</span>
+          </label>
+        </section>
+
+        <section class="rail-card">
+          <div class="rail-card__title">Ticks</div>
+
+          <div class="field">
+            <label for="pause-at-input">Pause at</label>
+            <input id="pause-at-input" type="number" min="0" step="1" value="900" />
+          </div>
+
+          <div class="field">
+            <label for="hz-input">Rate (Hz)</label>
+            <input id="hz-input" type="number" min="1" step="1" value="30" />
+          </div>
+        </section>
+
+        <section class="rail-card">
+          <div class="rail-card__title">Camera</div>
+
+          <div class="field">
+            <label for="camera-preset-select">Perspective</label>
+            <select id="camera-preset-select">
+              <option value="perspective_default" selected>Perspective</option>
+              <option value="perspective_15_0_0">Perspective 15,0,0</option>
+              <option value="top">Top</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="rail-card">
+          <div class="rail-card__title">Stage</div>
+
+          <label class="stack-check">
+            <input type="checkbox" id="toggle-grid" checked />
+            <span>Stage grid</span>
+          </label>
+
+          <label class="stack-check">
+            <input type="checkbox" id="toggle-axes" />
+            <span>XYZ axes</span>
+          </label>
+
+          <label class="stack-check">
+            <input type="checkbox" id="toggle-labels" />
+            <span>Labels</span>
+          </label>
+        </section>
+      </aside>
+    </main>
+
+    <section class="metrics-panel">
+      <div class="metrics-panel__header">
+        <div class="metrics-panel__title">Console</div>
+      </div>
+
+      <pre class="metrics-console" id="metrics-console">current_d4s      : 0
+turn             : 0
+cells            : 0
+exposed_faces    : 0
+open_vertices    : 0
+phase            : A
+residue          : 0
+increment_target : 3
+regime           : Seed / mediator
+rung             : 1.5
+aggregation      : none
+active_tetra     : -
+active_face      : -
+active_chirality : -
+spinors          : on
+spinor_opacity   : 28%
+trurtle          : on
+edges            : on
+color_edges      : on
+left_opacity     : 80%
+right_opacity    : 80%
+camera_distance  : 15.00
+camera_yaw       : 0.00
+camera_pitch     : 0.00
+camera_preset    : perspective_default</pre>
+
+      <div class="metrics-hidden-bindings" aria-hidden="true">
+        <span id="metric-current">0</span>
+        <span id="metric-cells">0</span>
+        <span id="metric-faces">0</span>
+        <span id="metric-open-vertices">0</span>
+        <span id="metric-phase">A</span>
+        <span id="metric-residue">0</span>
+        <span id="metric-increment">3</span>
+        <span id="metric-regime">Seed / mediator</span>
+        <span id="metric-rung">1.5</span>
+        <span id="metric-aggregation">none</span>
+        <span id="metric-active-tetra">-</span>
+        <span id="metric-active-face">-</span>
+        <span id="metric-active-chirality">-</span>
+        <span id="metric-trurtle">on</span>
+        <span id="metric-edges">on</span>
+        <span id="metric-color-edges">on</span>
+        <span id="metric-left-opacity">80%</span>
+        <span id="metric-right-opacity">80%</span>
+        <span id="metric-camera-preset">perspective_default</span>
+        <span id="mobile-current">0</span>
+        <span id="mobile-phase">A</span>
+        <span id="mobile-residue">0</span>
+        <span id="mobile-regime">Seed / mediator</span>
+        <span id="mobile-active-tetra">-</span>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="/graph_viewer_assets/lab_boot.js"></script>
+</body>
+</html>

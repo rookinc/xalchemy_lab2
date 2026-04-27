@@ -1,0 +1,140 @@
+{
+  "schema": "d4.prime.v1",
+  "title": "Prime tetra definition",
+  "description": "Canonical prime tetra with centroidal orientation, chirality, and expanded pleated composite layer.",
+  "prime": {
+    "prime_id": "prime_tetra",
+    "primitive_type": "tetrahedron",
+    "role": "prime"
+  },
+  "geometry": {
+    "vertex_order": ["v0", "v1", "v2", "v3"],
+    "canonical_vertices": [
+      { "id": "v0", "x": -0.5, "y": -0.2886751346, "z": 0.0 },
+      { "id": "v1", "x": 0.5, "y": -0.2886751346, "z": 0.0 },
+      { "id": "v2", "x": 0.0, "y": 0.5773502692, "z": 0.0 },
+      { "id": "v3", "x": 0.0, "y": 0.0, "z": 0.8164965809 }
+    ],
+    "edges": [
+      ["v0", "v1"],
+      ["v0", "v2"],
+      ["v0", "v3"],
+      ["v1", "v2"],
+      ["v1", "v3"],
+      ["v2", "v3"]
+    ],
+    "geometric_faces": {
+      "1": ["v1", "v2", "v3"],
+      "2": ["v0", "v2", "v3"],
+      "3": ["v0", "v1", "v3"],
+      "4": ["v0", "v1", "v2"]
+    }
+  },
+  "face_roles": {
+    "1": "growth",
+    "2": "growth",
+    "3": "growth",
+    "4": "composite_down"
+  },
+  "orientation": {
+    "frame_mode": "centroidal",
+    "cell_origin": "cell_centroid",
+    "composite_origin": "face_4_centroid",
+    "down_axis": "face_4_normal",
+    "up_axis": "opposite_face_4_normal",
+    "north_reference": "centroid_anchored",
+    "east_reference": "right_handed_from_down_and_north",
+    "handedness": "right"
+  },
+  "chirality": {
+    "allowed_states": ["left", "right"],
+    "mirror_rule": {
+      "operation": "mirror_through_active_face",
+      "parent_to_child": {
+        "left": "right",
+        "right": "left"
+      }
+    }
+  },
+  "composite_layer": {
+    "carrier_face": 4,
+    "expansion_mode": "pleated",
+    "expanded_faces": [4, 5, 6, 7, 8, 9, 10, 11, 12],
+    "pleat_ordering": {
+      "mode": "cyclic_from_north",
+      "center": 4,
+      "outer_cycle": [5, 6, 7, 8, 9, 10, 11, 12]
+    },
+    "pleat_roles": {
+      "4": "base_center",
+      "5": "north",
+      "6": "north_east",
+      "7": "east",
+      "8": "south_east",
+      "9": "south",
+      "10": "south_west",
+      "11": "west",
+      "12": "north_west"
+    },
+    "allowed_states": [
+      "open",
+      "closed",
+      "occupied",
+      "cohered",
+      "mirrored",
+      "reserved"
+    ]
+  },
+  "seed_rule": {
+    "seed_symbol": "t_0",
+    "seed_mode": "resolved_from_4_face_composite_closure",
+    "requirements": [
+      "face_4_is_composite_downward_carrier",
+      "faces_1_2_3_are_growth_faces",
+      "centroidal_frame_initialized",
+      "chirality_assigned"
+    ]
+  },
+  "growth_law": {
+    "primitive_operation": "ordered_face_mirroring",
+    "one_turn_rule": "exactly_one_surface_cohesion_event_per_turn",
+    "local_face_order": [1, 2, 3],
+    "cycle_increments": [3, 6, 9],
+    "cycle_sum": 18,
+    "phase_meanings": {
+      "A": "first_order_primary_face_pass",
+      "B": "secondary_complementary_pass",
+      "C": "composite_pleated_consolidation"
+    }
+  },
+  "runtime_template": {
+    "tetra_id": "T0",
+    "chirality": "left",
+    "parent_tetra_id": null,
+    "generated_by_face": null,
+    "generated_by_operation": null,
+    "centroid_frame": {
+      "origin": [0.0, 0.0, 0.2041241452],
+      "down_axis": [0.0, 0.0, -1.0],
+      "north_axis": [0.0, 1.0, 0.0],
+      "east_axis": [1.0, 0.0, 0.0]
+    },
+    "face_state": {
+      "1": "open",
+      "2": "open",
+      "3": "open",
+      "4": "composite"
+    },
+    "composite_state": {
+      "4": "occupied",
+      "5": "open",
+      "6": "open",
+      "7": "open",
+      "8": "open",
+      "9": "open",
+      "10": "open",
+      "11": "open",
+      "12": "open"
+    }
+  }
+}
