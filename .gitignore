@@ -1,1 +1,280 @@
-__pycache__
+# =========================================================
+# alchemy_lab .gitignore
+# verbose, Python + Vim + macOS + Termux friendly
+# keep this file repo-local and adjust as the project grows
+# =========================================================
+
+# ---------------------------------------------------------
+# Python bytecode / interpreter caches
+# ---------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+
+# CPython / alternate interpreter cache artifacts
+*.pyo
+*.pyd
+
+# ---------------------------------------------------------
+# Python build / packaging / distribution artifacts
+# ---------------------------------------------------------
+.Python
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+share/python-wheels/
+wheels/
+pip-wheel-metadata/
+*.egg-info/
+*.egg
+
+# Common single-file packaging leftovers
+MANIFEST
+
+# ---------------------------------------------------------
+# Virtual environments
+# ---------------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.env
+
+# Termux users sometimes keep project-local venvs in odd spots
+.pythonenv/
+.pyenv/
+.virtualenv/
+
+# ---------------------------------------------------------
+# Python tool caches
+# ---------------------------------------------------------
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.pyre/
+.pytype/
+.hypothesis/
+.nox/
+.tox/
+
+# Coverage / test reports
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+nosetests.xml
+*.cover
+*.py,cover
+
+# Jupyter / notebook checkpoints
+.ipynb_checkpoints/
+
+# ---------------------------------------------------------
+# Logs / runtime leftovers
+# ---------------------------------------------------------
+*.log
+*.out
+*.err
+*.pid
+*.pid.lock
+*.seed
+*.stackdump
+
+# ---------------------------------------------------------
+# Local runtime / scratch / temp
+# ---------------------------------------------------------
+tmp/
+temp/
+.cache/
+
+# Generic scratch names that often show up during local work
+scratch/
+sandbox/
+work/
+junk/
+
+# ---------------------------------------------------------
+# Editor / IDE artifacts
+# ---------------------------------------------------------
+
+# Vim / Neovim
+*~
+.*.swp
+*.swp
+*.swo
+*.swn
+Session.vim
+Sessionx.vim
+.netrwhist
+tags
+
+# Helix / Kakoune / generic editor scratch
+*.tmp
+*.bak
+
+# VS Code
+.vscode/
+
+# JetBrains
+.idea/
+*.iml
+
+# ---------------------------------------------------------
+# macOS artifacts
+# ---------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# macOS folder metadata
+.Spotlight-V100
+.Trashes
+.fseventsd
+
+# AFP / network share leftovers
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# ---------------------------------------------------------
+# Termux / Android friendly exclusions
+# ---------------------------------------------------------
+
+# Termux can generate local shell histories or helper caches
+.termux/
+.bash_history
+.zsh_history
+.history
+
+# Android / mobile share junk if copied into repo roots
+thumbs.db
+Thumbs.db
+
+# ---------------------------------------------------------
+# Project-generated renders
+# ---------------------------------------------------------
+# We are currently KEEPING renders for provenance,
+# so do NOT ignore renders/ by default.
+#
+# If this becomes overwhelming later, switch to:
+# renders/tmp/
+# renders/cache/
+# and ignore those subfolders only.
+#
+# renders/
+
+# ---------------------------------------------------------
+# Project-generated exports / one-off artifacts
+# ---------------------------------------------------------
+# These are commented out on purpose.
+# Enable selectively if a folder becomes noisy.
+#
+# export/
+# exports/
+# snapshots/
+# artifacts/
+# paper_artifacts/snapshots/
+
+# ---------------------------------------------------------
+# Environment / secret files
+# ---------------------------------------------------------
+.env
+.env.*
+*.local
+
+# Keep explicit examples if you add them later
+!.env.example
+!.env.sample
+
+# ---------------------------------------------------------
+# OS / shell archive clutter
+# ---------------------------------------------------------
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+
+# Comment these back in only if archives are always generated
+# and never meant to be tracked.
+# Right now left broad but active because generated archives
+# are usually not source.
+#
+# If you intentionally version a specific archive, force-add it.
+
+# ---------------------------------------------------------
+# SQLite / local database scratch
+# ---------------------------------------------------------
+*.sqlite
+*.sqlite3
+*.db
+
+# Uncomment if these become part of real tracked project state
+# !schema/reference.sqlite3
+
+# ---------------------------------------------------------
+# Node / frontend leftovers
+# ---------------------------------------------------------
+# Included just in case a small web viewer appears later.
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---------------------------------------------------------
+# Compiled / binary junk
+# ---------------------------------------------------------
+*.so
+*.dylib
+*.dll
+*.exe
+*.o
+*.obj
+*.a
+
+# ---------------------------------------------------------
+# LaTeX / paper compilation leftovers
+# useful if the repo grows paper tooling later
+# ---------------------------------------------------------
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+
+# ---------------------------------------------------------
+# Misc project notes
+# ---------------------------------------------------------
+# Keep notes/ tracked.
+# Keep specs/ tracked.
+# Keep renders/ tracked for provenance for now.
+# Keep paper_artifacts/scripts/ tracked.
+#
+# This file is intentionally conservative:
+# it ignores generated junk and local machine/editor noise,
+# while preserving research artifacts unless clearly disposable.
+# =========================================================
