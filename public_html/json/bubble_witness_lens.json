@@ -1,0 +1,29 @@
+{
+  "name": "bubble_collapse_witness_lens",
+  "status": "exploratory_lens",
+  "base_object": "G15 transport theorem object",
+  "not_theorem_object": true,
+  "description": "A six-station collapse/rebound visual lens over the canonical G15 transport data.",
+  "stations": {
+    "A": [0],
+    "D": [1, 11],
+    "E": [2, 14],
+    "C": [3, 6, 10],
+    "B": [4, 7, 13],
+    "F": [12]
+  },
+  "phase_sequence": [
+    "latent_round",
+    "defect_selection",
+    "cup_fold",
+    "throat_bridge",
+    "rebound_jet",
+    "relaxation"
+  ],
+  "anti_drift": [
+    "This lens does not change the theorem object.",
+    "Station labels are quotient-visible rendering labels.",
+    "The collapse animation is an exploratory analog, not a physical derivation.",
+    "Changing lens does not change transport identity."
+  ]
+}

@@ -38,8 +38,8 @@ include __DIR__ . '/includes/site_header.php';
         <p>Raw graph-viewer stage outside public_html. This link works when serving from the repository root.</p>
       </a>
 
-      <a class="index-card" href="#">
-        <span class="card-label">Planned</span>
+      <a class="index-card" href="collapse_witness.php">
+        <span class="card-label">Scaffold</span>
         <h3>Collapse Witness Lens</h3>
         <p>Future G15 collapse/rebound visual lens over the canonical transport data.</p>
       </a>

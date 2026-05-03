@@ -1,0 +1,21 @@
+{
+  "name": "g15_collapse_dynamics_defaults",
+  "status": "exploratory_parameters",
+  "time_steps": 600,
+  "dt": 0.035,
+  "damping": 0.045,
+  "stiffness": 0.9,
+  "coupling": 1.15,
+  "nonlinear": 0.08,
+  "forcing": {
+    "source_vertex": 0,
+    "amplitude": 3.5,
+    "center_time": 0.9,
+    "width": 0.18
+  },
+  "render": {
+    "fps": 60,
+    "scale": 1.0,
+    "show_labels": true
+  }
+}
