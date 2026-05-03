@@ -57,6 +57,9 @@ include __DIR__ . '/includes/site_header.php';
           Collapse overlay
         </label>
       </fieldset>
+
+      <button id="cw-export-svg" class="cw-button" type="button">Export witness SVG</button>
+      <button id="cw-copy-state" class="cw-button" type="button">Copy state JSON</button>
     </div>
 
     <div class="cw-howto">
@@ -101,6 +104,11 @@ include __DIR__ . '/includes/site_header.php';
     </div>
 
     <div id="cw-status" class="cw-status">Loading collapse witness data…</div>
+
+    <div class="cw-provenance">
+      <h3>Current state provenance</h3>
+      <pre><code id="cw-state-json">Waiting for renderer…</code></pre>
+    </div>
 
     <div class="collapse-grid">
       <section class="collapse-panel">

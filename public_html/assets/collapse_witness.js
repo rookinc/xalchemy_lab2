@@ -200,6 +200,75 @@ function stationValues() {
   return out;
 }
 
+function currentStateObject() {
+  const stations = stationValues();
+  const maxu = Math.max(...CW.u.map(Math.abs));
+
+  return {
+    artifact: "collapse_witness_lens_state",
+    version: "0.6",
+    theorem_object: CW.theorem?.name ?? null,
+    lens: CW.lens?.name ?? null,
+    mode: getMode(),
+    phase: getMode() === "overlay" ? currentPhaseName() : "raw G15 quotient",
+    time: Number(CW.t.toFixed(3)),
+    max_abs_u: Number(maxu.toFixed(6)),
+    stations: Object.fromEntries(
+      ["A", "D", "E", "C", "B", "F"].map(k => [k, Number((stations[k] ?? 0).toFixed(6))])
+    ),
+    source_vertex: CW.params?.forcing?.source_vertex ?? null,
+    note: "Exploratory visual lens state. This is not a theorem object and not a physical derivation."
+  };
+}
+
+function updateStateJson() {
+  const el = document.getElementById("cw-state-json");
+  if (!el || !CW.theorem || !CW.lens || !CW.params) return;
+  el.textContent = JSON.stringify(currentStateObject(), null, 2);
+}
+
+async function copyStateJson() {
+  const text = JSON.stringify(currentStateObject(), null, 2);
+
+  try {
+    await navigator.clipboard.writeText(text);
+    setStatus("Copied current collapse witness state JSON to clipboard.");
+  } catch (err) {
+    setStatus("Clipboard copy failed. State JSON is visible in the provenance panel.");
+    console.error(err);
+  }
+}
+
+function exportWitnessSvg() {
+  const svg = document.getElementById("witness-panel");
+  if (!svg) return;
+
+  const clone = svg.cloneNode(true);
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+  const state = currentStateObject();
+  const metadata = document.createElementNS("http://www.w3.org/2000/svg", "metadata");
+  metadata.textContent = JSON.stringify(state);
+  clone.prepend(metadata);
+
+  const serializer = new XMLSerializer();
+  const source = serializer.serializeToString(clone);
+  const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const filename = `collapse_witness_${state.mode.replaceAll(" ", "_")}_${state.phase.replaceAll(" ", "_")}_${String(state.time).replace(".", "p")}.svg`;
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+  setStatus(`Exported ${filename}`);
+}
+
 function renderGraph() {
   const svg = document.getElementById('g15-panel');
   svg.innerHTML = '';
@@ -469,6 +538,7 @@ function renderAll() {
   renderIncidence();
   renderWitness();
   updateReadouts();
+  updateStateJson();
 }
 
 function resetSimulation() {
@@ -522,6 +592,9 @@ async function bootCollapseWitness() {
       renderAll();
     });
   });
+
+  document.getElementById('cw-export-svg')?.addEventListener('click', exportWitnessSvg);
+  document.getElementById('cw-copy-state')?.addEventListener('click', copyStateJson);
 
   setStatus(`Loaded canonical G15 transport theorem object. Current view: exploratory collapse witness lens.`);
   requestAnimationFrame(frame);
