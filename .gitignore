@@ -278,3 +278,9 @@ pnpm-debug.log*
 # it ignores generated junk and local machine/editor noise,
 # while preserving research artifacts unless clearly disposable.
 # =========================================================
+
+# Local manual backups
+*.bak
+*.bak.*
+*.backup
+*.backup.*
