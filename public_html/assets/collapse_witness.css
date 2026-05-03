@@ -1,0 +1,109 @@
+.collapse-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.cw-button {
+  min-height: 2.4rem;
+  padding: 0 0.95rem;
+  border: var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font: inherit;
+}
+
+.cw-button:hover,
+.cw-button:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.cw-control {
+  display: inline-grid;
+  gap: 0.25rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.cw-control input {
+  width: 8.5rem;
+}
+
+.cw-status {
+  margin-bottom: var(--space-3);
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.collapse-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-3);
+}
+
+.collapse-panel {
+  padding: var(--space-3);
+  border: var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.collapse-panel h3 {
+  margin: 0 0 var(--space-2);
+}
+
+.collapse-svg {
+  width: 100%;
+  min-height: 18rem;
+  display: block;
+  border: var(--border);
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(circle at 50% 35%, rgba(123, 194, 255, 0.06), transparent 42%),
+    rgba(0, 0, 0, 0.18);
+}
+
+.cw-edge {
+  stroke: rgba(235, 239, 247, 0.24);
+  stroke-width: 1.4;
+}
+
+.cw-node {
+  stroke: rgba(235, 239, 247, 0.72);
+  stroke-width: 1.4;
+}
+
+.cw-label {
+  fill: var(--text);
+  font-size: 11px;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.cw-bar {
+  stroke: rgba(235, 239, 247, 0.3);
+  stroke-width: 1;
+}
+
+.cw-witness-line {
+  fill: none;
+  stroke: rgba(235, 239, 247, 0.45);
+  stroke-width: 2;
+}
+
+.cw-witness-surface {
+  fill: rgba(123, 194, 255, 0.12);
+  stroke: rgba(123, 194, 255, 0.8);
+  stroke-width: 2;
+}
+
+.cw-axis {
+  stroke: rgba(235, 239, 247, 0.24);
+  stroke-width: 1;
+  stroke-dasharray: 4 5;
+}
