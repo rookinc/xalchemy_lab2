@@ -56,6 +56,14 @@ include __DIR__ . '/includes/site_header.php';
       </p>
     </div>
 
+    <div class="cw-morphology-note">
+      <h3>Phase morphology overlay</h3>
+      <p>
+        The live G15 state drives the color and station values. A lightweight phase overlay shapes the witness silhouette
+        through the intended collapse grammar: latent round, defect selection, cup fold, throat bridge, rebound jet, and relaxation.
+      </p>
+    </div>
+
     <div class="cw-readout-grid">
       <div class="cw-readout">
         <span class="cw-readout__label">Phase</span>

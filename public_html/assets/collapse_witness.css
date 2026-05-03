@@ -178,3 +178,48 @@
     width: 7.5rem;
   }
 }
+
+.cw-morphology-note {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  border: var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.cw-morphology-note h3 {
+  margin: 0 0 var(--space-1);
+}
+
+.cw-morphology-note p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.cw-phase-glow {
+  fill: rgba(123, 194, 255, 0.08);
+  stroke: rgba(123, 194, 255, 0.32);
+  stroke-width: 1.5;
+}
+
+.cw-jet {
+  fill: rgba(235, 239, 247, 0.18);
+  stroke: rgba(235, 239, 247, 0.72);
+  stroke-width: 1.5;
+}
+
+.cw-throat {
+  stroke: rgba(123, 194, 255, 0.62);
+  stroke-width: 5;
+  stroke-linecap: round;
+  opacity: 0.75;
+}
+
+.cw-phase-label {
+  fill: var(--muted);
+  font-size: 12px;
+  text-anchor: middle;
+  dominant-baseline: central;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}

@@ -35,6 +35,43 @@ function currentPhaseName() {
   return PHASES.find(p => x >= p.start && x < p.end)?.name ?? 'relaxation';
 }
 
+function smoothstep(edge0, edge1, x) {
+  const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
+function phaseWindow(start, peak, end, x) {
+  return smoothstep(start, peak, x) * (1 - smoothstep(peak, end, x));
+}
+
+function phaseMorphology() {
+  const x = phasePosition();
+
+  const defect = phaseWindow(0.12, 0.24, 0.38, x);
+  const cup = phaseWindow(0.26, 0.40, 0.56, x);
+  const throat = phaseWindow(0.42, 0.55, 0.70, x);
+  const rebound = phaseWindow(0.60, 0.72, 0.88, x);
+  const relax = smoothstep(0.78, 1.0, x);
+
+  return {
+    round: 1 - Math.max(defect, cup, throat, rebound) * 0.45,
+    defect,
+    cup,
+    throat,
+    rebound,
+    relax,
+
+    // Positive values here are drawing instructions, not theorem claims.
+    crownIndent: 34 * defect + 18 * cup - 8 * rebound,
+    shoulderLift: 10 * defect + 30 * cup + 10 * throat,
+    throatPinch: 20 * cup + 44 * throat,
+    throatDrop: 18 * cup + 20 * throat,
+    jetExtend: 58 * rebound,
+    reboundDome: 22 * rebound,
+    asymmetry: 14 * defect - 8 * rebound
+  };
+}
+
 function colorFor(value) {
   const x = clamp(value, -2.5, 2.5);
   if (x >= 0) {
@@ -251,28 +288,90 @@ function renderWitness() {
   const svg = document.getElementById('witness-panel');
   svg.innerHTML = '';
 
-  const s = stationValues();
-  const k = 30;
+  const live = stationValues();
+  const m = phaseMorphology();
+
+  // Live station values remain visible in colors/readouts.
+  // Morphology offsets give the quotient a deliberate collapse/rebound grammar.
+  const liveK = 10;
 
   const pts = {
-    A: { x: 210, y: 78 - k * s.A },
-    D: { x: 105 - 10 * s.D, y: 118 - k * s.D },
-    E: { x: 315 + 10 * s.E, y: 118 - k * s.E },
-    C: { x: 150 - 20 * s.C, y: 190 + k * s.C },
-    B: { x: 270 + 20 * s.B, y: 190 + k * s.B },
-    F: { x: 210, y: 258 + k * s.F }
+    A: {
+      x: 210 + m.asymmetry * 0.35,
+      y: 78 + m.crownIndent - liveK * live.A
+    },
+    D: {
+      x: 112 - m.throatPinch * 0.18 - m.asymmetry,
+      y: 122 - m.shoulderLift - liveK * live.D
+    },
+    E: {
+      x: 308 + m.throatPinch * 0.18 + m.asymmetry * 0.35,
+      y: 122 - m.shoulderLift - liveK * live.E
+    },
+    C: {
+      x: 150 + m.throatPinch * 0.62,
+      y: 188 + m.throatDrop + liveK * live.C
+    },
+    B: {
+      x: 270 - m.throatPinch * 0.62,
+      y: 188 + m.throatDrop + liveK * live.B
+    },
+    F: {
+      x: 210,
+      y: 252 + m.jetExtend + liveK * live.F
+    }
+  };
+
+  const domeTop = {
+    x: 210 + m.asymmetry * 0.15,
+    y: 92 - m.reboundDome + 8 * m.round
   };
 
   svg.appendChild(makeSvg('line', {
     class: 'cw-axis',
     x1: 210,
-    y1: 42,
+    y1: 36,
     x2: 210,
-    y2: 282
+    y2: 296
   }));
 
+  const glowRadiusX = 90 + 24 * m.rebound + 12 * m.round;
+  const glowRadiusY = 66 + 18 * m.rebound - 10 * m.throat;
+  svg.appendChild(makeSvg('ellipse', {
+    class: 'cw-phase-glow',
+    cx: 210,
+    cy: 166 + 20 * m.rebound,
+    rx: glowRadiusX,
+    ry: glowRadiusY
+  }));
+
+  if (m.throat > 0.08) {
+    svg.appendChild(makeSvg('line', {
+      class: 'cw-throat',
+      x1: pts.C.x,
+      y1: pts.C.y,
+      x2: pts.B.x,
+      y2: pts.B.y
+    }));
+  }
+
+  if (m.rebound > 0.08) {
+    const jetW = 9 + 8 * m.rebound;
+    const jetTop = pts.F.y - 22;
+    const jetBottom = clamp(pts.F.y + 26 * m.rebound, 240, 306);
+    const jetPath = `M ${210 - jetW} ${jetTop}
+                     Q 210 ${jetTop - 14} ${210 + jetW} ${jetTop}
+                     L ${210 + jetW * 0.45} ${jetBottom}
+                     Q 210 ${jetBottom + 8} ${210 - jetW * 0.45} ${jetBottom}
+                     Z`;
+    svg.appendChild(makeSvg('path', {
+      class: 'cw-jet',
+      d: jetPath
+    }));
+  }
+
   const surface = `M ${pts.D.x} ${pts.D.y}
-                   Q ${pts.A.x} ${pts.A.y} ${pts.E.x} ${pts.E.y}
+                   Q ${domeTop.x} ${domeTop.y} ${pts.E.x} ${pts.E.y}
                    Q ${pts.B.x} ${pts.B.y} ${pts.F.x} ${pts.F.y}
                    Q ${pts.C.x} ${pts.C.y} ${pts.D.x} ${pts.D.y}
                    Z`;
@@ -299,23 +398,31 @@ function renderWitness() {
     }));
   }
 
-  for (const [name, p] of Object.entries(pts)) {
+  for (const [name, point] of Object.entries(pts)) {
     svg.appendChild(makeSvg('circle', {
       class: 'cw-node',
-      cx: p.x,
-      cy: p.y,
+      cx: point.x,
+      cy: point.y,
       r: 12,
-      fill: colorFor(s[name])
+      fill: colorFor(live[name] ?? 0)
     }));
 
     const label = makeSvg('text', {
       class: 'cw-label',
-      x: p.x,
-      y: p.y
+      x: point.x,
+      y: point.y
     });
     label.textContent = name;
     svg.appendChild(label);
   }
+
+  const phaseLabel = makeSvg('text', {
+    class: 'cw-phase-label',
+    x: 210,
+    y: 304
+  });
+  phaseLabel.textContent = currentPhaseName();
+  svg.appendChild(phaseLabel);
 }
 
 function updateReadouts() {
