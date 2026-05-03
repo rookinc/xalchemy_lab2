@@ -364,3 +364,13 @@ a {
     justify-content: center;
   }
 }
+
+pre {
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}

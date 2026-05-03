@@ -9,7 +9,7 @@
       <a class="global-nav__link" href="the_thalean_graph_at4val_60_6.php">Thalean Graph</a>
       <a class="global-nav__link" href="labs.php">Labs</a>
       <a class="global-nav__link is-disabled" href="#" aria-disabled="true">Papers</a>
-      <a class="global-nav__link is-disabled" href="#" aria-disabled="true">Audit</a>
+      <a class="global-nav__link" href="audit.php">Audit</a>
     </nav>
   </div>
 </header>
