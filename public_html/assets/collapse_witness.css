@@ -223,3 +223,25 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+
+.phase-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--space-3);
+}
+
+.phase-card {
+  padding: var(--space-3);
+  border: var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.phase-card h3 {
+  margin: 0 0 var(--space-2);
+}
+
+.phase-card p {
+  margin: 0;
+  color: var(--muted);
+}

@@ -103,6 +103,55 @@ include __DIR__ . '/includes/site_header.php';
     </div>
   </section>
 
+  <section class="index-section">
+    <div class="section-head">
+      <p class="section-kicker">Collapse grammar</p>
+      <h2>Phase legend</h2>
+      <p class="section-text">
+        The witness silhouette is shaped by a six-phase visual grammar. The graph state remains live;
+        this table documents the visual interpretation layer.
+      </p>
+    </div>
+
+    <div class="phase-legend">
+      <article class="phase-card">
+        <span class="card-label">01</span>
+        <h3>Latent round</h3>
+        <p>Near-symmetric cavity. The witness is broad, balanced, and minimally committed to an axis.</p>
+      </article>
+
+      <article class="phase-card">
+        <span class="card-label">02</span>
+        <h3>Defect selection</h3>
+        <p>A distinguished crown/defect appears. The symmetry breaks and a preferred axis begins to form.</p>
+      </article>
+
+      <article class="phase-card">
+        <span class="card-label">03</span>
+        <h3>Cup fold</h3>
+        <p>The shoulders lift and the lower stations begin moving inward. The boundary starts folding into itself.</p>
+      </article>
+
+      <article class="phase-card">
+        <span class="card-label">04</span>
+        <h3>Throat bridge</h3>
+        <p>The C/B stations pinch toward one another. The witness reads as a temporary transport throat.</p>
+      </article>
+
+      <article class="phase-card">
+        <span class="card-label">05</span>
+        <h3>Rebound jet</h3>
+        <p>The F station extends along the axis. The collapse returns energy as a rebound/jet-like feature.</p>
+      </article>
+
+      <article class="phase-card">
+        <span class="card-label">06</span>
+        <h3>Relaxation</h3>
+        <p>The witness returns toward a rounded cavity while the live graph state continues to damp and propagate.</p>
+      </article>
+    </div>
+  </section>
+
   <section class="index-section archive-section">
     <div class="section-head">
       <p class="section-kicker">Data contracts</p>

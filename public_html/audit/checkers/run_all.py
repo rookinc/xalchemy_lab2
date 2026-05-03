@@ -135,3 +135,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# TODO: include check_bubble_witness_lens.py in aggregate runner.
