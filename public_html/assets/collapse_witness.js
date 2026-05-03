@@ -9,7 +9,8 @@ const CW = {
   t: 0,
   playing: true,
   lastFrame: null,
-  speed: 1
+  speed: 1,
+  mode: 'overlay'
 };
 
 const PHASES = [
@@ -96,6 +97,12 @@ function setStatus(text) {
 function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value;
+}
+
+function getMode() {
+  const checked = document.querySelector('input[name="cw-mode"]:checked');
+  CW.mode = checked?.value ?? CW.mode ?? 'overlay';
+  return CW.mode;
 }
 
 async function loadJson(path) {
@@ -289,7 +296,24 @@ function renderWitness() {
   svg.innerHTML = '';
 
   const live = stationValues();
-  const m = phaseMorphology();
+  const mode = getMode();
+  const m = mode === 'overlay'
+    ? phaseMorphology()
+    : {
+        round: 1,
+        defect: 0,
+        cup: 0,
+        throat: 0,
+        rebound: 0,
+        relax: 0,
+        crownIndent: 0,
+        shoulderLift: 0,
+        throatPinch: 0,
+        throatDrop: 0,
+        jetExtend: 0,
+        reboundDome: 0,
+        asymmetry: 0
+      };
 
   // Live station values remain visible in colors/readouts.
   // Morphology offsets give the quotient a deliberate collapse/rebound grammar.
@@ -421,7 +445,7 @@ function renderWitness() {
     x: 210,
     y: 304
   });
-  phaseLabel.textContent = currentPhaseName();
+  phaseLabel.textContent = getMode() === 'overlay' ? currentPhaseName() : 'RAW G15 QUOTIENT';
   svg.appendChild(phaseLabel);
 }
 
@@ -429,7 +453,9 @@ function updateReadouts() {
   const s = stationValues();
   const maxu = Math.max(...CW.u.map(Math.abs));
 
-  setText('cw-phase', currentPhaseName());
+  const mode = getMode();
+  setText('cw-phase', mode === 'overlay' ? currentPhaseName() : 'raw G15 quotient');
+  setText('cw-mode-readout', mode === 'overlay' ? 'collapse overlay' : 'raw G15');
   setText('cw-time', CW.t.toFixed(2));
   setText('cw-maxu', maxu.toFixed(3));
   setText(
@@ -490,7 +516,14 @@ async function bootCollapseWitness() {
 
   document.getElementById('cw-reset')?.addEventListener('click', resetSimulation);
 
-  setStatus(`Loaded ${theorem.name} through ${lens.name}. Exploratory lens active.`);
+  document.querySelectorAll('input[name="cw-mode"]').forEach(input => {
+    input.addEventListener('change', () => {
+      getMode();
+      renderAll();
+    });
+  });
+
+  setStatus(`Loaded canonical G15 transport theorem object. Current view: exploratory collapse witness lens.`);
   requestAnimationFrame(frame);
 }
 

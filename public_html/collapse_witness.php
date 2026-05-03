@@ -45,6 +45,18 @@ include __DIR__ . '/includes/site_header.php';
         Damping
         <input id="cw-damping" type="range" min="0" max="0.2" step="0.005" value="0.045">
       </label>
+
+      <fieldset class="cw-mode-toggle" aria-label="Witness render mode">
+        <legend>Mode</legend>
+        <label>
+          <input type="radio" name="cw-mode" value="raw" id="cw-mode-raw">
+          Raw G15
+        </label>
+        <label>
+          <input type="radio" name="cw-mode" value="overlay" id="cw-mode-overlay" checked>
+          Collapse overlay
+        </label>
+      </fieldset>
     </div>
 
     <div class="cw-howto">
@@ -59,8 +71,9 @@ include __DIR__ . '/includes/site_header.php';
     <div class="cw-morphology-note">
       <h3>Phase morphology overlay</h3>
       <p>
-        The live G15 state drives the color and station values. A lightweight phase overlay shapes the witness silhouette
-        through the intended collapse grammar: latent round, defect selection, cup fold, throat bridge, rebound jet, and relaxation.
+        The live G15 state always drives the color and station values. In raw mode, the witness follows only the live quotient.
+        In overlay mode, a lightweight phase morphology shapes the silhouette through the intended collapse grammar:
+        latent round, defect selection, cup fold, throat bridge, rebound jet, and relaxation.
       </p>
     </div>
 
@@ -80,6 +93,10 @@ include __DIR__ . '/includes/site_header.php';
       <div class="cw-readout">
         <span class="cw-readout__label">Stations</span>
         <strong id="cw-stations">A D E C B F</strong>
+      </div>
+      <div class="cw-readout">
+        <span class="cw-readout__label">View mode</span>
+        <strong id="cw-mode-readout">collapse overlay</strong>
       </div>
     </div>
 
