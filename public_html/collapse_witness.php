@@ -47,6 +47,34 @@ include __DIR__ . '/includes/site_header.php';
       </label>
     </div>
 
+    <div class="cw-howto">
+      <h3>How to read this lens</h3>
+      <p>
+        The left panel is the 15-row transport graph. The middle panel is the lifted 30-column incidence response
+        computed from <code>Mᵀu</code>. The right panel is the six-station witness quotient:
+        <strong>A</strong> crown, <strong>D/E</strong> shoulders, <strong>C/B</strong> throat, and <strong>F</strong> rebound pole.
+      </p>
+    </div>
+
+    <div class="cw-readout-grid">
+      <div class="cw-readout">
+        <span class="cw-readout__label">Phase</span>
+        <strong id="cw-phase">loading</strong>
+      </div>
+      <div class="cw-readout">
+        <span class="cw-readout__label">Time</span>
+        <strong id="cw-time">0.00</strong>
+      </div>
+      <div class="cw-readout">
+        <span class="cw-readout__label">Max |u|</span>
+        <strong id="cw-maxu">0.000</strong>
+      </div>
+      <div class="cw-readout">
+        <span class="cw-readout__label">Stations</span>
+        <strong id="cw-stations">A D E C B F</strong>
+      </div>
+    </div>
+
     <div id="cw-status" class="cw-status">Loading collapse witness data…</div>
 
     <div class="collapse-grid">

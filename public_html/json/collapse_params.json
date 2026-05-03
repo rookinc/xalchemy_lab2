@@ -16,6 +16,10 @@
   "render": {
     "fps": 60,
     "scale": 1.0,
-    "show_labels": true
-  }
+    "show_labels": true,
+    "incidence_scale": 110,
+    "graph_layout": "two_ring_g15",
+    "phase_readout": true
+  },
+  "cycle_duration": 6.0
 }

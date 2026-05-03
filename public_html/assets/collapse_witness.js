@@ -12,18 +12,37 @@ const CW = {
   speed: 1
 };
 
+const PHASES = [
+  { name: 'latent round', start: 0.00, end: 0.16 },
+  { name: 'defect selection', start: 0.16, end: 0.30 },
+  { name: 'cup fold', start: 0.30, end: 0.46 },
+  { name: 'throat bridge', start: 0.46, end: 0.62 },
+  { name: 'rebound jet', start: 0.62, end: 0.78 },
+  { name: 'relaxation', start: 0.78, end: 1.01 }
+];
+
 function clamp(x, a, b) {
   return Math.max(a, Math.min(b, x));
+}
+
+function phasePosition() {
+  const cycle = CW.params?.cycle_duration ?? 6.0;
+  return ((CW.t % cycle) / cycle);
+}
+
+function currentPhaseName() {
+  const x = phasePosition();
+  return PHASES.find(p => x >= p.start && x < p.end)?.name ?? 'relaxation';
 }
 
 function colorFor(value) {
   const x = clamp(value, -2.5, 2.5);
   if (x >= 0) {
     const k = Math.round(80 + 70 * Math.min(1, x / 2.5));
-    return `rgb(${k + 70}, ${90 + k / 2}, ${110})`;
+    return `rgb(${k + 70}, ${90 + k / 2}, 110)`;
   }
   const k = Math.round(80 + 90 * Math.min(1, -x / 2.5));
-  return `rgb(${70}, ${100 + k / 2}, ${k + 80})`;
+  return `rgb(70, ${100 + k / 2}, ${k + 80})`;
 }
 
 function makeSvg(tag, attrs = {}) {
@@ -37,6 +56,11 @@ function setStatus(text) {
   if (el) el.textContent = text;
 }
 
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
 async function loadJson(path) {
   const response = await fetch(path);
   if (!response.ok) throw new Error(`Failed to load ${path}`);
@@ -46,17 +70,17 @@ async function loadJson(path) {
 function buildLayout() {
   const cx = 210;
   const cy = 160;
-  const outer = 112;
-  const inner = 58;
+  const outer = 110;
+  const inner = 55;
 
   CW.nodes = Array.from({ length: 15 }, (_, i) => {
-    const ring = i < 10 ? outer : inner;
-    const angle = -Math.PI / 2 + (2 * Math.PI * (i % 10)) / 10;
     if (i < 10) {
-      return { id: i, x: cx + ring * Math.cos(angle), y: cy + ring * Math.sin(angle) };
+      const angle = -Math.PI / 2 + (2 * Math.PI * i) / 10;
+      return { id: i, x: cx + outer * Math.cos(angle), y: cy + outer * Math.sin(angle) };
     }
-    const a2 = -Math.PI / 2 + (2 * Math.PI * (i - 10)) / 5 + Math.PI / 5;
-    return { id: i, x: cx + inner * Math.cos(a2), y: cy + inner * Math.sin(a2) };
+
+    const angle = -Math.PI / 2 + (2 * Math.PI * (i - 10)) / 5 + Math.PI / 5;
+    return { id: i, x: cx + inner * Math.cos(angle), y: cy + inner * Math.sin(angle) };
   });
 
   CW.edges = CW.theorem.petersen_edges_indexing || [];
@@ -73,11 +97,17 @@ function laplacian(u) {
     out[b] -= u[a];
   }
 
-  for (let i = 0; i < 15; i++) {
-    out[i] += deg[i] * u[i];
-  }
-
+  for (let i = 0; i < 15; i++) out[i] += deg[i] * u[i];
   return out;
+}
+
+function pulseAt(t) {
+  const p = CW.params;
+  const cycle = p.cycle_duration ?? 6.0;
+  const local = t % cycle;
+  const center = p.forcing.center_time;
+  const width = p.forcing.width;
+  return Math.exp(-((local - center) ** 2) / (width ** 2));
 }
 
 function step(dt) {
@@ -87,16 +117,12 @@ function step(dt) {
   const damping = Number(document.getElementById('cw-damping')?.value ?? p.damping);
   const amplitude = Number(document.getElementById('cw-force')?.value ?? p.forcing.amplitude);
   const source = p.forcing.source_vertex;
-  const center = p.forcing.center_time;
-  const width = p.forcing.width;
 
   for (let i = 0; i < 15; i++) {
-    const pulse = i === source
-      ? amplitude * Math.exp(-((CW.t - center) ** 2) / (width ** 2))
-      : 0;
+    const sourcePulse = i === source ? amplitude * pulseAt(CW.t) : 0;
 
     const nonlinear = p.nonlinear * CW.u[i] ** 3;
-    const acc = pulse
+    const acc = sourcePulse
       - damping * CW.v[i]
       - p.stiffness * CW.u[i]
       - nonlinear
@@ -115,9 +141,7 @@ function columnResponse() {
   const cols = Array(30).fill(0);
 
   for (let r = 0; r < 15; r++) {
-    for (let c = 0; c < 30; c++) {
-      cols[c] += M[r][c] * CW.u[r];
-    }
+    for (let c = 0; c < 30; c++) cols[c] += M[r][c] * CW.u[r];
   }
 
   return cols.map(x => x / 7);
@@ -141,14 +165,16 @@ function renderGraph() {
     const nb = CW.nodes[b];
     svg.appendChild(makeSvg('line', {
       class: 'cw-edge',
-      x1: na.x, y1: na.y,
-      x2: nb.x, y2: nb.y
+      x1: na.x,
+      y1: na.y,
+      x2: nb.x,
+      y2: nb.y
     }));
   }
 
   for (const n of CW.nodes) {
     const val = CW.u[n.id];
-    const r = 10 + 5 * Math.min(1, Math.abs(val) / 2.5);
+    const r = 10 + 6 * Math.min(1, Math.abs(val) / 2.5);
 
     svg.appendChild(makeSvg('circle', {
       class: 'cw-node',
@@ -158,12 +184,22 @@ function renderGraph() {
       fill: colorFor(val)
     }));
 
-    svg.appendChild(makeSvg('text', {
+    const label = makeSvg('text', {
       class: 'cw-label',
       x: n.x,
       y: n.y
-    })).textContent = n.id;
+    });
+    label.textContent = n.id;
+    svg.appendChild(label);
   }
+
+  const phase = makeSvg('text', {
+    class: 'cw-label',
+    x: 210,
+    y: 300
+  });
+  phase.textContent = currentPhaseName();
+  svg.appendChild(phase);
 }
 
 function renderIncidence() {
@@ -173,36 +209,42 @@ function renderIncidence() {
   const values = columnResponse();
   const w = 10;
   const gap = 3;
-  const baseY = 170;
-  const scale = 44;
+  const baseY = 168;
+  const scale = CW.params.render?.incidence_scale ?? 110;
   const startX = 20;
 
   svg.appendChild(makeSvg('line', {
     class: 'cw-axis',
-    x1: 12, y1: baseY,
-    x2: 408, y2: baseY
+    x1: 12,
+    y1: baseY,
+    x2: 408,
+    y2: baseY
   }));
 
-  values.forEach((v, i) => {
-    const h = Math.abs(v) * scale;
+  values.forEach((raw, i) => {
+    const v = Math.tanh(raw * 0.9);
+    const h = Math.max(2, Math.abs(v) * scale);
     const x = startX + i * (w + gap);
     const y = v >= 0 ? baseY - h : baseY;
+
     svg.appendChild(makeSvg('rect', {
       class: 'cw-bar',
       x,
       y,
       width: w,
-      height: Math.max(2, h),
+      height: h,
       rx: 2,
-      fill: colorFor(v)
+      fill: colorFor(raw)
     }));
   });
 
-  svg.appendChild(makeSvg('text', {
+  const label = makeSvg('text', {
     class: 'cw-label',
     x: 210,
     y: 292
-  })).textContent = 'Mᵀu — 30 incidence columns';
+  });
+  label.textContent = 'Mᵀu — 30 incidence columns';
+  svg.appendChild(label);
 }
 
 function renderWitness() {
@@ -210,21 +252,23 @@ function renderWitness() {
   svg.innerHTML = '';
 
   const s = stationValues();
-  const k = 24;
+  const k = 30;
 
   const pts = {
-    A: { x: 210, y: 72 - k * s.A },
-    D: { x: 105 - 8 * s.D, y: 112 - k * s.D },
-    E: { x: 315 + 8 * s.E, y: 112 - k * s.E },
-    C: { x: 150 - 18 * s.C, y: 188 + k * s.C },
-    B: { x: 270 + 18 * s.B, y: 188 + k * s.B },
+    A: { x: 210, y: 78 - k * s.A },
+    D: { x: 105 - 10 * s.D, y: 118 - k * s.D },
+    E: { x: 315 + 10 * s.E, y: 118 - k * s.E },
+    C: { x: 150 - 20 * s.C, y: 190 + k * s.C },
+    B: { x: 270 + 20 * s.B, y: 190 + k * s.B },
     F: { x: 210, y: 258 + k * s.F }
   };
 
   svg.appendChild(makeSvg('line', {
     class: 'cw-axis',
-    x1: 210, y1: 42,
-    x2: 210, y2: 282
+    x1: 210,
+    y1: 42,
+    x2: 210,
+    y2: 282
   }));
 
   const surface = `M ${pts.D.x} ${pts.D.y}
@@ -248,8 +292,10 @@ function renderWitness() {
   for (const [a, b] of skeleton) {
     svg.appendChild(makeSvg('line', {
       class: 'cw-witness-line',
-      x1: pts[a].x, y1: pts[a].y,
-      x2: pts[b].x, y2: pts[b].y
+      x1: pts[a].x,
+      y1: pts[a].y,
+      x2: pts[b].x,
+      y2: pts[b].y
     }));
   }
 
@@ -262,18 +308,34 @@ function renderWitness() {
       fill: colorFor(s[name])
     }));
 
-    svg.appendChild(makeSvg('text', {
+    const label = makeSvg('text', {
       class: 'cw-label',
       x: p.x,
       y: p.y
-    })).textContent = name;
+    });
+    label.textContent = name;
+    svg.appendChild(label);
   }
+}
+
+function updateReadouts() {
+  const s = stationValues();
+  const maxu = Math.max(...CW.u.map(Math.abs));
+
+  setText('cw-phase', currentPhaseName());
+  setText('cw-time', CW.t.toFixed(2));
+  setText('cw-maxu', maxu.toFixed(3));
+  setText(
+    'cw-stations',
+    ['A', 'D', 'E', 'C', 'B', 'F'].map(k => `${k}:${(s[k] ?? 0).toFixed(2)}`).join('  ')
+  );
 }
 
 function renderAll() {
   renderGraph();
   renderIncidence();
   renderWitness();
+  updateReadouts();
 }
 
 function resetSimulation() {
