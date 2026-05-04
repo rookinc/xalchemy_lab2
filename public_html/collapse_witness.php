@@ -17,6 +17,53 @@ include __DIR__ . '/includes/site_header.php';
     </p>
   </section>
 
+  <section class="index-section thalean-layer-stack">
+    <div class="section-head">
+      <p class="section-kicker">Thalean layer stack</p>
+      <h2>Where this lens sits</h2>
+      <p class="section-text">
+        This renderer operates at the G15/G30 quotient-visible layer of the Thalean graph.
+        It does not yet render the full G60 thalion directly.
+      </p>
+    </div>
+
+    <div class="layer-stack-flow" aria-label="Thalean layer stack">
+      <div class="layer-stack-card layer-stack-card--root">
+        <span class="card-label">Full object</span>
+        <h3>G60 thalion</h3>
+        <p>AT4val[60,6], the full 60-state Thalean transport organism.</p>
+      </div>
+
+      <div class="layer-stack-arrow">→</div>
+
+      <div class="layer-stack-card">
+        <span class="card-label">Quotient</span>
+        <h3>G15 transport state</h3>
+        <p>The compressed row/sector register used by the live graph panel.</p>
+      </div>
+
+      <div class="layer-stack-arrow">→</div>
+
+      <div class="layer-stack-card">
+        <span class="card-label">Lift</span>
+        <h3>G30 incidence response</h3>
+        <p>The 30-column response computed from <code>Mᵀu</code>.</p>
+      </div>
+
+      <div class="layer-stack-arrow">→</div>
+
+      <div class="layer-stack-card">
+        <span class="card-label">Lens</span>
+        <h3>Six-station witness</h3>
+        <p>A quotient-visible collapse/rebound witness, rendered as a bubble analog.</p>
+      </div>
+    </div>
+
+    <p class="layer-stack-note">
+      In short: <strong>G15 is the readable shadow, G30 is the incidence response, and G60 is the full object casting the shadow.</strong>
+    </p>
+  </section>
+
   <section class="index-section renderer-priority-section">
     <div class="section-head renderer-head">
       <div>
@@ -32,6 +79,13 @@ include __DIR__ . '/includes/site_header.php';
     <div class="collapse-controls" aria-label="Collapse witness controls">
       <button id="cw-play" class="cw-button" type="button">Pause</button>
       <button id="cw-reset" class="cw-button" type="button">Reset</button>
+
+      <div class="phase-stepper" aria-label="Overlay phase stepper">
+        <button type="button" id="phase-prev" class="button-secondary">◀ Prev phase</button>
+        <button type="button" id="phase-live" class="button-secondary">Resume live</button>
+        <button type="button" id="phase-next" class="button-secondary">Next phase ▶</button>
+        <span id="phase-step-indicator" class="phase-step-indicator">Live phase</span>
+      </div>
 
       <label class="cw-control">
         Speed

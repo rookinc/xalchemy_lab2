@@ -461,3 +461,118 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+
+.phase-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.phase-step-indicator {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  padding: 0 0.85rem;
+  border: var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.phase-step-indicator.is-locked {
+  color: var(--text);
+  border-color: rgba(123, 194, 255, 0.45);
+  background: rgba(123, 194, 255, 0.08);
+}
+
+@media (max-width: 860px) {
+  .phase-stepper {
+    width: 100%;
+  }
+
+  .phase-step-indicator {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
+/* v0.9 Thalean layer stack */
+.thalean-layer-stack {
+  background: linear-gradient(
+    180deg,
+    rgba(123, 194, 255, 0.055),
+    rgba(255, 255, 255, 0.018)
+  );
+}
+
+.layer-stack-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.layer-stack-card {
+  padding: var(--space-3);
+  border: var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.layer-stack-card--root {
+  border-color: rgba(123, 194, 255, 0.42);
+  background: rgba(123, 194, 255, 0.07);
+}
+
+.layer-stack-card h3 {
+  margin: 0 0 var(--space-2);
+}
+
+.layer-stack-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.layer-stack-card code {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.08rem 0.28rem;
+  border-radius: 0.35rem;
+}
+
+.layer-stack-arrow {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-size: 1.45rem;
+  opacity: 0.9;
+}
+
+.layer-stack-note {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3);
+  border: var(--border);
+  border-radius: var(--radius-md);
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.layer-stack-note strong {
+  color: var(--text);
+}
+
+@media (max-width: 1000px) {
+  .layer-stack-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .layer-stack-arrow {
+    transform: rotate(90deg);
+    min-height: 1.5rem;
+  }
+}
