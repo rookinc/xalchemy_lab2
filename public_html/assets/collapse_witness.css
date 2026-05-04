@@ -576,3 +576,40 @@
     min-height: 1.5rem;
   }
 }
+
+/* v1.0 bubble morphology fidelity */
+.cw-bubble-lobe {
+  fill: rgba(123, 194, 255, 0.10);
+  stroke: rgba(123, 194, 255, 0.42);
+  stroke-width: 1.4;
+}
+
+.cw-bubble-throat-tube {
+  fill: rgba(235, 239, 247, 0.08);
+  stroke: rgba(235, 239, 247, 0.52);
+  stroke-width: 1.8;
+}
+
+.cw-bubble-collapse-disk {
+  fill: rgba(235, 239, 247, 0.10);
+  stroke: rgba(235, 239, 247, 0.38);
+  stroke-width: 1.4;
+}
+
+.cw-bubble-collapse-ring {
+  fill: none;
+  stroke: rgba(123, 194, 255, 0.62);
+  stroke-width: 2.2;
+}
+
+.cw-bubble-jet-core {
+  fill: rgba(123, 194, 255, 0.18);
+  stroke: rgba(123, 194, 255, 0.76);
+  stroke-width: 1.4;
+}
+
+.cw-bubble-phase-dot {
+  fill: rgba(235, 239, 247, 0.72);
+  stroke: rgba(13, 16, 22, 0.8);
+  stroke-width: 1;
+}

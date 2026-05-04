@@ -211,6 +211,8 @@ function currentStateObject() {
     lens: CW.lens?.name ?? null,
     mode: getMode(),
     phase: getMode() === "overlay" ? currentPhaseName() : "raw G15 quotient",
+    phase_lock: typeof isPhaseLocked === "function" ? isPhaseLocked() : false,
+    capture_mode: (typeof isPhaseLocked === "function" && isPhaseLocked()) ? "morphology_preset" : "live_graph_state",
     time: Number(CW.t.toFixed(3)),
     max_abs_u: Number(maxu.toFixed(6)),
     stations: Object.fromEntries(
@@ -563,58 +565,91 @@ function renderBubbleAnalog() {
   svg.appendChild(defs);
 
   const cx = 210;
-  const cy = 160;
+  const cy = 158;
 
-  // Live graph signal subtly biases the analog, but phase morphology controls the visual grammar.
   const liveTop = clamp(live.A ?? 0, -1, 1);
   const liveLeft = clamp(((live.D ?? 0) + (live.C ?? 0)) / 2, -1, 1);
   const liveRight = clamp(((live.E ?? 0) + (live.B ?? 0)) / 2, -1, 1);
   const liveBottom = clamp(live.F ?? 0, -1, 1);
 
-  const rx = 92 + 12 * m.round + 14 * m.rebound - 18 * m.throat;
-  const ry = 76 + 6 * m.round + 18 * m.rebound - 10 * m.throat;
+  const cup = m.cup;
+  const throat = m.throat;
+  const rebound = m.rebound;
+  const defect = m.defect;
+  const relax = m.relax;
 
-  const topY = cy - ry + m.crownIndent + 5 * liveTop;
-  const bottomY = cy + ry + m.jetExtend * 0.32 + 8 * liveBottom;
-  const leftX = cx - rx - 12 * m.cup + 5 * liveLeft;
-  const rightX = cx + rx + 12 * m.cup + 5 * liveRight;
+  const rx = 94 + 14 * m.round + 10 * rebound - 24 * throat;
+  const ry = 76 + 8 * m.round + 16 * rebound - 18 * throat;
 
-  const throatY = cy + 34 + m.throatDrop;
-  const throatHalf = Math.max(12, 48 - m.throatPinch * 0.72);
-
-  const shoulderY = cy - 48 - m.shoulderLift * 0.38;
   const asym = m.asymmetry;
+  const topY = cy - ry + m.crownIndent + 5 * liveTop;
+  const bottomY = cy + ry + m.jetExtend * 0.26 + 8 * liveBottom;
 
-  // Reference round cavity.
+  const shoulderY = cy - 42 - m.shoulderLift * 0.55;
+  const sideLobeY = cy + 8 + 16 * cup + 8 * throat;
+  const throatY = cy + 38 + m.throatDrop;
+
+  const leftShoulderX = cx - rx - 7 * cup + 5 * liveLeft - asym;
+  const rightShoulderX = cx + rx + 7 * cup + 5 * liveRight + asym * 0.35;
+
+  const waistHalf = Math.max(10, 55 - m.throatPinch * 0.86);
+  const lobeSpread = 70 + 24 * cup + 8 * throat;
+  const lobeRx = 34 + 26 * cup + 10 * throat;
+  const lobeRy = 26 + 18 * cup + 6 * throat;
+
+  // Reference original cavity.
   svg.appendChild(makeSvg('ellipse', {
     class: 'cw-bubble-ghost',
     cx,
     cy,
-    rx: 98,
+    rx: 100,
     ry: 78
   }));
 
-  // Pressure/defect patch.
-  if (m.defect > 0.05 || m.cup > 0.05) {
+  // Side lobes, most visible in cup/throat phases.
+  const lobeOpacity = clamp(0.15 + 0.65 * Math.max(cup, throat), 0, 0.85);
+  if (cup > 0.08 || throat > 0.08) {
     svg.appendChild(makeSvg('ellipse', {
-      class: 'cw-bubble-pressure',
-      cx: cx - 18 + asym,
-      cy: topY - 6,
-      rx: 22 + 18 * m.defect,
-      ry: 12 + 12 * m.cup,
-      transform: `rotate(-18 ${cx - 18 + asym} ${topY - 6})`
+      class: 'cw-bubble-lobe',
+      cx: cx - lobeSpread,
+      cy: sideLobeY,
+      rx: lobeRx,
+      ry: lobeRy,
+      opacity: lobeOpacity
+    }));
+    svg.appendChild(makeSvg('ellipse', {
+      class: 'cw-bubble-lobe',
+      cx: cx + lobeSpread,
+      cy: sideLobeY,
+      rx: lobeRx,
+      ry: lobeRy,
+      opacity: lobeOpacity
     }));
   }
 
-  // Smooth cavity contour. It becomes cup/throat/jet shaped through phase offsets.
+  // Pressure/defect patch.
+  if (defect > 0.05 || cup > 0.05) {
+    svg.appendChild(makeSvg('ellipse', {
+      class: 'cw-bubble-pressure',
+      cx: cx - 20 + asym,
+      cy: topY - 6,
+      rx: 18 + 24 * defect + 8 * cup,
+      ry: 10 + 12 * cup,
+      transform: `rotate(-18 ${cx - 20 + asym} ${topY - 6})`,
+      opacity: clamp(0.25 + 0.55 * Math.max(defect, cup), 0, 0.82)
+    }));
+  }
+
+  // Main cavity contour:
+  // rounded upper body → cup shoulders → pinched throat → lower closure/jet base.
   const d = [
-    `M ${leftX} ${cy}`,
-    `C ${leftX} ${shoulderY}, ${cx - 42 + asym} ${topY}, ${cx + asym} ${topY}`,
-    `C ${cx + 42 + asym} ${topY}, ${rightX} ${shoulderY}, ${rightX} ${cy}`,
-    `C ${rightX} ${cy + 34}, ${cx + throatHalf} ${throatY}, ${cx + throatHalf} ${throatY}`,
-    `C ${cx + 30} ${bottomY - 20}, ${cx + 10} ${bottomY}, ${cx} ${bottomY}`,
-    `C ${cx - 10} ${bottomY}, ${cx - 30} ${bottomY - 20}, ${cx - throatHalf} ${throatY}`,
-    `C ${cx - throatHalf} ${throatY}, ${leftX} ${cy + 34}, ${leftX} ${cy}`,
+    `M ${leftShoulderX} ${cy - 4}`,
+    `C ${leftShoulderX - 2 * cup} ${shoulderY}, ${cx - 48 + asym} ${topY}, ${cx + asym} ${topY}`,
+    `C ${cx + 48 + asym} ${topY}, ${rightShoulderX + 2 * cup} ${shoulderY}, ${rightShoulderX} ${cy - 4}`,
+    `C ${rightShoulderX - 2 * cup} ${cy + 36}, ${cx + lobeSpread * 0.62} ${sideLobeY + 18}, ${cx + waistHalf} ${throatY}`,
+    `C ${cx + 30} ${bottomY - 24}, ${cx + 10} ${bottomY}, ${cx} ${bottomY}`,
+    `C ${cx - 10} ${bottomY}, ${cx - 30} ${bottomY - 24}, ${cx - waistHalf} ${throatY}`,
+    `C ${cx - lobeSpread * 0.62} ${sideLobeY + 18}, ${leftShoulderX + 2 * cup} ${cy + 36}, ${leftShoulderX} ${cy - 4}`,
     'Z'
   ].join(' ');
 
@@ -623,32 +658,86 @@ function renderBubbleAnalog() {
     d
   }));
 
+  // Throat tube overlay in bridge phase.
+  if (throat > 0.10) {
+    const tubeHalf = Math.max(8, waistHalf * 0.46);
+    const tubeTop = throatY - 34;
+    const tubeBottom = throatY + 34 + 14 * rebound;
+    const tube = `M ${cx - tubeHalf} ${tubeTop}
+                  C ${cx - tubeHalf * 1.15} ${throatY - 8}, ${cx - tubeHalf * 1.15} ${throatY + 8}, ${cx - tubeHalf} ${tubeBottom}
+                  L ${cx + tubeHalf} ${tubeBottom}
+                  C ${cx + tubeHalf * 1.15} ${throatY + 8}, ${cx + tubeHalf * 1.15} ${throatY - 8}, ${cx + tubeHalf} ${tubeTop}
+                  Z`;
+
+    svg.appendChild(makeSvg('path', {
+      class: 'cw-bubble-throat-tube',
+      d: tube,
+      opacity: clamp(0.15 + 0.75 * throat, 0, 0.9)
+    }));
+  }
+
+  // Collapse disk/ring during the transition between throat and rebound.
+  const collapseDisk = Math.max(0, Math.min(throat, 1 - Math.abs(rebound - 0.25)));
+  if (throat > 0.35 || (rebound > 0.18 && rebound < 0.72)) {
+    svg.appendChild(makeSvg('ellipse', {
+      class: 'cw-bubble-collapse-disk',
+      cx,
+      cy: throatY + 30,
+      rx: 46 + 18 * throat,
+      ry: 10 + 5 * collapseDisk,
+      opacity: clamp(0.15 + 0.55 * collapseDisk, 0.15, 0.75)
+    }));
+
+    svg.appendChild(makeSvg('ellipse', {
+      class: 'cw-bubble-collapse-ring',
+      cx,
+      cy: throatY + 30,
+      rx: 50 + 20 * throat,
+      ry: 12 + 5 * collapseDisk,
+      opacity: clamp(0.12 + 0.62 * collapseDisk, 0.12, 0.82)
+    }));
+  }
+
   // Rebound jet feature.
-  if (m.rebound > 0.08) {
-    const jetTop = bottomY - 34;
-    const jetBottom = clamp(bottomY + 42 * m.rebound, 230, 304);
-    const jetW = 7 + 10 * m.rebound;
+  if (rebound > 0.08) {
+    const jetTop = bottomY - 40;
+    const jetBottom = clamp(bottomY + 48 * rebound, 232, 306);
+    const jetW = 7 + 12 * rebound;
+
     const jet = `M ${cx - jetW} ${jetTop}
-                 C ${cx - jetW * 0.7} ${jetTop - 16}, ${cx + jetW * 0.7} ${jetTop - 16}, ${cx + jetW} ${jetTop}
-                 L ${cx + jetW * 0.45} ${jetBottom}
-                 C ${cx + jetW * 0.2} ${jetBottom + 8}, ${cx - jetW * 0.2} ${jetBottom + 8}, ${cx - jetW * 0.45} ${jetBottom}
+                 C ${cx - jetW * 0.85} ${jetTop - 18}, ${cx + jetW * 0.85} ${jetTop - 18}, ${cx + jetW} ${jetTop}
+                 L ${cx + jetW * 0.48} ${jetBottom}
+                 C ${cx + jetW * 0.22} ${jetBottom + 8}, ${cx - jetW * 0.22} ${jetBottom + 8}, ${cx - jetW * 0.48} ${jetBottom}
                  Z`;
 
     svg.appendChild(makeSvg('path', {
       class: 'cw-bubble-jet',
-      d: jet
+      d: jet,
+      opacity: clamp(0.25 + 0.65 * rebound, 0, 0.95)
+    }));
+
+    svg.appendChild(makeSvg('rect', {
+      class: 'cw-bubble-jet-core',
+      x: cx - Math.max(2, jetW * 0.22),
+      y: jetTop - 4,
+      width: Math.max(4, jetW * 0.44),
+      height: Math.max(12, jetBottom - jetTop),
+      rx: 3,
+      opacity: clamp(0.12 + 0.48 * rebound, 0, 0.65)
     }));
   }
 
   // Flow arrows, strongest during fold/throat/rebound.
-  const flow = Math.max(m.cup, m.throat, m.rebound);
+  const flow = Math.max(cup, throat, rebound);
   if (flow > 0.08) {
     const arrows = [
-      [cx - 125, cy - 76, cx - 94, cy - 42],
-      [cx + 125, cy - 76, cx + 94, cy - 42],
-      [cx - 110, cy + 18, cx - 75, cy + 10],
-      [cx + 110, cy + 18, cx + 75, cy + 10],
-      [cx, cy - 112, cx, topY + 14]
+      [cx - 128, cy - 80, cx - 92, cy - 42],
+      [cx + 128, cy - 80, cx + 92, cy - 42],
+      [cx - 122, cy + 16, cx - 78, cy + 12],
+      [cx + 122, cy + 16, cx + 78, cy + 12],
+      [cx - 55, cy + 96, cx - 24, throatY + 24],
+      [cx + 55, cy + 96, cx + 24, throatY + 24],
+      [cx, cy - 112, cx, topY + 16]
     ];
 
     for (const [x1, y1, x2, y2] of arrows) {
@@ -658,26 +747,258 @@ function renderBubbleAnalog() {
         y1,
         x2,
         y2,
-        opacity: 0.25 + 0.55 * flow
+        opacity: 0.20 + 0.58 * flow
       }));
     }
   }
 
+  // Phase dots: source/crown and rebound pole.
+  svg.appendChild(makeSvg('circle', {
+    class: 'cw-bubble-phase-dot',
+    cx: cx + asym,
+    cy: topY,
+    r: 3.5 + 2.5 * defect,
+    opacity: clamp(0.35 + 0.55 * Math.max(defect, cup), 0.35, 0.95)
+  }));
+
+  svg.appendChild(makeSvg('circle', {
+    class: 'cw-bubble-phase-dot',
+    cx,
+    cy: bottomY,
+    r: 3.5 + 3.5 * rebound,
+    opacity: clamp(0.25 + 0.65 * rebound, 0.25, 0.95)
+  }));
+
   svg.appendChild(makeSvg('line', {
     class: 'cw-axis',
     x1: cx,
-    y1: 36,
+    y1: 34,
     x2: cx,
-    y2: 292
+    y2: 296
   }));
 
   const label = makeSvg('text', {
     class: 'cw-bubble-label',
     x: cx,
-    y: 302
+    y: 304
   });
   label.textContent = mode === 'overlay' ? currentPhaseName() : 'RAW QUOTIENT CONTOUR';
   svg.appendChild(label);
+}
+
+
+const PHASE_SEQUENCE = [
+  'latent round',
+  'defect selection',
+  'cup fold',
+  'throat bridge',
+  'rebound jet',
+  'relaxation'
+];
+
+const PHASE_PRESETS = {
+  'latent round': {
+    round: 1.0,
+    defect: 0.0,
+    cup: 0.05,
+    throat: 0.0,
+    rebound: 0.0,
+    relax: 0.15,
+    crownIndent: 0,
+    shoulderLift: 0,
+    throatPinch: 0,
+    throatDrop: 0,
+    jetExtend: 0,
+    reboundDome: 0,
+    asymmetry: 0
+  },
+  'defect selection': {
+    round: 0.78,
+    defect: 1.0,
+    cup: 0.12,
+    throat: 0.06,
+    rebound: 0.0,
+    relax: 0.12,
+    crownIndent: 18,
+    shoulderLift: 8,
+    throatPinch: 6,
+    throatDrop: 4,
+    jetExtend: 0,
+    reboundDome: 0,
+    asymmetry: 12
+  },
+  'cup fold': {
+    round: 0.52,
+    defect: 0.45,
+    cup: 1.0,
+    throat: 0.28,
+    rebound: 0.0,
+    relax: 0.08,
+    crownIndent: 8,
+    shoulderLift: 16,
+    throatPinch: 18,
+    throatDrop: 10,
+    jetExtend: 0,
+    reboundDome: 0,
+    asymmetry: 5
+  },
+  'throat bridge': {
+    round: 0.28,
+    defect: 0.18,
+    cup: 0.65,
+    throat: 1.0,
+    rebound: 0.0,
+    relax: 0.05,
+    crownIndent: 4,
+    shoulderLift: 12,
+    throatPinch: 42,
+    throatDrop: 18,
+    jetExtend: 10,
+    reboundDome: 0,
+    asymmetry: 0
+  },
+  'rebound jet': {
+    round: 0.22,
+    defect: 0.08,
+    cup: 0.34,
+    throat: 0.52,
+    rebound: 1.0,
+    relax: 0.0,
+    crownIndent: 2,
+    shoulderLift: 8,
+    throatPinch: 24,
+    throatDrop: 12,
+    jetExtend: 70,
+    reboundDome: 18,
+    asymmetry: 0
+  },
+  'relaxation': {
+    round: 0.78,
+    defect: 0.0,
+    cup: 0.10,
+    throat: 0.0,
+    rebound: 0.10,
+    relax: 1.0,
+    crownIndent: 0,
+    shoulderLift: 0,
+    throatPinch: 0,
+    throatDrop: 0,
+    jetExtend: 0,
+    reboundDome: 6,
+    asymmetry: 0
+  }
+};
+
+let phaseLockIndex = null;
+
+function phaseTitleCase(name) {
+  return String(name || '')
+    .split(' ')
+    .map(part => part ? part[0].toUpperCase() + part.slice(1) : part)
+    .join(' ');
+}
+
+function phaseIndexFromName(name) {
+  const key = String(name || '').trim().toLowerCase();
+  const idx = PHASE_SEQUENCE.indexOf(key);
+  return idx >= 0 ? idx : 0;
+}
+
+function isPhaseLocked() {
+  return phaseLockIndex !== null;
+}
+
+function phasePreset(name) {
+  const key = String(name || '').trim().toLowerCase();
+  return { ...(PHASE_PRESETS[key] || PHASE_PRESETS['latent round']) };
+}
+
+function clickButtonByExactLabel(label) {
+  const buttons = Array.from(document.querySelectorAll('button'));
+  const btn = buttons.find(el => el.textContent.trim().toLowerCase() === label.toLowerCase());
+  if (btn) btn.click();
+}
+
+function ensurePausedForStepCapture() {
+  clickButtonByExactLabel('Pause');
+}
+
+function resumeIfPaused() {
+  clickButtonByExactLabel('Play');
+}
+
+const liveCurrentPhaseName = currentPhaseName;
+const livePhaseMorphology = phaseMorphology;
+
+currentPhaseName = function() {
+  if (isPhaseLocked()) {
+    return PHASE_SEQUENCE[phaseLockIndex];
+  }
+  return liveCurrentPhaseName();
+};
+
+phaseMorphology = function() {
+  if (isPhaseLocked()) {
+    return phasePreset(PHASE_SEQUENCE[phaseLockIndex]);
+  }
+  return livePhaseMorphology();
+};
+
+function updatePhaseStepper() {
+  const indicator = document.getElementById('phase-step-indicator');
+  const liveBtn = document.getElementById('phase-live');
+  if (!indicator) return;
+
+  if (isPhaseLocked()) {
+    indicator.textContent = `Locked preset: ${phaseTitleCase(PHASE_SEQUENCE[phaseLockIndex])}`;
+    indicator.classList.add('is-locked');
+    if (liveBtn) liveBtn.disabled = false;
+  } else {
+    indicator.textContent = `Live: ${phaseTitleCase(liveCurrentPhaseName())}`;
+    indicator.classList.remove('is-locked');
+    if (liveBtn) liveBtn.disabled = true;
+  }
+}
+
+function bindPhaseStepper() {
+  const prev = document.getElementById('phase-prev');
+  const next = document.getElementById('phase-next');
+  const live = document.getElementById('phase-live');
+
+  if (!prev || prev.dataset.bound === '1') return;
+
+  prev.dataset.bound = '1';
+  if (next) next.dataset.bound = '1';
+  if (live) live.dataset.bound = '1';
+
+  prev.addEventListener('click', () => {
+    ensurePausedForStepCapture();
+    if (phaseLockIndex === null) {
+      phaseLockIndex = phaseIndexFromName(liveCurrentPhaseName());
+    }
+    phaseLockIndex = (phaseLockIndex + PHASE_SEQUENCE.length - 1) % PHASE_SEQUENCE.length;
+    renderAll();
+  });
+
+  if (next) {
+    next.addEventListener('click', () => {
+      ensurePausedForStepCapture();
+      if (phaseLockIndex === null) {
+        phaseLockIndex = phaseIndexFromName(liveCurrentPhaseName());
+      }
+      phaseLockIndex = (phaseLockIndex + 1) % PHASE_SEQUENCE.length;
+      renderAll();
+    });
+  }
+
+  if (live) {
+    live.addEventListener('click', () => {
+      phaseLockIndex = null;
+      updatePhaseStepper();
+      renderAll();
+      resumeIfPaused();
+    });
+  }
 }
 
 function updateReadouts() {
@@ -685,8 +1006,9 @@ function updateReadouts() {
   const maxu = Math.max(...CW.u.map(Math.abs));
 
   const mode = getMode();
+  const locked = typeof isPhaseLocked === "function" && isPhaseLocked();
   setText('cw-phase', mode === 'overlay' ? currentPhaseName() : 'raw G15 quotient');
-  setText('cw-mode-readout', mode === 'overlay' ? 'collapse overlay' : 'raw G15');
+  setText('cw-mode-readout', locked ? 'locked preset' : (mode === 'overlay' ? 'collapse overlay' : 'raw G15'));
   setText('cw-time', CW.t.toFixed(2));
   setText('cw-maxu', maxu.toFixed(3));
   setText(
@@ -696,11 +1018,13 @@ function updateReadouts() {
 }
 
 function renderAll() {
+  bindPhaseStepper();
   renderGraph();
   renderIncidence();
   renderWitness();
   renderBubbleAnalog();
   updateReadouts();
+  updatePhaseStepper();
   updateStateJson();
 }
 

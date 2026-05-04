@@ -173,7 +173,7 @@ include __DIR__ . '/includes/site_header.php';
           <p>
             The left panel is the 15-row transport graph. The middle panel is the lifted 30-column incidence response
             computed from <code>Mᵀu</code>. The third panel is the six-station witness quotient:
-            <strong>A</strong> crown, <strong>D/E</strong> shoulders, <strong>C/B</strong> throat, and <strong>F</strong> rebound pole. The fourth panel renders those stations as a smooth bubble/cavity analog.
+            <strong>A</strong> crown, <strong>D/E</strong> shoulders, <strong>C/B</strong> throat, and <strong>F</strong> rebound pole. The fourth panel renders those stations as a smooth bubble/cavity analog: rounded cavity, cup fold, throat bridge, collapse disk, and rebound jet.
           </p>
         </div>
 
