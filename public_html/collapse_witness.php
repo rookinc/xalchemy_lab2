@@ -84,7 +84,6 @@ include __DIR__ . '/includes/site_header.php';
         <button type="button" id="phase-prev" class="button-secondary">◀ Prev phase</button>
         <button type="button" id="phase-live" class="button-secondary">Resume live</button>
         <button type="button" id="phase-next" class="button-secondary">Next phase ▶</button>
-        <span id="phase-step-indicator" class="phase-step-indicator">Live phase</span>
       </div>
 
       <label class="cw-control">
