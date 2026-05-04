@@ -1,226 +1,12 @@
-/* --------------------------------------------------------------------------
-   Research page DOM alignment for the new Aletheos chrome.
-   This file loads after thalean_graph.css, so it deliberately reasserts
-   the new public-site palette and layout.
--------------------------------------------------------------------------- */
-
-:root {
-  --bg: #f4efe3;
-  --bg-deep: #e6ddc9;
-  --paper: #fffaf0;
-  --paper-warm: #f8f0de;
-  --panel: rgba(255, 250, 240, 0.86);
-  --panel-solid: #fffaf0;
-  --panel-alt: rgba(246, 237, 218, 0.9);
-  --text: #272117;
-  --muted: #6e6250;
-  --muted-2: #8f8169;
-  --line: rgba(94, 72, 35, 0.22);
-  --line-strong: rgba(94, 72, 35, 0.42);
-  --accent: #8b641d;
-  --accent-dark: #563b10;
-  --accent-soft: rgba(139, 100, 29, 0.12);
-  --accent-blue: #315f73;
-  --shadow: 0 28px 80px rgba(73, 51, 18, 0.14);
-  --radius-lg: 28px;
-  --radius-md: 18px;
-  --radius-sm: 12px;
-  --max-width: 1120px;
-  --border: 1px solid var(--line);
-  --font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-display: "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
-}
-
-html {
-  color-scheme: light;
-}
-
-body {
-  background:
-    radial-gradient(circle at 16% 10%, rgba(49, 95, 115, 0.12), transparent 28rem),
-    radial-gradient(circle at 82% 2%, rgba(139, 100, 29, 0.14), transparent 25rem),
-    radial-gradient(circle at 50% 100%, rgba(139, 100, 29, 0.10), transparent 34rem),
-    linear-gradient(180deg, var(--bg), var(--bg-deep)) !important;
-  color: var(--text) !important;
-  font-family: var(--font-body);
-}
-
-/* Header repair */
-
-.global-header {
-  background: rgba(244, 239, 227, 0.88) !important;
-  border-bottom: var(--border) !important;
-  backdrop-filter: blur(18px);
-}
-
-.brand-mark,
-.brand-mark:visited {
-  color: var(--text) !important;
-}
-
-.brand-mark__sigil {
-  color: var(--accent-dark) !important;
-  border-color: var(--line-strong) !important;
-  background:
-    radial-gradient(circle, rgba(139, 100, 29, 0.16), rgba(139, 100, 29, 0.035) 62%),
-    rgba(255, 255, 255, 0.5) !important;
-}
-
-.brand-mark__text {
-  color: var(--text) !important;
-}
-
-.global-nav__link,
-.global-nav__link:visited {
-  color: var(--muted) !important;
-}
-
-.global-nav__link:hover,
-.global-nav__link:focus-visible {
-  color: var(--text) !important;
-  border-color: var(--line) !important;
-  background: rgba(255, 255, 255, 0.5) !important;
-}
-
-/* Main shell repair */
-
-.site-shell.research-page {
-  width: min(100% - 2rem, var(--max-width)) !important;
-  margin: 0 auto !important;
-  padding: var(--space-6, 3.4rem) 0 var(--space-7, 5.2rem) !important;
-}
-
-/* Hero repair */
-
-.research-page .hero {
-  color: var(--text) !important;
-  background:
-    linear-gradient(135deg, rgba(139, 100, 29, 0.12), transparent 38%),
-    radial-gradient(circle at 78% 28%, rgba(49, 95, 115, 0.12), transparent 20rem),
-    rgba(255, 250, 240, 0.78) !important;
-  border: var(--border) !important;
-  box-shadow: var(--shadow) !important;
-}
-
-.research-page .hero-grid {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr) !important;
-  align-items: center !important;
-  gap: clamp(2rem, 6vw, 5rem) !important;
-}
+/* Research page alignment for the Aletheos public chrome. */
 
 .research-page .hero-title {
   max-width: 10ch;
-  color: var(--text) !important;
-  font-family: var(--font-display) !important;
-  font-size: clamp(3rem, 8vw, 6.2rem) !important;
-  font-weight: 650 !important;
-  letter-spacing: -0.065em !important;
-  line-height: 0.95 !important;
-}
-
-.research-page .hero-text {
-  color: var(--text) !important;
-}
-
-.research-page .hero-text--secondary {
-  color: var(--muted) !important;
-}
-
-.research-page .eyebrow,
-.research-page .section-kicker,
-.research-page .card-label {
-  color: var(--accent) !important;
 }
 
 .research-page strong {
-  color: var(--accent-dark) !important;
+  color: var(--accent-dark);
   font-weight: 800;
-}
-
-.research-page .button--primary {
-  border: 1px solid rgba(86, 59, 16, 0.84) !important;
-  background: linear-gradient(180deg, rgba(139, 100, 29, 0.92), rgba(86, 59, 16, 0.92)) !important;
-  color: #fffaf0 !important;
-}
-
-.research-page .button--secondary {
-  border: var(--border) !important;
-  background: rgba(255, 255, 255, 0.52) !important;
-  color: var(--muted) !important;
-}
-
-.research-page .button--secondary:hover,
-.research-page .button--secondary:focus-visible {
-  color: var(--text) !important;
-  border-color: var(--line-strong) !important;
-}
-
-/* Orbital motif repair */
-
-.research-page .hero-emblem {
-  display: grid !important;
-  justify-items: center !important;
-  gap: var(--space-3, 1.2rem) !important;
-}
-
-.research-page .orbital-mark {
-  width: min(100%, 22rem) !important;
-  max-width: 22rem !important;
-}
-
-.research-page .orbital-mark__ring {
-  border-color: rgba(94, 72, 35, 0.34) !important;
-}
-
-.research-page .orbital-mark__ring--middle {
-  border-color: rgba(49, 95, 115, 0.36) !important;
-}
-
-.research-page .orbital-mark__point {
-  background: var(--accent) !important;
-  box-shadow: 0 0 24px rgba(139, 100, 29, 0.36) !important;
-}
-
-.research-page .orbital-mark__point--two {
-  background: var(--accent-blue) !important;
-  box-shadow: 0 0 24px rgba(49, 95, 115, 0.26) !important;
-}
-
-.research-page .emblem-caption {
-  color: var(--muted-2) !important;
-}
-
-/* Section/card repair */
-
-.research-page .index-section {
-  color: var(--text) !important;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.28)),
-    var(--panel) !important;
-  border: var(--border) !important;
-  box-shadow: 0 18px 58px rgba(73, 51, 18, 0.10) !important;
-}
-
-.research-page .section-head h2,
-.research-page h1,
-.research-page h2,
-.research-page h3 {
-  color: var(--text) !important;
-  font-family: var(--font-display) !important;
-}
-
-.research-page .section-text,
-.research-page .muted,
-.research-page p,
-.research-page li {
-  color: var(--muted) !important;
-}
-
-.research-page .hero-text,
-.research-page .index-card h3,
-.research-page .principle-card h3 {
-  color: var(--text) !important;
 }
 
 .research-overview .section-text {
@@ -232,147 +18,16 @@ body {
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-3, 1.2rem);
+  gap: var(--space-3);
 }
 
-.research-page .principle-card,
-.research-page .index-card {
-  color: var(--text) !important;
-  border: var(--border) !important;
-  background:
-    radial-gradient(circle at 18% 0%, rgba(139, 100, 29, 0.10), transparent 13rem),
-    rgba(255, 255, 255, 0.48) !important;
+.research-page .index-card p + p {
+  margin-top: 0.75rem;
 }
 
-.research-page .feature-card {
-  background:
-    radial-gradient(circle at 18% 0%, rgba(49, 95, 115, 0.11), transparent 13rem),
-    linear-gradient(180deg, rgba(139, 100, 29, 0.08), rgba(255, 255, 255, 0.55)) !important;
-}
-
-/* Data layout */
-
-.status-layout {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: minmax(12rem, 0.28fr) minmax(0, 1fr);
-  gap: var(--space-4, 1.7rem);
-  align-items: start;
-}
-
-.status-pill,
-.count-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: fit-content;
-  min-height: 2.3rem;
-  padding: 0 0.9rem;
-  border: var(--border) !important;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.52) !important;
-  color: var(--muted) !important;
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.status-pass {
-  border-color: rgba(61, 122, 76, 0.35) !important;
-  background: rgba(61, 122, 76, 0.10) !important;
-  color: #385f35 !important;
-}
-
-.status-fail {
-  border-color: rgba(155, 63, 47, 0.36) !important;
-  background: rgba(155, 63, 47, 0.10) !important;
-  color: #7a2d22 !important;
-}
-
-.status-loading {
-  border-color: var(--line) !important;
-  background: rgba(255, 255, 255, 0.52) !important;
-  color: var(--muted) !important;
-}
-
-.research-kv {
-  display: grid;
-  grid-template-columns: minmax(8rem, 0.42fr) minmax(0, 1fr);
-  gap: 0.7rem 1rem;
-  color: var(--muted);
-  font-size: 0.95rem;
-}
-
-.research-kv div:nth-child(odd) {
+.doi-line {
   color: var(--muted-2) !important;
-}
-
-.research-kv div:nth-child(even) {
-  color: var(--text) !important;
-  overflow-wrap: anywhere;
-}
-
-.formula-stack {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.formula {
-  padding: 0.85rem 0.95rem;
-  border: var(--border) !important;
-  border-radius: var(--radius-sm, 12px);
-  background:
-    linear-gradient(180deg, rgba(139, 100, 29, 0.08), rgba(255, 255, 255, 0.42)) !important;
-  color: var(--accent-dark) !important;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 0.94rem;
-  overflow-x: auto;
-}
-
-.count-row {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  margin-bottom: var(--space-4, 1.7rem);
-}
-
-.claims-grid {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: var(--space-3, 1.2rem);
-}
-
-.claim-list,
-.artifact-list {
-  margin: 0;
-  padding-left: 1.1rem;
-  color: var(--muted) !important;
-}
-
-.claim-list li,
-.artifact-list li {
-  margin: 0.45rem 0;
-}
-
-.link-list a,
-.artifact-list a,
-.research-page a:not(.button):not(.brand-mark):not(.global-nav__link) {
-  color: var(--accent-dark) !important;
-  border-bottom: 1px solid rgba(94, 72, 35, 0.28);
-}
-
-.link-list a:hover,
-.artifact-list a:hover,
-.link-list a:focus-visible,
-.artifact-list a:focus-visible {
-  color: var(--text) !important;
-  outline: none;
+  font-size: 0.9rem !important;
 }
 
 .artifacts-grid {
@@ -380,32 +35,42 @@ body {
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-3, 1.2rem);
-}
-
-.compact-list {
-  font-size: 0.9rem;
+  gap: var(--space-3);
 }
 
 .paper-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-/* Footer repair */
-
-.site-footer {
-  color: var(--muted-2) !important;
-  border-top: var(--border) !important;
+.artifact-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
 }
 
-.site-footer a {
-  color: var(--muted) !important;
+.artifact-list li {
+  margin: 0.45rem 0;
 }
 
-/* Responsive */
+.link-list a,
+.artifact-list a {
+  color: var(--accent-dark);
+  border-bottom: 1px solid rgba(94, 72, 35, 0.28);
+}
+
+.link-list a:hover,
+.artifact-list a:hover,
+.link-list a:focus-visible,
+.artifact-list a:focus-visible {
+  color: var(--text);
+  outline: none;
+}
+
+.compact-list {
+  font-size: 0.9rem;
+}
 
 @media (max-width: 1080px) {
-  .claims-grid,
   .artifacts-grid,
   .paper-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -413,30 +78,18 @@ body {
 }
 
 @media (max-width: 860px) {
-  .research-page .hero-grid,
-  .prose-grid,
-  .status-layout {
-    grid-template-columns: 1fr !important;
-  }
-
-  .research-page .hero-emblem {
-    display: none !important;
+  .prose-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 640px) {
-  .site-shell.research-page {
-    width: min(100% - 1rem, var(--max-width)) !important;
-    padding-top: var(--space-5, 2.4rem) !important;
-  }
-
-  .claims-grid,
   .artifacts-grid,
   .paper-grid {
     grid-template-columns: 1fr;
   }
+}
 
-  .research-kv {
-    grid-template-columns: 1fr;
-  }
+.section-text--spaced {
+  margin-top: 1rem;
 }

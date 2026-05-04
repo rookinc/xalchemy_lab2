@@ -1,0 +1,21 @@
+.labs-page .hero-title {
+  max-width: 12ch;
+}
+
+.labs-page .section-text {
+  max-width: 62rem;
+}
+
+.lab-route-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lab-route-grid .index-card {
+  min-height: 14rem;
+}
+
+@media (max-width: 860px) {
+  .lab-route-grid {
+    grid-template-columns: 1fr;
+  }
+}

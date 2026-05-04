@@ -1,7 +1,7 @@
 <?php
 $page_title = 'Research — The Thalean Graph';
-$page_description = 'Aletheos research page for the Thalean Graph AT4val[60,6], theorem artifacts, verification records, and public audit surface.';
-$page_css = ['assets/index.css', 'assets/thalean_graph.css', 'assets/research_page.css'];
+$page_description = 'Aletheos research page for the Thalean Graph AT4val[60,6], companion papers, canonical artifacts, and public research context.';
+$page_css = ['assets/index.css', 'assets/research_page.css'];
 
 include __DIR__ . '/includes/head.php';
 include __DIR__ . '/includes/site_header.php';
@@ -14,18 +14,39 @@ include __DIR__ . '/includes/site_header.php';
     <div class="hero-grid">
       <div class="hero-copy">
         <h1 class="hero-title">The Thalean Graph.</h1>
+
         <p class="hero-text">
-          A finite research object for studying relation, observation, structure,
-          and traceable action.
+          This project started with a conversation with AI.
         </p>
+
         <p class="hero-text hero-text--secondary">
-          The current public witness is identified with <strong>AT4val[60,6]</strong>.
-          It gathers theorem artifacts, verification records, companion papers,
-          and experimental rendering stages into one inspectable surface.
+          At first, the question was not about graph theory. It was about time,
+          memory, consciousness, and how difficult ideas can be explored without
+          pretending they are already proven.
+        </p>
+
+        <p class="hero-text hero-text--secondary">
+          Those questions led somewhere unexpected: toward a highly specific mathematical
+          object. It is a graph, a collection of vertices and edges, that appears useful
+          as a shared test object for ideas about spacetime, quantum structure,
+          information, and intelligent systems.
+        </p>
+
+        <p class="hero-text hero-text--secondary">
+          We have named the form <strong>The Thalean Graph</strong> after Thales of
+          Miletus, a pre-Socratic philosopher associated with looking for order beneath
+          appearances. The name points to the spirit of the work: begin with wonder and
+          possibility, then ask what holds true.
+        </p>
+
+        <p class="hero-text hero-text--secondary">
+          The form emerged from the research and has been mapped to the previously
+          underived graph catalogued by the House of Graphs as Graph52002, and identified
+          in the GraphSym census as AT4val[60,6].
         </p>
 
         <div class="hero-actions" aria-label="Research actions">
-          <a class="button button--primary" href="#proof-status">View proof status</a>
+          <a class="button button--primary" href="#papers">Read the papers</a>
           <a class="button button--secondary" href="#artifacts">Browse artifacts</a>
         </div>
       </div>
@@ -47,58 +68,107 @@ include __DIR__ . '/includes/site_header.php';
   <section id="overview" class="index-section research-overview">
     <div class="section-head">
       <p class="section-kicker">Overview</p>
-      <h2>A theorem-facing public surface.</h2>
+      <h2>What the graph discovered.</h2>
       <p class="section-text">
-        This page presents a finite witness assembled from companion results.
-        Starting from a local transport rule on the flag structure of the
-        combinatorial dodecahedron, one obtains a quotient tower
-        <strong>G60 → G30 → G15</strong>, with <strong>G15 ≅ L(Petersen)</strong>,
-        together with a 15 × 30 sector-edge incidence matrix
-        <strong>M</strong> satisfying the exact quadratic law
-        <strong>Q = MMᵀ = A³ + 2A² + 2I</strong>.
+        The central discovery is that a finite transport construction on the flag
+        structure of the combinatorial dodecahedron produces a layered object:
+        a 60-state graph, a 30-state incidence response, and a 15-state quotient
+        where the structure becomes legible.
+      </p>
+      <p class="section-text section-text--spaced">
+        In that quotient-visible layer, the sector-edge incidence matrix
+        <strong>M</strong> satisfies the exact relation
+        <strong>Q = MMᵀ = A³ + 2A² + 2I</strong>. This gives the project a
+        concrete audit point: the graph is not only visually suggestive, but
+        algebraically constrained.
       </p>
     </div>
 
     <div class="prose-grid">
       <article class="principle-card">
-        <span class="card-label">Algebraic witness</span>
-        <h3>Exact quadratic law</h3>
+        <span class="card-label">Discovery</span>
+        <h3>Relation has structure</h3>
         <p>
-          The matrix identity gives one side of the witness: a finite,
-          inspectable algebraic relation carried by the public artifacts.
+          The graph gives a finite way to study how local transport, incidence,
+          overlap, and observation can organize into a coherent object.
         </p>
       </article>
 
       <article class="principle-card">
-        <span class="card-label">Internal grammar</span>
-        <h3>Chamber structure</h3>
+        <span class="card-label">Witness</span>
+        <h3>The object leaves traces</h3>
         <p>
-          The same matrix decomposes into a rigid chamber grammar with canonical
-          block and row classes.
+          Its matrix identities, quotient layers, and verifier artifacts make the
+          structure inspectable instead of merely asserted.
         </p>
       </article>
 
       <article class="principle-card">
-        <span class="card-label">Finite surface</span>
-        <h3>Public audit</h3>
+        <span class="card-label">Aletheos</span>
+        <h3>A path toward accountability</h3>
         <p>
-          The page gathers theorem data, verifier outputs, cocycle records, and
-          linked checkers into one theorem-facing surface.
+          The long-term question is whether structures like this can help model
+          traceable action in AI systems, privacy-preserving computation, and
+          human-technology trust.
         </p>
       </article>
     </div>
   </section>
 
-  <section class="index-section papers-section">
+  <section class="index-section">
+    <div class="section-head">
+      <p class="section-kicker">Key relation</p>
+      <h2>The current theorem-facing identity.</h2>
+      <p class="section-text">
+        The central finite witness uses a 15 × 30 sector-edge incidence matrix
+        <strong>M</strong>. The associated quadratic form satisfies the exact
+        identity <strong>Q = MMᵀ = A³ + 2A² + 2I</strong> on the relevant
+        overlap graph. This page does not attempt to reproduce the proof inline;
+        it points to the papers and artifacts where the structure can be
+        inspected directly.
+      </p>
+    </div>
+
+    <div class="card-grid">
+      <article class="index-card feature-card">
+        <span class="card-label">Matrix</span>
+        <h3>Q = MMᵀ</h3>
+        <p>
+          The witness begins with a finite incidence matrix and its Gram-style
+          quadratic shadow.
+        </p>
+      </article>
+
+      <article class="index-card">
+        <span class="card-label">Graph</span>
+        <h3>A³ + 2A² + 2I</h3>
+        <p>
+          The same object is expressed through the adjacency structure of the
+          overlap graph.
+        </p>
+      </article>
+
+      <article class="index-card">
+        <span class="card-label">Inspection</span>
+        <h3>Public artifacts</h3>
+        <p>
+          JSON records and checker scripts remain available for readers who want
+          to inspect the data directly.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <section id="papers" class="index-section papers-section">
     <div class="section-head">
       <p class="section-kicker">Companion papers</p>
-      <h2>Four documents around the theorem surface.</h2>
+      <h2>Four documents around the research surface.</h2>
       <p class="section-text">
-        The March 2026 paper establishes the quotient-core theorem and quadratic
-        identity. The April 2026 paper develops the chamber grammar. The witness
-        note gathers the finite object into one unified theorem-facing surface.
-        The CMB note is a separate exploratory benchmark program inspired by the
-        broader template reservoir.
+        These documents form the current paper trail around the Thalean Graph
+        work. The first papers develop the quotient-core construction and chamber
+        grammar. The witness note gathers the finite object into a unified
+        theorem-facing surface. The CMB note is a separate exploratory benchmark
+        program inspired by the broader template reservoir.
       </p>
     </div>
 
@@ -106,156 +176,51 @@ include __DIR__ . '/includes/site_header.php';
       <a class="index-card feature-card" href="https://zenodo.org/records/19043356" target="_blank" rel="noopener">
         <span class="card-label">March 2026</span>
         <h3>Dodecahedral Transport</h3>
-        <p>DOI: 10.5281/zenodo.19043356</p>
+        <p>
+          Sector geometry on L(Petersen) and the identity
+          MMᵀ = A³ + 2A² + 2I.
+        </p>
+        <p class="doi-line">DOI: 10.5281/zenodo.19043356</p>
       </a>
 
       <a class="index-card" href="https://zenodo.org/records/19520206" target="_blank" rel="noopener">
         <span class="card-label">April 2026</span>
         <h3>Chamber Grammar</h3>
-        <p>DOI: 10.5281/zenodo.19520206</p>
+        <p>
+          The internal chamber grammar of the Thalean sector matrix.
+        </p>
+        <p class="doi-line">DOI: 10.5281/zenodo.19520206</p>
       </a>
 
       <a class="index-card" href="https://zenodo.org/records/19542052" target="_blank" rel="noopener">
         <span class="card-label">Witness note</span>
         <h3>Thalean Witness</h3>
-        <p>DOI: 10.5281/zenodo.19542052</p>
+        <p>
+          A unified finite witness surface for the current theorem-facing object.
+        </p>
+        <p class="doi-line">DOI: 10.5281/zenodo.19542052</p>
       </a>
 
       <a class="index-card" href="https://doi.org/10.5281/zenodo.19561286" target="_blank" rel="noopener">
         <span class="card-label">CMB note</span>
         <h3>Structured Benchmark</h3>
-        <p>DOI: 10.5281/zenodo.19561286</p>
+        <p>
+          An exploratory mixed structured template for a TE-dominated middle-band
+          CMB benchmark.
+        </p>
+        <p class="doi-line">DOI: 10.5281/zenodo.19561286</p>
       </a>
-    </div>
-  </section>
-
-  <section id="proof-status" class="index-section proof-status-section">
-    <div class="section-head">
-      <p class="section-kicker">Proof status</p>
-      <h2>Verification artifacts.</h2>
-      <p class="section-text" id="statusSummary">
-        Reading verification artifacts…
-      </p>
-    </div>
-
-    <div class="status-layout">
-      <div id="overallPill" class="status-pill status-loading">Loading</div>
-
-      <div class="kv research-kv">
-        <div>Canonical object</div><div id="canonicalObject">theorem/theorem_object.json</div>
-        <div>Witness provenance</div><div id="witnessStatus">loading…</div>
-        <div>Cocycle layer</div><div id="cocycleStatus">loading…</div>
-        <div>Generated report</div><div id="reportTimestamp">loading…</div>
-      </div>
-    </div>
-  </section>
-
-  <section id="theorem-snapshot" class="index-section theorem-snapshot-section">
-    <div class="section-head">
-      <p class="section-kicker">Snapshot</p>
-      <h2>Core theorem structure.</h2>
-      <p class="section-text">
-        The current witness is presented through matrix shape, identities,
-        overlap geometry, and cocycle data.
-      </p>
-    </div>
-
-    <div class="card-grid snapshot-grid">
-      <article class="index-card">
-        <span class="card-label">Witness</span>
-        <h3>Summary</h3>
-        <div class="kv research-kv">
-          <div>M shape</div><div id="mShape">loading…</div>
-          <div>Q shape</div><div id="qShape">loading…</div>
-          <div>Row sums</div><div id="rowSums">loading…</div>
-          <div>Column sums</div><div id="colSums">loading…</div>
-          <div>Overlap spectrum</div><div id="overlapSpectrum">loading…</div>
-        </div>
-      </article>
-
-      <article class="index-card feature-card">
-        <span class="card-label">Identities</span>
-        <h3>Core laws</h3>
-        <div class="formula-stack">
-          <div class="formula">Q = MMᵀ</div>
-          <div class="formula">Q = A³ + 2A² + 2I</div>
-          <div class="formula">off-diagonal overlaps = {4, 5, 9}</div>
-          <div class="formula">three-angle geometry = {37/112, −23/112, −38/112}</div>
-        </div>
-      </article>
-
-      <article class="index-card">
-        <span class="card-label">Cocycle</span>
-        <h3>Transport layer</h3>
-        <div class="kv research-kv">
-          <div>Parallel edges</div><div id="parallelCount">loading…</div>
-          <div>Crossed edges</div><div id="crossedCount">loading…</div>
-          <div>Minimal support</div><div id="minimalSupport">loading…</div>
-          <div>Distinct minima</div><div id="distinctMinima">loading…</div>
-          <div>Odd-holonomy witnesses</div><div id="oddCycleCount">loading…</div>
-        </div>
-      </article>
-    </div>
-  </section>
-
-  <section id="verified-claims" class="index-section verified-claims-section">
-    <div class="section-head">
-      <p class="section-kicker">Verified claims</p>
-      <h2>Machine-readable claim groups.</h2>
-      <p class="section-text">
-        These lists are populated from the verification artifacts used by the
-        public theorem surface.
-      </p>
-    </div>
-
-    <div class="count-row">
-      <span class="count-pill" id="countWitness">witness: —</span>
-      <span class="count-pill" id="countGraph">graph: —</span>
-      <span class="count-pill" id="countAlgebra">algebra: —</span>
-      <span class="count-pill" id="countGeometry">geometry: —</span>
-      <span class="count-pill" id="countCocycle">cocycle: —</span>
-    </div>
-
-    <div class="claims-grid">
-      <article class="index-card">
-        <span class="card-label">Claims</span>
-        <h3>Witness</h3>
-        <ul id="claimsWitness" class="claim-list"></ul>
-      </article>
-
-      <article class="index-card">
-        <span class="card-label">Claims</span>
-        <h3>Graph</h3>
-        <ul id="claimsGraph" class="claim-list"></ul>
-      </article>
-
-      <article class="index-card">
-        <span class="card-label">Claims</span>
-        <h3>Algebra</h3>
-        <ul id="claimsAlgebra" class="claim-list"></ul>
-      </article>
-
-      <article class="index-card">
-        <span class="card-label">Claims</span>
-        <h3>Geometry</h3>
-        <ul id="claimsGeometry" class="claim-list"></ul>
-      </article>
-
-      <article class="index-card">
-        <span class="card-label">Claims</span>
-        <h3>Cocycle</h3>
-        <ul id="claimsCocycle" class="claim-list"></ul>
-      </article>
     </div>
   </section>
 
   <section id="artifacts" class="index-section artifacts-section">
     <div class="section-head">
-      <p class="section-kicker">Artifact browser</p>
-      <h2>Canonical data and verifier code.</h2>
+      <p class="section-kicker">Artifacts</p>
+      <h2>Public data and checker links.</h2>
       <p class="section-text">
-        Public JSON artifacts and checker scripts for inspecting the theorem
-        surface directly.
+        These links are kept for transparency. They are not required for a first
+        reading, but they allow the theorem object, matrix data, verification
+        report, and checker scripts to remain publicly inspectable.
       </p>
     </div>
 
@@ -276,7 +241,6 @@ include __DIR__ . '/includes/site_header.php';
         <h3>Generated proof outputs</h3>
         <ul class="artifact-list link-list">
           <li><a href="json/verify_report.json" target="_blank" rel="noopener">verify_report.json</a></li>
-          <li id="reportPassLine" class="muted">verification report summary loading…</li>
         </ul>
       </article>
 
@@ -285,7 +249,6 @@ include __DIR__ . '/includes/site_header.php';
         <h3>Cocycle artifacts</h3>
         <ul class="artifact-list link-list">
           <li><a href="json/transport_cocycle.json" target="_blank" rel="noopener">transport_cocycle.json</a></li>
-          <li id="cocycleArtifactLine" class="muted">companion invariant status loading…</li>
         </ul>
       </article>
 
@@ -311,9 +274,21 @@ include __DIR__ . '/includes/site_header.php';
       </article>
     </div>
   </section>
+
+  <section class="index-section scope-section">
+    <div class="section-head">
+      <p class="section-kicker">Scope</p>
+      <h2>Research context, not final doctrine.</h2>
+      <p class="section-text">
+        The Thalean Graph project is exploratory mathematical research. Aletheos
+        presents it publicly because the broader goal is to make difficult ideas,
+        assumptions, artifacts, and inspection paths visible rather than hidden
+        behind private notes.
+      </p>
+    </div>
+  </section>
 </main>
 
 <?php include __DIR__ . '/includes/site_footer.php'; ?>
-<script src="assets/thalean_graph.js?v=20260410-final"></script>
 </body>
 </html>

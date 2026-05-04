@@ -15,7 +15,7 @@ include __DIR__ . '/includes/site_header.php';
       <div class="hero-copy">
         <h1 class="hero-title">Making intelligence accountable.</h1>
         <p class="hero-text">
-          Aletheos is a public research workshop exploring AI agent accountability,
+          Aletheos is a an open source research project conducted by the Center of Recursive Inquiry. We explore AI agent accountability,
           privacy-preserving financial technology, and the changing relationship
           between humans and intelligent systems.
         </p>
@@ -112,17 +112,6 @@ include __DIR__ . '/includes/site_header.php';
     </div>
   </section>
 
-  <section class="index-section scope-section">
-    <div class="section-head">
-      <p class="section-kicker">Scope</p>
-      <h2>Exploratory research, made inspectable.</h2>
-      <p class="section-text">
-        Aletheos is not a finished product or a claim to final certainty. It is a
-        public workshop for developing mathematical, conceptual, and software tools
-        that may help make intelligent action more accountable.
-      </p>
-    </div>
-  </section>
 </main>
 
 <?php include __DIR__ . '/includes/site_footer.php'; ?>
