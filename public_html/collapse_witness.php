@@ -17,14 +17,16 @@ include __DIR__ . '/includes/site_header.php';
     </p>
   </section>
 
-  <section class="index-section">
-    <div class="section-head">
-      <p class="section-kicker">Renderer</p>
-      <h2>G15 collapse/rebound witness</h2>
-      <p class="section-text">
-        One scalar disturbance is evolved across the G15 transport graph, lifted through the 30-column incidence structure,
-        and quotiented into a six-station witness silhouette.
-      </p>
+  <section class="index-section renderer-priority-section">
+    <div class="section-head renderer-head">
+      <div>
+        <p class="section-kicker">Renderer</p>
+        <h2>G15 collapse/rebound witness</h2>
+        <p class="section-text">
+          One scalar disturbance evolves across the G15 transport graph, lifts through the 30-column incidence structure,
+          and quotients into a six-station witness silhouette.
+        </p>
+      </div>
     </div>
 
     <div class="collapse-controls" aria-label="Collapse witness controls">
@@ -62,22 +64,23 @@ include __DIR__ . '/includes/site_header.php';
       <button id="cw-copy-state" class="cw-button" type="button">Copy state JSON</button>
     </div>
 
-    <div class="cw-howto">
-      <h3>How to read this lens</h3>
-      <p>
-        The left panel is the 15-row transport graph. The middle panel is the lifted 30-column incidence response
-        computed from <code>Mᵀu</code>. The right panel is the six-station witness quotient:
-        <strong>A</strong> crown, <strong>D/E</strong> shoulders, <strong>C/B</strong> throat, and <strong>F</strong> rebound pole.
-      </p>
-    </div>
+    <div id="cw-status" class="cw-status">Loading collapse witness data…</div>
 
-    <div class="cw-morphology-note">
-      <h3>Phase morphology overlay</h3>
-      <p>
-        The live G15 state always drives the color and station values. In raw mode, the witness follows only the live quotient.
-        In overlay mode, a lightweight phase morphology shapes the silhouette through the intended collapse grammar:
-        latent round, defect selection, cup fold, throat bridge, rebound jet, and relaxation.
-      </p>
+    <div class="collapse-grid collapse-grid--priority">
+      <section class="collapse-panel">
+        <h3>G15 transport graph</h3>
+        <svg id="g15-panel" class="collapse-svg" viewBox="0 0 420 320" role="img" aria-label="G15 transport graph animation"></svg>
+      </section>
+
+      <section class="collapse-panel">
+        <h3>30-column incidence response</h3>
+        <svg id="incidence-panel" class="collapse-svg" viewBox="0 0 420 320" role="img" aria-label="Thirty column incidence response"></svg>
+      </section>
+
+      <section class="collapse-panel collapse-panel--featured">
+        <h3>Six-station witness</h3>
+        <svg id="witness-panel" class="collapse-svg" viewBox="0 0 420 320" role="img" aria-label="Six station collapse witness"></svg>
+      </section>
     </div>
 
     <div class="cw-readout-grid">
@@ -103,29 +106,35 @@ include __DIR__ . '/includes/site_header.php';
       </div>
     </div>
 
-    <div id="cw-status" class="cw-status">Loading collapse witness data…</div>
+    <details class="cw-details">
+      <summary>How to read this lens</summary>
+      <div class="cw-detail-grid">
+        <div class="cw-howto">
+          <h3>Panel map</h3>
+          <p>
+            The left panel is the 15-row transport graph. The middle panel is the lifted 30-column incidence response
+            computed from <code>Mᵀu</code>. The right panel is the six-station witness quotient:
+            <strong>A</strong> crown, <strong>D/E</strong> shoulders, <strong>C/B</strong> throat, and <strong>F</strong> rebound pole.
+          </p>
+        </div>
 
-    <div class="cw-provenance">
-      <h3>Current state provenance</h3>
-      <pre><code id="cw-state-json">Waiting for renderer…</code></pre>
-    </div>
+        <div class="cw-morphology-note">
+          <h3>Phase morphology overlay</h3>
+          <p>
+            The live G15 state always drives the color and station values. In raw mode, the witness follows only the live quotient.
+            In overlay mode, a lightweight phase morphology shapes the silhouette through the intended collapse grammar:
+            latent round, defect selection, cup fold, throat bridge, rebound jet, and relaxation.
+          </p>
+        </div>
+      </div>
+    </details>
 
-    <div class="collapse-grid">
-      <section class="collapse-panel">
-        <h3>G15 transport graph</h3>
-        <svg id="g15-panel" class="collapse-svg" viewBox="0 0 420 320" role="img" aria-label="G15 transport graph animation"></svg>
-      </section>
-
-      <section class="collapse-panel">
-        <h3>30-column incidence response</h3>
-        <svg id="incidence-panel" class="collapse-svg" viewBox="0 0 420 320" role="img" aria-label="Thirty column incidence response"></svg>
-      </section>
-
-      <section class="collapse-panel">
-        <h3>Six-station witness</h3>
-        <svg id="witness-panel" class="collapse-svg" viewBox="0 0 420 320" role="img" aria-label="Six station collapse witness"></svg>
-      </section>
-    </div>
+    <details class="cw-details cw-details--provenance">
+      <summary>Current state provenance</summary>
+      <div class="cw-provenance">
+        <pre><code id="cw-state-json">Waiting for renderer…</code></pre>
+      </div>
+    </details>
   </section>
 
   <section class="index-section">
