@@ -470,35 +470,12 @@
   flex-wrap: wrap;
 }
 
-.phase-step-indicator {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.4rem;
-  padding: 0 0.85rem;
-  border: var(--border);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--muted);
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
-
-.phase-step-indicator.is-locked {
-  color: var(--text);
-  border-color: rgba(123, 194, 255, 0.45);
-  background: rgba(123, 194, 255, 0.08);
-}
-
 @media (max-width: 860px) {
   .phase-stepper {
     width: 100%;
   }
 
-  .phase-step-indicator {
-    width: 100%;
-    justify-content: center;
   }
-}
 
 
 /* v0.9 Thalean layer stack */

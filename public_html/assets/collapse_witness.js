@@ -945,19 +945,8 @@ phaseMorphology = function() {
 };
 
 function updatePhaseStepper() {
-  const indicator = document.getElementById('phase-step-indicator');
   const liveBtn = document.getElementById('phase-live');
-  if (!indicator) return;
-
-  if (isPhaseLocked()) {
-    indicator.textContent = `Locked preset: ${phaseTitleCase(PHASE_SEQUENCE[phaseLockIndex])}`;
-    indicator.classList.add('is-locked');
-    if (liveBtn) liveBtn.disabled = false;
-  } else {
-    indicator.textContent = `Live: ${phaseTitleCase(liveCurrentPhaseName())}`;
-    indicator.classList.remove('is-locked');
-    if (liveBtn) liveBtn.disabled = true;
-  }
+  if (liveBtn) liveBtn.disabled = !isPhaseLocked();
 }
 
 function bindPhaseStepper() {
