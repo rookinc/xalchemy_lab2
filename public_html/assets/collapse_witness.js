@@ -518,6 +518,168 @@ function renderWitness() {
   svg.appendChild(phaseLabel);
 }
 
+
+function renderBubbleAnalog() {
+  const svg = document.getElementById('bubble-panel');
+  if (!svg) return;
+
+  svg.innerHTML = '';
+
+  const live = stationValues();
+  const mode = getMode();
+  const m = mode === 'overlay'
+    ? phaseMorphology()
+    : {
+        round: 1,
+        defect: 0,
+        cup: 0,
+        throat: 0,
+        rebound: 0,
+        relax: 0,
+        crownIndent: 0,
+        shoulderLift: 0,
+        throatPinch: 0,
+        throatDrop: 0,
+        jetExtend: 0,
+        reboundDome: 0,
+        asymmetry: 0
+      };
+
+  const defs = makeSvg('defs');
+  const marker = makeSvg('marker', {
+    id: 'bubble-arrow',
+    markerWidth: 8,
+    markerHeight: 8,
+    refX: 6,
+    refY: 3,
+    orient: 'auto',
+    markerUnits: 'strokeWidth'
+  });
+  marker.appendChild(makeSvg('path', {
+    d: 'M 0 0 L 6 3 L 0 6 z',
+    fill: 'rgba(235, 239, 247, 0.55)'
+  }));
+  defs.appendChild(marker);
+  svg.appendChild(defs);
+
+  const cx = 210;
+  const cy = 160;
+
+  // Live graph signal subtly biases the analog, but phase morphology controls the visual grammar.
+  const liveTop = clamp(live.A ?? 0, -1, 1);
+  const liveLeft = clamp(((live.D ?? 0) + (live.C ?? 0)) / 2, -1, 1);
+  const liveRight = clamp(((live.E ?? 0) + (live.B ?? 0)) / 2, -1, 1);
+  const liveBottom = clamp(live.F ?? 0, -1, 1);
+
+  const rx = 92 + 12 * m.round + 14 * m.rebound - 18 * m.throat;
+  const ry = 76 + 6 * m.round + 18 * m.rebound - 10 * m.throat;
+
+  const topY = cy - ry + m.crownIndent + 5 * liveTop;
+  const bottomY = cy + ry + m.jetExtend * 0.32 + 8 * liveBottom;
+  const leftX = cx - rx - 12 * m.cup + 5 * liveLeft;
+  const rightX = cx + rx + 12 * m.cup + 5 * liveRight;
+
+  const throatY = cy + 34 + m.throatDrop;
+  const throatHalf = Math.max(12, 48 - m.throatPinch * 0.72);
+
+  const shoulderY = cy - 48 - m.shoulderLift * 0.38;
+  const asym = m.asymmetry;
+
+  // Reference round cavity.
+  svg.appendChild(makeSvg('ellipse', {
+    class: 'cw-bubble-ghost',
+    cx,
+    cy,
+    rx: 98,
+    ry: 78
+  }));
+
+  // Pressure/defect patch.
+  if (m.defect > 0.05 || m.cup > 0.05) {
+    svg.appendChild(makeSvg('ellipse', {
+      class: 'cw-bubble-pressure',
+      cx: cx - 18 + asym,
+      cy: topY - 6,
+      rx: 22 + 18 * m.defect,
+      ry: 12 + 12 * m.cup,
+      transform: `rotate(-18 ${cx - 18 + asym} ${topY - 6})`
+    }));
+  }
+
+  // Smooth cavity contour. It becomes cup/throat/jet shaped through phase offsets.
+  const d = [
+    `M ${leftX} ${cy}`,
+    `C ${leftX} ${shoulderY}, ${cx - 42 + asym} ${topY}, ${cx + asym} ${topY}`,
+    `C ${cx + 42 + asym} ${topY}, ${rightX} ${shoulderY}, ${rightX} ${cy}`,
+    `C ${rightX} ${cy + 34}, ${cx + throatHalf} ${throatY}, ${cx + throatHalf} ${throatY}`,
+    `C ${cx + 30} ${bottomY - 20}, ${cx + 10} ${bottomY}, ${cx} ${bottomY}`,
+    `C ${cx - 10} ${bottomY}, ${cx - 30} ${bottomY - 20}, ${cx - throatHalf} ${throatY}`,
+    `C ${cx - throatHalf} ${throatY}, ${leftX} ${cy + 34}, ${leftX} ${cy}`,
+    'Z'
+  ].join(' ');
+
+  svg.appendChild(makeSvg('path', {
+    class: 'cw-bubble-cavity',
+    d
+  }));
+
+  // Rebound jet feature.
+  if (m.rebound > 0.08) {
+    const jetTop = bottomY - 34;
+    const jetBottom = clamp(bottomY + 42 * m.rebound, 230, 304);
+    const jetW = 7 + 10 * m.rebound;
+    const jet = `M ${cx - jetW} ${jetTop}
+                 C ${cx - jetW * 0.7} ${jetTop - 16}, ${cx + jetW * 0.7} ${jetTop - 16}, ${cx + jetW} ${jetTop}
+                 L ${cx + jetW * 0.45} ${jetBottom}
+                 C ${cx + jetW * 0.2} ${jetBottom + 8}, ${cx - jetW * 0.2} ${jetBottom + 8}, ${cx - jetW * 0.45} ${jetBottom}
+                 Z`;
+
+    svg.appendChild(makeSvg('path', {
+      class: 'cw-bubble-jet',
+      d: jet
+    }));
+  }
+
+  // Flow arrows, strongest during fold/throat/rebound.
+  const flow = Math.max(m.cup, m.throat, m.rebound);
+  if (flow > 0.08) {
+    const arrows = [
+      [cx - 125, cy - 76, cx - 94, cy - 42],
+      [cx + 125, cy - 76, cx + 94, cy - 42],
+      [cx - 110, cy + 18, cx - 75, cy + 10],
+      [cx + 110, cy + 18, cx + 75, cy + 10],
+      [cx, cy - 112, cx, topY + 14]
+    ];
+
+    for (const [x1, y1, x2, y2] of arrows) {
+      svg.appendChild(makeSvg('line', {
+        class: 'cw-bubble-flow',
+        x1,
+        y1,
+        x2,
+        y2,
+        opacity: 0.25 + 0.55 * flow
+      }));
+    }
+  }
+
+  svg.appendChild(makeSvg('line', {
+    class: 'cw-axis',
+    x1: cx,
+    y1: 36,
+    x2: cx,
+    y2: 292
+  }));
+
+  const label = makeSvg('text', {
+    class: 'cw-bubble-label',
+    x: cx,
+    y: 302
+  });
+  label.textContent = mode === 'overlay' ? currentPhaseName() : 'RAW QUOTIENT CONTOUR';
+  svg.appendChild(label);
+}
+
 function updateReadouts() {
   const s = stationValues();
   const maxu = Math.max(...CW.u.map(Math.abs));
@@ -537,6 +699,7 @@ function renderAll() {
   renderGraph();
   renderIncidence();
   renderWitness();
+  renderBubbleAnalog();
   updateReadouts();
   updateStateJson();
 }

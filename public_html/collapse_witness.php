@@ -81,6 +81,11 @@ include __DIR__ . '/includes/site_header.php';
         <h3>Six-station witness</h3>
         <svg id="witness-panel" class="collapse-svg" viewBox="0 0 420 320" role="img" aria-label="Six station collapse witness"></svg>
       </section>
+
+      <section class="collapse-panel collapse-panel--bubble">
+        <h3>Bubble analog</h3>
+        <svg id="bubble-panel" class="collapse-svg" viewBox="0 0 420 320" role="img" aria-label="Smooth bubble collapse analog"></svg>
+      </section>
     </div>
 
     <div class="cw-readout-grid">
@@ -113,8 +118,8 @@ include __DIR__ . '/includes/site_header.php';
           <h3>Panel map</h3>
           <p>
             The left panel is the 15-row transport graph. The middle panel is the lifted 30-column incidence response
-            computed from <code>Mᵀu</code>. The right panel is the six-station witness quotient:
-            <strong>A</strong> crown, <strong>D/E</strong> shoulders, <strong>C/B</strong> throat, and <strong>F</strong> rebound pole.
+            computed from <code>Mᵀu</code>. The third panel is the six-station witness quotient:
+            <strong>A</strong> crown, <strong>D/E</strong> shoulders, <strong>C/B</strong> throat, and <strong>F</strong> rebound pole. The fourth panel renders those stations as a smooth bubble/cavity analog.
           </p>
         </div>
 
