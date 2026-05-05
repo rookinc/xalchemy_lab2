@@ -1,0 +1,165 @@
+
+/* Thalean Mathematical Spaces research note */
+
+.research-page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 4rem 1.25rem 6rem;
+  color: #102033;
+}
+
+.research-hero {
+  margin-bottom: 4rem;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #55718f;
+  margin-bottom: 1rem;
+}
+
+.research-hero h1 {
+  font-size: clamp(2.25rem, 6vw, 4.5rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+  margin: 0 0 1.5rem;
+  color: #07182c;
+}
+
+.hero-text {
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  line-height: 1.55;
+  max-width: 780px;
+  margin: 0 0 1rem;
+}
+
+.hero-text--secondary {
+  color: #40566f;
+}
+
+.research-section {
+  margin: 4rem 0;
+}
+
+.research-section h2 {
+  font-size: clamp(1.65rem, 3vw, 2.35rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 1rem;
+  color: #0b1b2e;
+}
+
+.research-section p,
+.research-section li {
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: #27384c;
+}
+
+.research-section ul {
+  padding-left: 1.25rem;
+}
+
+.research-section li {
+  margin: 0.5rem 0;
+}
+
+blockquote {
+  margin: 2rem 0;
+  padding: 1.25rem 1.5rem;
+  border-left: 4px solid #5686a6;
+  background: rgba(86, 134, 166, 0.08);
+  color: #102033;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  border-radius: 0 1rem 1rem 0;
+}
+
+.lens-stack {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.lens-card {
+  border: 1px solid rgba(86, 134, 166, 0.22);
+  background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(238,247,250,0.72));
+  border-radius: 1.25rem;
+  padding: 1.35rem;
+  box-shadow: 0 12px 36px rgba(8, 25, 44, 0.06);
+}
+
+.lens-card h3 {
+  margin: 0 0 0.6rem;
+  color: #102033;
+  font-size: 1.18rem;
+}
+
+.lens-card p {
+  margin: 0.55rem 0 0;
+}
+
+.research-code {
+  overflow-x: auto;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  background: #07182c;
+  color: #e9f4ff;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  margin: 2rem 0;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.comparison-card {
+  border-radius: 1.25rem;
+  padding: 1.35rem;
+  background: #f4f7fa;
+  border: 1px solid rgba(16, 32, 51, 0.08);
+}
+
+.comparison-card--accent {
+  background: rgba(86, 134, 166, 0.1);
+  border-color: rgba(86, 134, 166, 0.28);
+}
+
+.comparison-card h3 {
+  margin-top: 0;
+  color: #102033;
+}
+
+.research-section--closing {
+  padding: 2rem;
+  border-radius: 1.5rem;
+  background: linear-gradient(135deg, rgba(86, 134, 166, 0.12), rgba(255,255,255,0.85));
+  border: 1px solid rgba(86, 134, 166, 0.2);
+}
+
+.closing-line {
+  font-size: 1.25rem !important;
+  color: #07182c !important;
+  font-weight: 650;
+}
+
+@media (max-width: 760px) {
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .research-page {
+    padding-top: 3rem;
+  }
+
+  .research-section {
+    margin: 3rem 0;
+  }
+}

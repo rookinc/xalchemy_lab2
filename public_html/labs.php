@@ -27,7 +27,16 @@ include __DIR__ . '/includes/site_header.php';
 
         <div class="hero-actions" aria-label="Lab actions">
           <a class="button button--primary" href="collapse_witness.php">Enter the Lab</a>
-        </div>
+        
+<!-- HERO_LINKS_THALEAN_GRAPH_VIEWER -->
+<a class="hero-link hero-link--secondary thalean-viewer-link" href="/labs/thalean-graph-viewer/index.html">
+  Graph Viewer
+</a>
+<a class="hero-link hero-link--secondary thalean-viewer-link" href="/labs/thalean-graph-viewer/lab.html">
+  D4 Lab
+</a>
+
+</div>
       </div>
 
       <aside class="hero-emblem" aria-label="Aletheos lab themes">
@@ -216,6 +225,7 @@ include __DIR__ . '/includes/site_header.php';
       </p>
     </div>
   </section>
+
 </main>
 
 <?php include __DIR__ . '/includes/site_footer.php'; ?>
