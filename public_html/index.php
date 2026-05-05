@@ -45,6 +45,29 @@ include __DIR__ . '/includes/site_header.php';
     </div>
   </section>
 
+  <section class="index-section constructor-section">
+    <a class="constructor-feature" href="/labs/constructor/lab.html" aria-label="Open the Thalean constructor lab tool">
+      <div class="constructor-feature__copy">
+        <p class="section-kicker">Lab tool</p>
+        <h2>Explore the constructor.</h2>
+        <p class="section-text">
+          The constructor is an interactive lab surface for exploring Thalean structure
+          visually. It provides a place to rotate, compare, and inspect transport
+          forms, layered symmetry, and finite geometric witnesses.
+        </p>
+        <span class="constructor-feature__cta">Open the interactive lab tool →</span>
+      </div>
+
+      <figure class="constructor-feature__media">
+        <img
+          src="assets/thalean-constructor-preview.png"
+          alt="A luminous Thalean constructor render showing layered geometric transport structure on a dark grid."
+          loading="lazy"
+        >
+      </figure>
+    </a>
+  </section>
+
   <section class="index-section mission-section">
     <div class="section-head">
       <p class="section-kicker">The problem</p>
