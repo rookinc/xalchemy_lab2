@@ -13,30 +13,36 @@ include __DIR__ . '/includes/site_header.php';
 
     <div class="hero-grid">
       <div class="hero-copy">
-        <h1 class="hero-title">Making difficult structures easier to see.</h1>
+        <h1 class="hero-title">Explore the ideas visually.</h1>
         <p class="hero-text">
-          Aletheos Labs is where we build experimental viewers, witness lenses,
-          and exploratory renderers for ideas that are too complex to understand
-          from text alone.
+          Aletheos Labs turns difficult ideas into interactive experiments. These
+          tools are built for seeing patterns, movement, structure, and change —
+          not just reading about them.
         </p>
         <p class="hero-text hero-text--secondary">
-          If you are new here, you do not need to know graph theory, AI safety,
-          fintech, or formal verification to begin. The lab exists to make the
-          work inspectable one layer at a time.
+          You do not need a technical background to begin. The goal is to make
+          complex systems easier to inspect, question, and understand one layer
+          at a time.
         </p>
+        <div class="hero-actions lab-action-grid" aria-label="Lab actions">
+          <a class="lab-action-card lab-action-card--primary" href="/labs/informative_action/">
+            <span class="card-label">Quotient lab</span>
+            <strong>Informative Action</strong>
+            <span>
+              Watch how action moves through a simple visual system and leaves a
+              trace that can be inspected.
+            </span>
+          </a>
 
-        <div class="hero-actions" aria-label="Lab actions">
-          <a class="button button--primary" href="collapse_witness.php">Enter the Lab</a>
-        
-<!-- HERO_LINKS_THALEAN_GRAPH_VIEWER -->
-<a class="hero-link hero-link--secondary thalean-viewer-link" href="/labs/thalean-graph-viewer/index.html">
-  Graph Viewer
-</a>
-<a class="hero-link hero-link--secondary thalean-viewer-link" href="/labs/thalean-graph-viewer/lab.html">
-  D4 Lab
-</a>
-
-</div>
+          <a class="lab-action-card" href="/labs/constructor/lab.html">
+            <span class="card-label">Constructor</span>
+            <strong>Wave Form Constructor</strong>
+            <span>
+              Explore a live visual model of the Thalean graph as it grows,
+              shifts, and forms structure in the browser.
+            </span>
+          </a>
+        </div>
       </div>
 
       <aside class="hero-emblem" aria-label="Aletheos lab themes">
@@ -108,7 +114,7 @@ include __DIR__ . '/includes/site_header.php';
     </div>
 
     <div class="card-grid lab-route-grid">
-      <a class="index-card feature-card" href="collapse_witness.php">
+      <a class="index-card feature-card" href="/labs/informative_action/">
         <span class="card-label">Active lab</span>
         <h3>Collapse Witness Lens</h3>
         <p>
@@ -126,12 +132,12 @@ include __DIR__ . '/includes/site_header.php';
         </p>
       </a>
 
-      <a class="index-card" href="../graph_viewer/index.html">
+      <a class="index-card" href="/labs/constructor/lab.html">
         <span class="card-label">Development</span>
-        <h3>Graph Viewer</h3>
+        <h3>Constructor Lab</h3>
         <p>
-          A raw graph-viewer stage outside public_html. This route works when
-          serving from the repository root or a development environment.
+          A browser-side D4 / Thalean constructor viewer for inspecting the
+          active graph construction surface without a Python runtime.
         </p>
       </a>
     </div>

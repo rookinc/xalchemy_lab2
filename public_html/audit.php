@@ -63,7 +63,7 @@ include __DIR__ . '/includes/site_header.php';
     </div>
 
     <div class="card-grid">
-      <a class="index-card feature-card" href="collapse_witness.php">
+      <a class="index-card feature-card" href="/labs/informative_action/">
         <span class="card-label">Live</span>
         <h3>Collapse Witness Renderer</h3>
         <p>G15 graph wave, Mᵀu incidence response, and six-station collapse/rebound witness.</p>

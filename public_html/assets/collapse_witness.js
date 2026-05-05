@@ -1043,9 +1043,9 @@ function frame(timestamp) {
 
 async function bootCollapseWitness() {
   const [theorem, lens, params] = await Promise.all([
-    loadJson('json/theorem_object.json'),
-    loadJson('json/bubble_witness_lens.json'),
-    loadJson('json/collapse_params.json')
+    loadJson('/json/theorem_object.json'),
+    loadJson('/json/bubble_witness_lens.json'),
+    loadJson('/json/collapse_params.json')
   ]);
 
   CW.theorem = theorem;
